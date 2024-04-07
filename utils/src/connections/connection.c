@@ -1,4 +1,4 @@
-#include <sockets/sockets.h>
+#include <connections/connection.h>
 
 int iniciarServidor(t_log* logger, char* ip, char* puerto) //Este se usa en los servers
 {
