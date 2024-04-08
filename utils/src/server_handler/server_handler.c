@@ -1,6 +1,6 @@
 #include <server_handler/server_handler.h>
 
-int startServer(char *ip, char* puerto, char* nombreServer, hs_code serverHandShake, hs_code clienteHandShakeExpected, t_log* logger) {
+int startServer(char *ip, char* puerto, t_log* logger) {
 	
 	// Creamos un socket hacia el servidor
 	int socketServer = iniciarServidor(logger, ip, puerto);
@@ -12,12 +12,25 @@ int startServer(char *ip, char* puerto, char* nombreServer, hs_code serverHandSh
 
 	log_info(logger, "Servidor listo para recibir al cliente");
 	
+	return socketServer;
+}
+
+bool isValidHandShake(int socketServer, char* nombreServer, hs_code serverHandShake, hs_code clienteHandShakeExpected, t_log* logger) {
+
 	int socketCliente = esperarCliente(logger, nombreServer, socketServer);
 
-	char* textoSeConectoNuevoCliente = string_from_format("Se conecto un cliente %d", socketCliente);
-	log_info(logger, textoSeConectoNuevoCliente);
+	log_info(logger, "Se conecto un cliente a %s", nombreServer);
 
-	hs_code result = handleClientHandShaking(socketCliente, clienteHandShakeExpected, serverHandShake, logger);
+	hs_code result = handleServerHandShaking(socketCliente, clienteHandShakeExpected, serverHandShake, logger);
 
-	return (result == HS_OK) ? 0 : -1;
+	if (result == HS_OK)
+    {
+        log_info(logger, "Handshake valido - Conexion aceptada");
+        return true;
+    }
+    else
+    {
+        log_warning(logger, "Handshake invalido - Conexion rechazada");
+        return false;
+    }
 }

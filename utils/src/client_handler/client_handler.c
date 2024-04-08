@@ -14,5 +14,14 @@ int startCliente(char *ip, char* puerto, char* nombreClient, hs_code clientHandS
 
 	hs_code result = handleClientHandShaking(socketCliente, clientHandShake, serverHandShakeExpected, logger);
 
-	return (result == HS_OK) ? 0 : -1;
+	if (result == HS_OK)
+    {
+        log_info(logger, "Handshake valido - Conexion aceptada");
+        return socketCliente;
+    }
+    else
+    {
+        log_warning(logger, "Handshake invalido - Conexion rechazada");
+        return 0;
+    }
 }
