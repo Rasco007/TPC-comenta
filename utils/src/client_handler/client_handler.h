@@ -11,6 +11,7 @@
 #include<stdio.h>
 #include<communication/communication.h>
 #include<connections/connection.h>
+#include <commons/string.h>
 
 int startCliente(char *ip, char* puerto, char* nombreClient, hs_code clientHandShake, hs_code serverHandShakeExpected, t_log* logger);
 

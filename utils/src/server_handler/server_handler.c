@@ -12,7 +12,7 @@ int startServer(char *ip, char* puerto, char* nombreServer, hs_code serverHandSh
 
 	log_info(logger, "Servidor listo para recibir al cliente");
 	
-	int socketCliente = esperarCliente(logger, socketServer, nombreServer);
+	int socketCliente = esperarCliente(logger, nombreServer, socketServer);
 
 	char* textoSeConectoNuevoCliente = string_from_format("Se conecto un cliente %d", socketCliente);
 	log_info(logger, textoSeConectoNuevoCliente);

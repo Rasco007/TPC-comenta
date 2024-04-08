@@ -28,7 +28,6 @@ hs_code handleClientHandShaking(int socketCliente, hs_code clientHandShake, hs_c
 hs_code handleServerHandShaking(int socketServer, hs_code serverHandShake, hs_code clientHandShakeRequestExpected, t_log* logger) {
 
     hs_code serverHandShakeResponse;
-    hs_code hsResult;
     int clientHandShakeRequest = -1;
 	int isValidConnection = -1;
 

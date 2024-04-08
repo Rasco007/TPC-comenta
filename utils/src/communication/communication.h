@@ -9,6 +9,7 @@
 #include<commons/log.h>
 #include<string.h>
 #include<stdio.h>
+#include <commons/string.h>
 
 typedef enum
 {

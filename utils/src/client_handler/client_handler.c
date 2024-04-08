@@ -9,7 +9,7 @@ int startCliente(char *ip, char* puerto, char* nombreClient, hs_code clientHandS
 		return -1;
 	}
 
-	char* textoCreadaConexion = string_from_format("Creada la conexion desde %s", nombreClient);
+	char* textoCreadaConexion = string_from_format("Creada la conexion desde %d", socketCliente);
 	log_info(logger, textoCreadaConexion);
 
 	hs_code result = handleClientHandShaking(socketCliente, clientHandShake, serverHandShakeExpected, logger);
