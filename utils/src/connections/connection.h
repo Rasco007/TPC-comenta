@@ -10,8 +10,8 @@
 #include<string.h>
 
 int iniciarServidor(t_log* logger, char* ip, char* puerto);
-int esperarCliente(t_log* logger, const char* name, int socket_servidor);
+int esperarCliente(t_log* logger, const char* name, int socketServidor);
 int crearConexion(char *ip, char* puerto);
-void liberarConexion(int socket_cliente);
+void liberarConexion(int socketCliente);
 
 #endif /* CONNECTION_H_ */
