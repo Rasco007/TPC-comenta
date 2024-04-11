@@ -15,12 +15,12 @@ hs_code handleClientHandShaking(int socketCliente, hs_code clientHandShake, hs_c
 	if (serverHandShakeResponse == serverHandShakeExpected) {
 		log_info(logger, "Handshaking okey entre cliente y servidor. Conexion aceptada");
 		hsResult = HS_OK;
-		send(socketCliente, &hsResult, sizeof(int), 0);
     } else {
 		log_info(logger, "Handshaking fallo entre cliente y servidor. Conexion rechazada");
 		hsResult = HS_FAIL;
-		send(socketCliente, &hsResult, sizeof(int), 0);
 	}
+
+	send(socketCliente, &hsResult, sizeof(int), 0);
 
     return hsResult;
 }
