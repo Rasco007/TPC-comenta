@@ -7,14 +7,11 @@
 #include<unistd.h>
 #include<netdb.h>
 #include<commons/log.h>
-#include<commons/collections/list.h>
 #include<string.h>
-#include<assert.h>
-#include <commons/collections/queue.h>
 
 int iniciarServidor(t_log* logger, char* ip, char* puerto);
-int esperarCliente(t_log* logger, const char* name, int socket_servidor);
+int esperarCliente(t_log* logger, const char* name, int socketServidor);
 int crearConexion(char *ip, char* puerto);
-void liberarConexion(int socket_cliente);
+void liberarConexion(int socketCliente);
 
 #endif /* CONNECTION_H_ */
