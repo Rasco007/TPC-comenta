@@ -22,42 +22,42 @@ typedef enum
     HS_CPU,
     HS_MEMORIA,
     HS_IO
-} hs_code; //Enum para identificar codigos de Hand Shaking
+} tHsCode; //Enum para identificar codigos de Hand Shaking
 
-hs_code handleClientHandShaking(int socketCliente, hs_code clientHandShake, hs_code serverHandShakeExpected, t_log* logger);
-hs_code handleServerHandShaking(int socketServer, hs_code serverHandShake, hs_code clientHandShakeRequestExpected, t_log* logger);
+tHsCode handleClientHandShaking(int socketCliente, tHsCode clientHandShake, tHsCode serverHandShakeExpected, t_log* logger);
+tHsCode handleServerHandShaking(int socketServer, tHsCode serverHandShake, tHsCode clientHandShakeRequestExpected, t_log* logger);
 
 //transmision de mensajes
 
 typedef enum{
 	MENSAJE,
 	PAQUETE
-} op_code;
+} tOpCode;
 
 typedef struct{
 	int size;
 	void* stream;
-} t_buffer;
+} tBuffer;
 
 typedef struct{
-	op_code codigo_operacion;
-	t_buffer* buffer;
-} t_paquete;
+	tOpCode codigo_operacion;
+	tBuffer* buffer;
+} tPaquete;
 
 //Mensajes
 void enviar_mensaje(char* mensaje, int socket_cliente);
 int recibir_operacion(int socket_cliente);
 void* recibir_buffer(int* size, int socket_cliente);
 void recibir_mensaje(t_log* logger, int socket_cliente);
-void crear_buffer(t_paquete* paquete);
+void crear_buffer(tPaquete* paquete);
 
 //Paquetes
 t_list* recibir_paquete(int);
-t_paquete* crear_paquete(op_code);
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
-void agregar_a_paquete_con_header(t_paquete *paquete, void *valor, int tamanio);
-void enviar_paquete(t_paquete* paquete, int socket_cliente);
-void eliminar_paquete(t_paquete* paquete);
-void* serializar_paquete(t_paquete* paquete, int bytes);
+tPaquete* crear_paquete(tOpCode);
+void agregar_a_paquete(tPaquete* paquete, void* valor, int tamanio);
+void agregar_a_paquete_con_header(tPaquete *paquete, void *valor, int tamanio);
+void enviar_paquete(tPaquete* paquete, int socket_cliente);
+void eliminar_paquete(tPaquete* paquete);
+void* serializar_paquete(tPaquete* paquete, int bytes);
 
 #endif /* COMMUNICATION_H_ */

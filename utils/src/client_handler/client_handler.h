@@ -13,6 +13,6 @@
 #include<connections/connection.h>
 #include <commons/string.h>
 
-int startCliente(char *ip, char* puerto, char* nombreClient, hs_code clientHandShake, hs_code serverHandShakeExpected, t_log* logger);
+int startCliente(char *ip, char* puerto, char* nombreClient, tHsCode clientHandShake, tHsCode serverHandShakeExpected, t_log* logger);
 
 #endif /* CLIENT_HANDLER_H_ */

@@ -14,6 +14,6 @@
 #include <commons/string.h>
 
 int startServer(char *ip, char* puerto, t_log* logger);
-bool isValidHandShake(int socketServer, char* nombreServer, hs_code serverHandShake, hs_code clienteHandShakeExpected, t_log* logger);
+bool isValidHandShake(int socketServer, char* nombreServer, tHsCode serverHandShake, tHsCode clienteHandShakeExpected, t_log* logger);
 
 #endif /* SERVER_HANDLER_H_ */
