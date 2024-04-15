@@ -2,7 +2,6 @@
 
 void liberarMemoriaDinamica(tKernelConfig* kernelConfig, t_log* kernelLogger);
 void liberarConfig(tKernelConfig* kernelConfig);
-void liberarLogger(t_log* kernelLogger);
 
 void terminarPrograma(tKernelConfig* kernelConfig, t_log* kernelLogger) {
 

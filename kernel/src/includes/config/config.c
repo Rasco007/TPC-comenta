@@ -10,6 +10,10 @@ tKernelConfig* leerKernelConfig(t_log *logger) {
 
     t_config* config = leerConfig(kernelConfigPath, logger);
 
+    if (config == NULL) {
+        return config;
+    }
+
     tKernelConfig* kernelConfig = armarKernelConfig(config);
 
     log_debug(logger, "Archivo de configuracion %s leido correctamente", kernelConfigPath);

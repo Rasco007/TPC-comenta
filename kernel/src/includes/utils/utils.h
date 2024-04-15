@@ -6,5 +6,6 @@
 #include <stdlib.h>
 
 void terminarPrograma(tKernelConfig* kernelConfig, t_log* kernelLogger);
+void liberarLogger(t_log* kernelLogger);
 
 #endif /* UTILS_H_ */

@@ -5,7 +5,16 @@
 int main(int argc, char* argv[]) {
     
     t_log* kernelLogger = iniciarKernelLogger();
+    if (kernelLogger == NULL) {
+        return EXIT_FAILURE;        
+    }
+
     tKernelConfig* kernelConfig = leerKernelConfig(kernelLogger);
+    if (kernelConfig == NULL) {
+        liberarLogger(kernelLogger);
+        return EXIT_FAILURE;        
+    }
+    
     log_info(kernelLogger, "Hola desde Kernel!!");
 
     //start cliente de cpu dispatch
@@ -16,5 +25,6 @@ int main(int argc, char* argv[]) {
     int socketClientMemoria = startCliente(kernelConfig->ipMemoria, kernelConfig->puertoMemoria, NOMBRE_CLIENTE_MEMORIA, tHsCode.HS_KERNEL, tHsCode.HS_MEMORIA);
 
     terminarPrograma(kernelConfig, kernelLogger);
-    return 0;
+    
+    return EXIT_SUCCESS;
 }
