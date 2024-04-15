@@ -20,11 +20,11 @@ int main(int argc, char* argv[]) {
     log_info(kernelLogger, "Hola desde Kernel!!");
 
     //start cliente de cpu dispatch
-    int socketClientCPUDispatch = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuDispatch, NOMBRE_CLIENTE_CPU_DISPATCH, tHsCode.HS_KERNEL, tHsCode.HS_CPU_DISPATCH, kernelLogger);
+    int socketClientCPUDispatch = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuDispatch, NOMBRE_CLIENTE_CPU_DISPATCH, HS_KERNEL, HS_CPU_DISPATCH, kernelLogger);
     //start cliente de cpu interrupt
-    int socketClientCPUInterrupt = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuInterrupt, NOMBRE_CLIENTE_CPU_INTERRUPT, tHsCode.HS_KERNEL, tHsCode.HS_CPU_INTERRUPT, kernelLogger);
+    int socketClientCPUInterrupt = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuInterrupt, NOMBRE_CLIENTE_CPU_INTERRUPT, HS_KERNEL, HS_CPU_INTERRUPT, kernelLogger);
     //start cliente de memoria
-    int socketClientMemoria = startCliente(kernelConfig->ipMemoria, kernelConfig->puertoMemoria, NOMBRE_CLIENTE_MEMORIA, tHsCode.HS_KERNEL, tHsCode.HS_MEMORIA, kernelLogger);
+    int socketClientMemoria = startCliente(kernelConfig->ipMemoria, kernelConfig->puertoMemoria, NOMBRE_CLIENTE_MEMORIA, HS_KERNEL, HS_MEMORIA, kernelLogger);
 
     if (!sonSocketsValidos(socketClientCPUDispatch, socketClientCPUInterrupt, socketClientMemoria)) {
         terminarPrograma(kernelConfig, kernelLogger);
