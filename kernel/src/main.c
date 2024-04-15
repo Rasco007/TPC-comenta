@@ -5,7 +5,10 @@
 int main(int argc, char* argv[]) {
     
     t_log* kernelLogger = iniciarKernelLogger();
-    
+    if (kernelLogger == NULL) {
+        return EXIT_FAILURE;        
+    }
+
     tKernelConfig* kernelConfig = leerKernelConfig(kernelLogger);
     if (kernelConfig == NULL) {
         liberarLogger(kernelLogger);
@@ -14,5 +17,6 @@ int main(int argc, char* argv[]) {
     
     log_info(kernelLogger, "Hola desde Kernel!!");
     terminarPrograma(kernelConfig, kernelLogger);
+    
     return EXIT_SUCCESS;
 }
