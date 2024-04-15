@@ -81,7 +81,7 @@ void add_to_list(char **source, t_list *destiny){
 }
 
 void free_arr(char **arr){
-    
+
     int i = 0;
     while (arr[i] != NULL)
     {
