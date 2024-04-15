@@ -2,6 +2,8 @@
 #include <includes/config/config.h>
 #include <includes/utils/utils.h>
 
+bool sonSocketsValidos(int socketClientCPUDispatch, int socketClientCPUInterrupt, int socketClientMemoria);
+
 int main(int argc, char* argv[]) {
     
     t_log* kernelLogger = iniciarKernelLogger();
@@ -18,13 +20,22 @@ int main(int argc, char* argv[]) {
     log_info(kernelLogger, "Hola desde Kernel!!");
 
     //start cliente de cpu dispatch
-    int socketClientCPUDispatch = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuDispatch, NOMBRE_CLIENTE_CPU_DISPATCH, tHsCode.HS_KERNEL, tHsCode.HS_CPU_DISPATCH);
+    int socketClientCPUDispatch = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuDispatch, NOMBRE_CLIENTE_CPU_DISPATCH, tHsCode.HS_KERNEL, tHsCode.HS_CPU_DISPATCH, kernelLogger);
     //start cliente de cpu interrupt
-    int socketClientCPUInterrupt = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuInterrupt, NOMBRE_CLIENTE_CPU_INTERRUPT, tHsCode.HS_KERNEL, tHsCode.HS_CPU_INTERRUPT);
+    int socketClientCPUInterrupt = startCliente(kernelConfig->ipCpu, kernelConfig->puertoCpuInterrupt, NOMBRE_CLIENTE_CPU_INTERRUPT, tHsCode.HS_KERNEL, tHsCode.HS_CPU_INTERRUPT, kernelLogger);
     //start cliente de memoria
-    int socketClientMemoria = startCliente(kernelConfig->ipMemoria, kernelConfig->puertoMemoria, NOMBRE_CLIENTE_MEMORIA, tHsCode.HS_KERNEL, tHsCode.HS_MEMORIA);
+    int socketClientMemoria = startCliente(kernelConfig->ipMemoria, kernelConfig->puertoMemoria, NOMBRE_CLIENTE_MEMORIA, tHsCode.HS_KERNEL, tHsCode.HS_MEMORIA, kernelLogger);
+
+    if (!sonSocketsValidos(socketClientCPUDispatch, socketClientCPUInterrupt, socketClientMemoria)) {
+        terminarPrograma(kernelConfig, kernelLogger);
+        return EXIT_FAILURE;
+    }
 
     terminarPrograma(kernelConfig, kernelLogger);
     
     return EXIT_SUCCESS;
+}
+
+bool sonSocketsValidos(int socketClientCPUDispatch, int socketClientCPUInterrupt, int socketClientMemoria) {
+    return socketClientCPUDispatch != -1 && socketClientCPUInterrupt != -1 && socketClientMemoria != -1;
 }
