@@ -51,6 +51,7 @@ tKernelConfig* armarKernelConfig(t_config* config) {
 }
 
 tAlgoritmosPlanificacion charTotAlgoritmosPlanificacion(char* givenChar) {
+
      if (strcmp(givenChar, "VRR") == 0) {
           return VRR;
      }
@@ -69,8 +70,8 @@ void destruirMemoriaDinamica(t_config* config, char** recursos, char** instancia
     free_arr(instanciasRecursos);
 }
 
-void add_to_list(char **source, t_list *destiny)
-{
+void add_to_list(char **source, t_list *destiny){
+
     int i = 0;
     while (source[i] != NULL)
     {
@@ -79,8 +80,8 @@ void add_to_list(char **source, t_list *destiny)
     }
 }
 
-void free_arr(char **arr)
-{
+void free_arr(char **arr){
+    
     int i = 0;
     while (arr[i] != NULL)
     {

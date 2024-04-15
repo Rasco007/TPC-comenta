@@ -12,8 +12,8 @@ t_config* leerConfig(char* path, t_log *logger) {
     return config;
 }
 
-t_log* iniciarLogger(char* loggerFilePath, char* moduleName, bool isActiveConsolem, t_log_level logLevel) {
+t_log* iniciarLogger(char* loggerFilePath, char* moduleName, bool isActiveConsole, t_log_level logLevel) {
     
-    t_log* nuevo_logger = log_create(loggerFilePath, moduleName, isActiveConsolem, logLevel);
+    t_log* nuevo_logger = log_create(loggerFilePath, moduleName, isActiveConsole, logLevel);
 	return nuevo_logger;
 }
