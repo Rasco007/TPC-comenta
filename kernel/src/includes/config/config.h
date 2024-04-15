@@ -3,8 +3,7 @@
 
 #include <commons/collections/list.h>
 #include <shared/structs.h>
-#include<commons/config.h>
-#include<commons/log.h>
+#include <shared/init.h>
 
 static const char* kernelConfigPath = "./configs/kernel.config";
 
@@ -23,6 +22,6 @@ typedef struct
     int gradoMultiprogramacion;
 } tKernelConfig;
 
-tKernelConfig* leerConfig(t_log *logger);
+tKernelConfig* leerKernelConfig(t_log *logger);
 
 #endif /* KERNEL_CONFIG_H_ */
