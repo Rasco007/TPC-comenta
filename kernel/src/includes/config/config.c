@@ -26,12 +26,12 @@ tKernelConfig* armarKernelConfig(t_config* config) {
     tKernelConfig* kernelConfig = malloc(sizeof(tKernelConfig));
 
     //configs a nivel cliente y servidor
-    kernelConfig->puertoEscucha = config_get_int_value(config, "PUERTO_ESCUCHA");
+    kernelConfig->puertoEscucha = config_get_string_value(config, "PUERTO_ESCUCHA");
     kernelConfig->ipMemoria = config_get_string_value(config, "IP_MEMORIA");
-    kernelConfig->puertoMemoria = config_get_int_value(config, "PUERTO_MEMORIA");
+    kernelConfig->puertoMemoria = config_get_string_value(config, "PUERTO_MEMORIA");
     kernelConfig->ipCpu = config_get_string_value(config, "IP_CPU");
-    kernelConfig->puertoCpuDispatch = config_get_int_value(config, "PUERTO_CPU_DISPATCH");
-    kernelConfig->puertoCpuInterrupt = config_get_int_value(config, "PUERTO_CPU_INTERRUPT");
+    kernelConfig->puertoCpuDispatch = config_get_string_value(config, "PUERTO_CPU_DISPATCH");
+    kernelConfig->puertoCpuInterrupt = config_get_string_value(config, "PUERTO_CPU_INTERRUPT");
 
     //configs a nivel planificacion
     char* configAlgoritmoPlanificacion = config_get_string_value(config, "ALGORITMO_PLANIFICACION");

@@ -9,12 +9,12 @@ static const char* kernelConfigPath = "./configs/kernel.config";
 
 typedef struct
 {
-    int puertoEscucha;
+    char* puertoEscucha;
     char* ipMemoria;
-    int puertoMemoria;
+    char* puertoMemoria;
     char* ipCpu;
-    int puertoCpuDispatch;
-    int puertoCpuInterrupt;
+    char* puertoCpuDispatch;
+    char* puertoCpuInterrupt;
     tAlgoritmosPlanificacion algoritmoPlanificacion;
     int quantum;
     t_list* recursos;
