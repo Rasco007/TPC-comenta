@@ -19,7 +19,8 @@ typedef enum
     HS_OK,
     HS_FAIL,
     HS_KERNEL,
-    HS_CPU,
+    HS_CPU_DISPATCH,
+    HS_CPU_INTERRUPT,
     HS_MEMORIA,
     HS_IO
 } tHsCode; //Enum para identificar codigos de Hand Shaking
