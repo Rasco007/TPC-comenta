@@ -1,6 +1,6 @@
 #include <client_handler/client_handler.h>
 
-int startCliente(char *ip, char* puerto, char* nombreClient, tHsCode clientHandShake, tHsCode serverHandShakeExpected, t_log* logger) {
+int startCliente(char *ip, char* puerto, const char* nombreClient, tHsCode clientHandShake, tHsCode serverHandShakeExpected, t_log* logger) {
 	
 	// Creamos una conexión hacia el servidor
 	int socketCliente = crearConexion(ip, puerto);
