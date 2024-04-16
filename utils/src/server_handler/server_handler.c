@@ -15,13 +15,13 @@ int startServer(char *ip, char* puerto, t_log* logger) {
 	return socketServer;
 }
 
-bool isValidHandShake(int socketServer, char* nombreServer, hs_code serverHandShake, hs_code clienteHandShakeExpected, t_log* logger) {
+bool isValidHandShake(int socketServer, char* nombreServer, tHsCode serverHandShake, tHsCode clienteHandShakeExpected, t_log* logger) {
 
 	int socketCliente = esperarCliente(logger, nombreServer, socketServer);
 
 	log_info(logger, "Se conecto un cliente a %s", nombreServer);
 
-	hs_code result = handleServerHandShaking(socketCliente, clienteHandShakeExpected, serverHandShake, logger);
+	tHsCode result = handleServerHandShaking(socketCliente, clienteHandShakeExpected, serverHandShake, logger);
 
 	if (result == HS_OK)
     {

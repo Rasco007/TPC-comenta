@@ -1,9 +1,9 @@
 #include <communication/communication.h>
 
-hs_code handleClientHandShaking(int socketCliente, hs_code clientHandShake, hs_code serverHandShakeExpected, t_log* logger) {
+tHsCode handleClientHandShaking(int socketCliente, tHsCode clientHandShake, tHsCode serverHandShakeExpected, t_log* logger) {
 
-    hs_code serverHandShakeResponse;
-    hs_code hsResult;
+    tHsCode serverHandShakeResponse;
+    tHsCode hsResult;
 
     //mando quien soy
 	send(socketCliente, &clientHandShake, sizeof(int), 0);
@@ -25,9 +25,9 @@ hs_code handleClientHandShaking(int socketCliente, hs_code clientHandShake, hs_c
     return hsResult;
 }
 
-hs_code handleServerHandShaking(int socketServer, hs_code serverHandShake, hs_code clientHandShakeRequestExpected, t_log* logger) {
+tHsCode handleServerHandShaking(int socketServer, tHsCode serverHandShake, tHsCode clientHandShakeRequestExpected, t_log* logger) {
 
-    hs_code serverHandShakeResponse;
+    tHsCode serverHandShakeResponse;
     int clientHandShakeRequest = -1;
 	int isValidConnection = -1;
 
@@ -53,7 +53,7 @@ hs_code handleServerHandShaking(int socketServer, hs_code serverHandShake, hs_co
     return isValidConnection;
 }
 
-void* serializar_paquete(t_paquete* paquete, int bytes){
+void* serializar_paquete(tPaquete* paquete, int bytes){
 	void * magic = malloc(bytes);
 	int desplazamiento = 0;
 
@@ -68,10 +68,10 @@ void* serializar_paquete(t_paquete* paquete, int bytes){
 }
 
 void enviar_mensaje(char* mensaje, int socket_cliente){
-	t_paquete* paquete = malloc(sizeof(t_paquete));
+	tPaquete* paquete = malloc(sizeof(tPaquete));
 
 	paquete->codigo_operacion = MENSAJE;
-	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer = malloc(sizeof(tBuffer));
 	paquete->buffer->size = strlen(mensaje) + 1;
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
@@ -86,7 +86,7 @@ void enviar_mensaje(char* mensaje, int socket_cliente){
 	eliminar_paquete(paquete);
 }
 
-void eliminar_paquete(t_paquete* paquete){
+void eliminar_paquete(tPaquete* paquete){
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
@@ -140,20 +140,20 @@ t_list* recibir_paquete(int socket_cliente){
 	return valores;
 }
 
-void crear_buffer(t_paquete* paquete){
-	paquete->buffer = malloc(sizeof(t_buffer));
+void crear_buffer(tPaquete* paquete){
+	paquete->buffer = malloc(sizeof(tBuffer));
 	paquete->buffer->size = 0;
 	paquete->buffer->stream = NULL;
 }
 
-t_paquete* crear_paquete(op_code codigo_op){
-	t_paquete* paquete = malloc(sizeof(t_paquete));
+tPaquete* crear_paquete(tOpCode codigo_op){
+	tPaquete* paquete = malloc(sizeof(tPaquete));
 	paquete->codigo_operacion = codigo_op;
 	crear_buffer(paquete);
 	return paquete;
 }
 
-void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio){
+void agregar_a_paquete(tPaquete* paquete, void* valor, int tamanio){
 	paquete->buffer->stream = realloc(paquete->buffer->stream, paquete->buffer->size + tamanio + sizeof(int));
 
 	memcpy(paquete->buffer->stream + paquete->buffer->size, &tamanio, sizeof(int));
@@ -162,8 +162,8 @@ void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio){
 	paquete->buffer->size += tamanio + sizeof(int);
 }
 
-void enviar_paquete(t_paquete* paquete, int socket_cliente){
-	int bytes = paquete->buffer->size + sizeof(int) + sizeof(op_code);
+void enviar_paquete(tPaquete* paquete, int socket_cliente){
+	int bytes = paquete->buffer->size + sizeof(int) + sizeof(tOpCode);
 	void* a_enviar = serializar_paquete(paquete, bytes);
 
 	send(socket_cliente, a_enviar, bytes, 0);

@@ -13,6 +13,10 @@
 #include<connections/connection.h>
 #include <commons/string.h>
 
-int startCliente(char *ip, char* puerto, char* nombreClient, hs_code clientHandShake, hs_code serverHandShakeExpected, t_log* logger);
+static const char* NOMBRE_CLIENTE_CPU_DISPATCH = "CPU_DISPATCH";
+static const char* NOMBRE_CLIENTE_CPU_INTERRUPT = "CPU_INTERRUPT";
+static const char* NOMBRE_CLIENTE_MEMORIA = "MEMORIA";
+
+int startCliente(char *ip, char* puerto, const char* nombreClient, tHsCode clientHandShake, tHsCode serverHandShakeExpected, t_log* logger);
 
 #endif /* CLIENT_HANDLER_H_ */
