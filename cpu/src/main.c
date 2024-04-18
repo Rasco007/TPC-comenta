@@ -3,6 +3,8 @@
 #include <client_handler/client_handler.h>
 #include <stdlib.h>
 
+bool sonSocketsValidos(int socketServidorKernelDispatch, int socketServidorKernelInterrupt, int socketClienteMemoria);
+
 int main(int argc, char* argv[]) {
     t_log* cpuLogger=iniciarCPULogger();
     if(cpuLogger==NULL){
