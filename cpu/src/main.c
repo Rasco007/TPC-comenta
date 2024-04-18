@@ -2,8 +2,10 @@
 #include <includes/config/config.h>
 #include <client_handler/client_handler.h>
 #include <stdlib.h>
+#include <includes/utils/utils.h>
 
 bool sonSocketsValidos(int socketServidorKernelDispatch, int socketServidorKernelInterrupt, int socketClienteMemoria);
+
 
 int main(int argc, char* argv[]) {
     t_log* cpuLogger=iniciarCPULogger();
@@ -32,8 +34,7 @@ int main(int argc, char* argv[]) {
 
     if (!sonSocketsValidos(socketServidorKernelDispatch, socketServidorKernelInterrupt, socketClienteMemoria)) {
         //Terminar programa
-        log_destroy(cpuLogger);
-        config_destroy(cpuConfig);
+        terminarPrograma(cpuConfig,cpuLogger);
         liberarConexion(socketClienteMemoria);
         liberarConexion(socketServidorKernelDispatch);
         liberarConexion(socketServidorKernelInterrupt);
@@ -41,8 +42,7 @@ int main(int argc, char* argv[]) {
     }
 
     //Terminar programa
-    log_destroy(cpuLogger);
-    config_destroy(cpuConfig);
+    terminarPrograma(cpuConfig,cpuLogger);
     liberarConexion(socketClienteMemoria);
     liberarConexion(socketServidorKernelDispatch);
     liberarConexion(socketServidorKernelInterrupt);

@@ -11,9 +11,9 @@ static const char* CPUConfigPath = "./configs/cpu.config";
 
 typedef struct{
     char* ipMemoria;
-    int puertoMemoria;
-    int puertoEscuchaDispatch;
-    int puertoEscuchaInterrupt;
+    char* puertoMemoria;
+    char* puertoEscuchaDispatch;
+    char* puertoEscuchaInterrupt;
     int entradasTLB;
     char* algoritmoTLB;
 } tCPUconfig;
