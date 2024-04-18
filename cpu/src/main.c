@@ -23,14 +23,20 @@ int main(int argc, char* argv[]) {
     HS_CPU_DISPATCH, //???
     HS_MEMORIA,cpuLogger);
     
-    //EscucharKernel()
+    //Escuchar Kernel
+    char* ip; //De donde sacaria esto? 
+    int socketServidorKernelDispatch=iniciarServidor(cpuLogger,ip,cpuConfig->puertoEscuchaDispatch);
+    int socketServidorKernelInterrupt=iniciarServidor(cpuLogger,ip,cpuConfig->puertoEscuchaInterrupt);
 
-    terminar_programa(socketClienteMemoria,cpuLogger,cpuConfig);
+    //Terminar programa
+    log_destroy(cpuLogger);
+    config_destroy(cpuConfig);
+    liberarConexion(socketClienteMemoria);
+    liberarConexion(socketServidorKernelDispatch);
+    liberarConexion(socketServidorKernelInterrupt);
+    
     return EXIT_SUCCESS;
 }
 
-void terminar_programa(int conexion, t_log* logger, t_config* config){
-	log_destroy(logger);
-	config_destroy(config);
-	liberarConexion(conexion);
-}
+
+
