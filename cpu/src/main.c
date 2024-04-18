@@ -28,6 +28,16 @@ int main(int argc, char* argv[]) {
     int socketServidorKernelDispatch=iniciarServidor(cpuLogger,ip,cpuConfig->puertoEscuchaDispatch);
     int socketServidorKernelInterrupt=iniciarServidor(cpuLogger,ip,cpuConfig->puertoEscuchaInterrupt);
 
+    if (!sonSocketsValidos(socketServidorKernelDispatch, socketServidorKernelInterrupt, socketClienteMemoria)) {
+        //Terminar programa
+        log_destroy(cpuLogger);
+        config_destroy(cpuConfig);
+        liberarConexion(socketClienteMemoria);
+        liberarConexion(socketServidorKernelDispatch);
+        liberarConexion(socketServidorKernelInterrupt);
+        return EXIT_FAILURE;
+    }
+
     //Terminar programa
     log_destroy(cpuLogger);
     config_destroy(cpuConfig);
@@ -38,5 +48,8 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
+bool sonSocketsValidos(int socketServidorKernelDispatch, int socketServidorKernelInterrupt, int socketClienteMemoria) {
+    return socketServidorKernelDispatch != -1 && socketServidorKernelInterrupt != -1 && socketClienteMemoria != -1;
+}
 
 
