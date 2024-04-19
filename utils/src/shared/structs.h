@@ -10,4 +10,11 @@ typedef enum {
      UNKNOWN
 } tAlgoritmosPlanificacion;
 
+//tipos de interfaces para IO
+ typedef enum {
+     STDIN,
+     STDOUT,
+      DIALFS,
+     GENERICA
+} tInterfaces;
 #endif /* STRUCTS_H_ */
