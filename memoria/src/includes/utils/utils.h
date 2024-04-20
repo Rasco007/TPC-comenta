@@ -5,7 +5,7 @@
 #include <client_handler/client_handler.h>
 #include <stdlib.h>
 
-void terminarPrograma(tKernelConfig* kernelConfig, t_log* kernelLogger);
-void liberarLogger(t_log* kernelLogger);
+void terminarPrograma(tMemoriaConfig* memoriaConfig, t_log* memoriaLogger);
+void liberarLogger(t_log* memoriaLogger);
 
 #endif
