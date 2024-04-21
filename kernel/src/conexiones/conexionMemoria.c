@@ -11,7 +11,7 @@ void conexionMemoria() {
         conexionAMemoria = conexion("MEMORIA");
         
         if(conexionAMemoria != -1){
-            return 0;
+            break;
         }
         else {
             log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionAMemoria);
