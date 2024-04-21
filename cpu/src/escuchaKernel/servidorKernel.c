@@ -7,11 +7,11 @@ void escucharAlKernel() {
     char *puertoEscuchaDispatch = confGet("PUERTO_ESCUCHA_DISPATCH");
     
     int socketClienteDispatch = alistarServidor(puertoEscuchaDispatch);
-	log_info(logger, "Kernel conectada! (dispatch)");
+	log_info(logger, "Kernel conectado (dispatch), en socket: %d",socketClienteDispatch);
     
     char *puertoEscuchaInterrupt = confGet("PUERTO_ESCUCHA_INTERRUPT"); 
     int socketClienteInterrupt = alistarServidor(puertoEscuchaInterrupt);
-	log_info(logger, "Kernel conectada! (interrupt)");
+	log_info(logger, "Kernel conectado (interrupt), en socket: %d", socketClienteInterrupt);
 
     log_info(logger,"Conexiones CPU-Kernel OK!");
     ejecutarServidorCPU();
