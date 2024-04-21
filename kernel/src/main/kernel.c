@@ -16,6 +16,7 @@ int main () {
     config = iniciarConfiguracion("kernel.config");
 	atexit (terminarPrograma);
 
+	conexionIO();
 	conexionMemoria(); 
 	conexionCPU();
 	
