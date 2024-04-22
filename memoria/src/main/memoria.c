@@ -25,5 +25,10 @@ int main() {
 	sockets[1] = esperarCliente (server_fd);
 	log_info(logger,"Conexion KERNEL OK");
 
+	usleep (1000 * 500);
+	log_info (logger, "Esperando IO...");
+	sockets[2] = esperarCliente (server_fd);
+	log_info(logger,"Conexion IO OK");
+	
 	exit (0);
 }

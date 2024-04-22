@@ -12,6 +12,7 @@ int main() {
 	atexit(terminarPrograma);
 	
 	conexionKernel();
+	conexionMemoria();
 
 	return EXIT_SUCCESS;
 }
