@@ -16,6 +16,8 @@
 extern t_log *logger;
 extern t_config *config;
 
+#define SEGS_ANTES_DE_REINTENTO 3
+
 int iniciarServidor(char * puerto);
 int esperarCliente(int socketServidor);
 int recibirOperacion(int socketCliente);

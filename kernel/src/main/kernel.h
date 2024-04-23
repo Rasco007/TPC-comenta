@@ -10,7 +10,6 @@
 // Conexiones propias del kernel
 #include <conexiones/conexionMemoria.h>
 #include <conexiones/conexionCPU.h>
-#include <conexiones/conexionIO.h>
 #include <main/configuraciones.h>
 
 

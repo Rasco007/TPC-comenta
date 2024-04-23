@@ -12,9 +12,8 @@
 
 extern t_config* config;
 extern t_log* logger;
-extern int sockets[2];
+extern int sockets[3];
 
 int ejecutarServidorKernel(int*);
-
 
 #endif

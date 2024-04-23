@@ -9,6 +9,7 @@
 #include <pthread.h>
 
 #include <conexionKernel/conexionKernel.h>
+#include <conexionMemoria/conexionMemoria.h>
 
 #include <global.h>
 #include <utilsServidor/utilsServidor.h>
