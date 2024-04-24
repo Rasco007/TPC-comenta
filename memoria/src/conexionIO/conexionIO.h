@@ -1,5 +1,5 @@
-#ifndef MEMORIA_CONEXION_CPU_H
-#define MEMORIA_CONEXION_CPU_H
+#ifndef MEMORIA_CONEXION_IO_H
+#define MEMORIA_CONEXION_IO_H
 
 #include <commons/config.h>
 #include <commons/string.h>

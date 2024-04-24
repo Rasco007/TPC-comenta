@@ -6,7 +6,7 @@ t_contexto *recibirPCB();
 void escucharAlKernel() {
     char *puertoEscuchaDispatch = confGet("PUERTO_ESCUCHA_DISPATCH");
 
-    log_info(logger,"Esperando conexiones CPU...");
+    log_info(logger,"Esperando conexiones con KERNEL...");
     
     int socketClienteDispatch = alistarServidor(puertoEscuchaDispatch);
 	log_info(logger, "Kernel conectado (dispatch), en socket: %d",socketClienteDispatch);
