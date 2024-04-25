@@ -1,3 +1,9 @@
+/* - Obtiene de los archivos de pseudo código las instrucciones y las devuelve a pedido a la CPU.
+- Ante cada petición se deberá esperar un tiempo (indicado en el archivo de configuración) determinado 
+a modo de retardo en la obtención de la instrucción.
+- Trabaja bajo un esquema de paginación simple
+- Esta Compuesta por 2 estructuras principales: Un espacio contiguo de memoria y las Tablas de páginas.*/
+
 #include <main/memoria.h>
 
 int sockets[3];

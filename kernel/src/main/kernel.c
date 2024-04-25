@@ -1,4 +1,8 @@
-/* - Interprete entre el hardware y el software - */
+/* - Interprete entre el hardware y el software
+- Encargado de iniciar los procesos del sistema 
+- Gestiona las peticiones contra la Memoria y las interfaces de I/O
+- Planifica la ejecución de los procesos del sistema en el módulo CPU a través de dos conexiones con el mismo: una de dispatch y otra de interrupt.*/
+
 #include <main/kernel.h>
 
 
