@@ -28,14 +28,6 @@ void *mayorRR(void *unPCB, void *otroPCB){
     return (calcularRR(unPCB) >= calcularRR(otroPCB)) ? unPCB : otroPCB;
 }
 
-void estimacionNuevaRafaga(t_pcb *pcb){
-
-    if (!strcmp(obtenerAlgoritmoPlanificacion(), "HRRN"))
-    {
-        calcularEstimadoProximaRafaga(pcb, rafagaCPU);
-    }
-}
-
 void calcularEstimadoProximaRafaga(t_pcb *pcb, int64_t rafagaReal){
 
     double alfa = obtenerAlfaEstimacion();

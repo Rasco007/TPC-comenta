@@ -8,8 +8,6 @@ t_list *pcbsEnMemoria;
 int32_t procesosCreados = 0;
 pthread_mutex_t mutexListaNew;
 pthread_mutex_t mutexListaReady; 
-pthread_mutex_t mutexFS;
-pthread_mutex_t mutexCompactacion;
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 
@@ -73,8 +71,6 @@ void inicializarSemaforos(){
     gradoMultiprogramacion = obtenerGradoMultiprogramacion();
     pthread_mutex_init(&mutexListaNew, NULL);
     pthread_mutex_init(&mutexListaReady,NULL); 
-    pthread_mutex_init(&mutexFS,NULL); 
-    pthread_mutex_init(&mutexCompactacion,NULL); 
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
@@ -83,8 +79,6 @@ void inicializarSemaforos(){
 void destruirSemaforos () {
     pthread_mutex_destroy(&mutexListaNew);
     pthread_mutex_destroy(&mutexListaReady);
-    pthread_mutex_destroy(&mutexFS);
-    pthread_mutex_destroy(&mutexCompactacion);
     sem_close(&hayProcesosNuevos);
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);

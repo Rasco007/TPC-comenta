@@ -12,9 +12,6 @@ t_pcb *crearPCB(){
     nuevoPCB->programCounter = 0;
     nuevoPCB->instrucciones = list_create();
     nuevoPCB->estimadoProximaRafaga = obtenerEstimacionInicial();
-    nuevoPCB->tablaDeArchivos = list_create();
-    nuevoPCB->tablaDeSegmentos = list_create();
-    nuevoPCB->recursosAsignados = list_create();
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
 
     procesosCreados++;
@@ -25,9 +22,6 @@ t_pcb *crearPCB(){
 
 void destruirPCB(t_pcb *pcb){
     list_destroy_and_destroy_elements(pcb->instrucciones, free);
-    list_destroy_and_destroy_elements(pcb->tablaDeSegmentos, free);
-    list_destroy_and_destroy_elements(pcb->tablaDeArchivos, free);
-    list_destroy_and_destroy_elements(pcb->recursosAsignados, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
     free(pcb);
 }

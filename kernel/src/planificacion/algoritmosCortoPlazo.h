@@ -33,7 +33,6 @@ t_pcb* proximoAEjecutarFIFO();
 /**
  * @brief indica el proximo elemento de la lista ready a ejecutar siguiendo el algoritmo HRRN
 */
- t_pcb* proximoAEjecutarHRRN();
 void* mayorRR(void* unPCB, void* otroPCB); 
 double calcularRR(void* pcb); 
 void listarPIDS(t_list* pcbs); 

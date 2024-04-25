@@ -36,10 +36,6 @@ typedef struct {
     t_dictionary* registrosCPU;
     double estimadoProximaRafaga; 
     t_temporal* tiempoEnReady; 
-    t_list* tablaDeSegmentos; 
-    t_list* tablaDeArchivos; 
-    t_list* recursosAsignados;
-
 } t_pcb; 
 
 
