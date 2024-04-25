@@ -25,22 +25,28 @@ int main() {
 	
 	sockets[2] = esperarCliente (server_fd);
 
-	int opCodes[3] = {
-		pthread_create (&threadCPU, NULL, (void*) ejecutarServidorCPU, (void*) &sockets[0]),
-		pthread_create (&threadIO, NULL, (void*) ejecutarServidorIO, (void*) &sockets[1]), 
-		pthread_create (&threadKernel, NULL, (void*) ejecutarServidorKernel, (void*) &sockets[2])
-	};
+	// Creación de hilos y logging por separado
+    int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);
+	log_info(logger, "Memoria conectada a CPU, en socket: %d", sockets[0]);
 
-    if (opCodes [0]) {
-        error ("Error en iniciar el servidor a CPU");
-	} 
-    if (opCodes [1]) {
-        error ("Error en iniciar el servidor a IO");
-	}
-    if (opCodes [2]) {
-        error ("Error en iniciar el servidor a Kernel");
-	} 
+    int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, (void*)&sockets[1]);
+    log_info(logger, "Memoria conectada a IO, en socket: %d", sockets[1]);
 
+    int opCodeKernel = pthread_create(&threadKernel, NULL, (void*)ejecutarServidorKernel, (void*)&sockets[2]);
+    log_info(logger, "Memoria conectada a Kernel, en socket: %d", sockets[2]);
+
+    // Verificación de errores en la creación de hilos
+    if (opCodeCPU) {
+        error("Error en iniciar el servidor a CPU");
+    }
+    if (opCodeIO) {
+        error("Error en iniciar el servidor a IO");
+    }
+    if (opCodeKernel) {
+        error("Error en iniciar el servidor a Kernel");
+    }
+
+	// Espera a que los hilos terminen
 	pthread_join (threadCPU, NULL);
 	pthread_join (threadIO, NULL);
 	pthread_join (threadKernel, NULL);
