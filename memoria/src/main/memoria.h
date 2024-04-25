@@ -23,6 +23,7 @@
 
 #include <conexionKernel/conexionKernel.h>
 #include <conexionCPU/conexionCPU.h>
+#include <conexionIO/conexionIO.h>
 
 #include <global.h>
 #include <utilsServidor/utilsServidor.h>
@@ -45,10 +46,7 @@ t_log* logger;
 t_log* loggerError; 
 t_config* config; 
 
-extern int sockets[2];
-extern void* espacioDeUsuario; 
-extern t_list* huecosLibres; 
-extern t_list* tablaDeTablasDeSegmentos; 
+extern int sockets[3];
 
 
 /**

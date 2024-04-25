@@ -16,7 +16,7 @@ void conexionCPU() {
         conexionACPU = conexion("CPU_DISPATCH");
         
         if(conexionACPU != -1){
-           break;;
+           break;
         }
         else {
             log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPU);
