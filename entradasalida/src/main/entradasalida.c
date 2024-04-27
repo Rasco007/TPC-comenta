@@ -18,5 +18,6 @@ int main() {
 	//conexionKernel();
 	conexionMemoria();
 
+
 	return EXIT_SUCCESS;
 }
