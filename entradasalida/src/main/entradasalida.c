@@ -19,10 +19,9 @@ int main(int argc, char** argv) {
     iniciar_io(argc, argv); //abrir modulo con: ./bin/entradasalida /home/utnso/tp-2024-1c-Silver-Crime-/entradasalida/entradasalida.config
 
 	atexit(terminarPrograma);
-
 	conexionMemoria();
-
 	conexionKernel();
+
 
 	return EXIT_SUCCESS;
 }
