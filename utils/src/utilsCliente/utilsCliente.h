@@ -18,32 +18,12 @@
 extern t_log *logger;
 extern t_config *config;
 
-/**
- * @struct t_buffer
- * @var t_buffer.size 
- * 	Tamaño del buffer creado.
- * @var t_buffer.stream
- * 	Stream con toda la informacion copiada.
- * @brief Información dentro de un paquete utilizado para enviar información a un servidor.
- *        Se divide en un int componiendo el tamaño del stream, y el stream en sí, que es la composición de información.
- */
 typedef struct
 {
 	int size;
 	void* stream;
 } t_buffer;
 
-/**
- * @enum op_code
- * Codigo de operacion utilizado para dar a conocer que se esta enviando. Esto puede ser:
- * 
- * - Un mensaje simple de texto.
- * - Un paquete con uno o mas elementos.
- * - Un contexto de ejecucion.
- * 
- * @brief Código de operación utilizado para enviar al servidor para informarle que tipo de paquete se utiliza.
- *        Actualmente los únicos dos códigos que se utilizan son MENSAJE, para realizar Handshakes, y PAQUETE, para enviar información.
- */
 typedef enum
 {	
 	MENSAJE,
@@ -65,17 +45,8 @@ typedef enum
 	FTRUNCATE,
 	FREAD,
 	FWRITE
-
 } op_code;
 
-
-/**
- * @struct t_paquete
- * @var t_paquete.codigoOperacion
- * El codigo de la informacion que se envia para que el servidor sepa que se le esta enviando.
- * Ver enum op_code
- * @brief El paquete a enviar a un servidor, se compone por el código de operación y el buffer.
- */
 typedef struct
 {
 	op_code codigo_operacion;
