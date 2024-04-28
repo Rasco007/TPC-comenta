@@ -7,6 +7,7 @@
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
 #include <global.h>
+#include "../src/peticiones/pcb.h"
 
 extern int conexionACPU;
 extern t_log* loggerError; 

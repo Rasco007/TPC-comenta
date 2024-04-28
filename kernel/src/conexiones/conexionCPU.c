@@ -41,7 +41,7 @@ void conexionCPU() {
     }
 }
 
-int recibirOperacionDeCPU(){ //Hay que ver esto en el utils.
+int recibirOperacionDeCPU(){ 
 	int cod_op;
     
 	if (recv(conexionACPU, &cod_op, sizeof(int), MSG_WAITALL) > 0)
@@ -50,4 +50,34 @@ int recibirOperacionDeCPU(){ //Hay que ver esto en el utils.
 		close(conexionACPU);
 		return -1;
 	}
+}
+
+t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
+    /*if (contextoEjecucion != NULL) destroyContextoUnico ();
+	iniciarContexto ();
+
+    bufferContexto = malloc(sizeof(t_buffer));
+
+    asignarPCBAContexto(procesoEnEjecucion);
+    
+    //t_segmento * test = (t_segmento *) list_get (procesoEnEjecucion->tablaDeSegmentos, 0);
+
+    //debug ("Test: %d %d %d", test->direccionBase, test->id, test->tamanio);
+
+    enviarContextoActualizado(conexionACPU);
+
+    if (recibirOperacionDeCPU() < 0) error ("Se desconecto el CPU.");
+
+    recibirContextoActualizado(conexionACPU); 
+
+    actualizarPCB(procesoEnEjecucion);
+
+    //uint32_t lista = list_size (procesoEnEjecucion->recursosAsignados);
+    //debug ("Tengo %d recursos.", lista);
+    //for (uint32_t i = 0; i < lista; i++) 
+    //    debug ("Listando recursos, recurso %d: %s", i, (char *) list_get (procesoEnEjecucion->recursosAsignados, i));
+
+    free(bufferContexto);
+    return contextoEjecucion; TODO! */
+ 
 }

@@ -17,7 +17,7 @@ typedef enum estadoProceso{
     READY,
     EXEC,
     BLOCKED,
-    EXIT,
+    SALIDA
 } estadoProceso; 
 
 typedef struct {
@@ -36,6 +36,7 @@ typedef struct {
     t_dictionary* registrosCPU;
     double estimadoProximaRafaga; 
     t_temporal* tiempoEnReady; 
+    t_list* recursosAsignados;
 } t_pcb; 
 
 
