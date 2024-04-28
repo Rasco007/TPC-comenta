@@ -15,7 +15,7 @@ void planificarACortoPlazoSegunAlgoritmo(){
     }
     else
     {
-        log_error(loggerError, "Algoritmo invalido. Debe ingresar FIFO o...");
+        log_error(loggerError, "Algoritmo invalido. Debe ingresar FIFO (por ahora)"); //1ro FIFO despues agregar RR y VRR
         abort();
     }
 }
@@ -24,9 +24,6 @@ t_pcb *proximoAEjecutarFIFO(){
     return desencolar(pcbsREADY);
 }
 
-void *mayorRR(void *unPCB, void *otroPCB){
-    return (calcularRR(unPCB) >= calcularRR(otroPCB)) ? unPCB : otroPCB;
-}
 
 void calcularEstimadoProximaRafaga(t_pcb *pcb, int64_t rafagaReal){
 

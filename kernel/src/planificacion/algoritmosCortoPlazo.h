@@ -30,7 +30,6 @@ void planificarACortoPlazoSegunAlgoritmo();
  */
 t_pcb* proximoAEjecutarFIFO();
 
-void* mayorRR(void* unPCB, void* otroPCB); 
 double calcularRR(void* pcb); 
 void listarPIDS(t_list* pcbs); 
 void detenerYDestruirCronometro(t_temporal* ); 
