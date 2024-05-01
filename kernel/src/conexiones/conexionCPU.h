@@ -15,7 +15,9 @@ extern t_contexto* contextoEjecucion;
 
 
 void conexionCPU();
-
+void asignarPCBAContexto(t_pcb* procesoEnEjecucion);
+void actualizarPCB(t_pcb* procesoEnEjecucion);
+t_contexto* procesarPCB(t_pcb* procesoEnEjecucion);
 
 
 // FUNCIONES PARA ENVIO DE CONTEXTO DE EJECUCION

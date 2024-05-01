@@ -1,5 +1,5 @@
-#include "../src/peticiones/manejoRecursos.h"
-#include "../src/peticiones/syscalls.h"
+#include <peticiones/manejoRecursos.h>
+#include <peticiones/syscalls.h>
 
 
 int cantidadRecursos;

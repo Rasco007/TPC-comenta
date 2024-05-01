@@ -12,9 +12,9 @@ void planificarACortoPlazoSegunAlgoritmo(){
     {
         planificarACortoPlazo(proximoAEjecutarFIFO);
     } else if(!strcmp(algoritmoPlanificador, "RR")){
-
+        //TODO: Implementar RR
     } else if(!strcmp(algoritmoPlanificador, "VRR")){
-
+        //TODO: Implementar VRR
     } else {
         log_error(loggerError, "Algoritmo invalido");
         abort();
