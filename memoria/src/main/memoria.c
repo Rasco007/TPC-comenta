@@ -22,24 +22,18 @@ int main() {
 	int server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
 
 	sockets[0] = esperarCliente(server_fd);
-	
-	usleep (1000 * 500);
+	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
 
 	sockets[1] = esperarCliente (server_fd);
+	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[1]);
 
-	usleep (1000 * 500);
-	
 	sockets[2] = esperarCliente (server_fd);
+	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[2]);
 
-	// Creación de hilos y logging por separado
+	// Creación de hilos 
     int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);
-	log_info(logger, "Memoria conectada a CPU, en socket: %d", sockets[0]);
-
     int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, (void*)&sockets[1]);
-    log_info(logger, "Memoria conectada a IO, en socket: %d", sockets[1]);
-
     int opCodeKernel = pthread_create(&threadKernel, NULL, (void*)ejecutarServidorKernel, (void*)&sockets[2]);
-    log_info(logger, "Memoria conectada a Kernel, en socket: %d", sockets[2]);
 
     // Verificación de errores en la creación de hilos
     if (opCodeCPU) {
