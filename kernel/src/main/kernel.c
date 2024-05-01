@@ -21,6 +21,11 @@ int main () {
     config = iniciarConfiguracion("kernel.config");
 	atexit (terminarPrograma);
 
+	inicializarSemaforos();
+	atexit (destruirSemaforos);
+	inicializarListasPCBs(); 
+	atexit (destruirListasPCBs);
+
 	conexionMemoria(); 
 	conexionCPU();
 
@@ -30,7 +35,7 @@ int main () {
 	free (nombre);
 
     //Inicializar Hilos
-	int opCodes [3] = {
+	int opCodes [2] = {
 		pthread_create(&planificadorLargoPlazo_h, NULL, (void *) planificarALargoPlazo, NULL),
 		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL),
 	};
@@ -40,10 +45,8 @@ int main () {
 	}
 	if (opCodes [1]) {
         error ("Error al generar hilo para el planificador de corto plazo, terminando el programa.");
-	}	
-  	if (opCodes [2]) {
-		error ("Error al generar hilo para recibir consolas, terminando el programa.");
 	}
+		
 	//Hilo Planificador Largo Plazo -> Mueve procesos de NEW a READY
 	pthread_join(planificadorLargoPlazo_h, NULL);
 	//Hilo Planificador Corto Plazo --> Mueve procesos de READY a EXEC

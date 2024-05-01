@@ -7,7 +7,6 @@ int conexionACPU;
 int conexionACPUInterrupt;
 
 void conexionCPU() {
-
     //CONEXION CPU DISPATCH
     logger = cambiarNombre(logger, "Kernel-CPU (dispatch)");
     loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU (dispatch)");
@@ -52,32 +51,49 @@ int recibirOperacionDeCPU(){
 	}
 }
 
+//Enviar proceso a CPU
 t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
-    /*if (contextoEjecucion != NULL) destroyContextoUnico ();
+    if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
 
     bufferContexto = malloc(sizeof(t_buffer));
 
     asignarPCBAContexto(procesoEnEjecucion);
-    
-    //t_segmento * test = (t_segmento *) list_get (procesoEnEjecucion->tablaDeSegmentos, 0);
 
-    //debug ("Test: %d %d %d", test->direccionBase, test->id, test->tamanio);
+    enviarContextoActualizado(conexionACPU); //Por dispatch
 
-    enviarContextoActualizado(conexionACPU);
-
-    if (recibirOperacionDeCPU() < 0) error ("Se desconecto el CPU.");
+    if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
     recibirContextoActualizado(conexionACPU); 
 
     actualizarPCB(procesoEnEjecucion);
 
-    //uint32_t lista = list_size (procesoEnEjecucion->recursosAsignados);
-    //debug ("Tengo %d recursos.", lista);
-    //for (uint32_t i = 0; i < lista; i++) 
-    //    debug ("Listando recursos, recurso %d: %s", i, (char *) list_get (procesoEnEjecucion->recursosAsignados, i));
-
     free(bufferContexto);
-    return contextoEjecucion; TODO! */
- 
+    return contextoEjecucion;
+}
+
+void actualizarPCB(t_pcb* proceso){
+	list_destroy_and_destroy_elements(proceso->instrucciones, free);
+    proceso->instrucciones = list_duplicate(contextoEjecucion->instrucciones);
+    proceso->pid = contextoEjecucion->pid;
+    proceso->programCounter = contextoEjecucion->programCounter;
+	dictionary_destroy_and_destroy_elements(proceso->registrosCPU, free);
+    proceso->registrosCPU = registrosDelCPU(contextoEjecucion->registrosCPU);
+}
+
+void asignarPCBAContexto(t_pcb* proceso){
+
+    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
+    contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
+    contextoEjecucion->instruccionesLength = list_size(contextoEjecucion->instrucciones);
+    contextoEjecucion->pid = proceso->pid;
+    contextoEjecucion->programCounter = proceso->programCounter;
+    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
+    contextoEjecucion->registrosCPU = registrosDelCPU(proceso->registrosCPU);
+}
+
+t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
+    t_dictionary *copia = dictionary_create();
+    //TODO
+    return copia;
 }

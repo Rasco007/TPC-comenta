@@ -15,10 +15,7 @@ int gradoMultiprogramacion;
 char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"};
 int *instanciasRecursos;
 
-// Planificacion en si
-
 void planificarALargoPlazo(){
-
     while (1)
     {
         sem_wait(&hayProcesosNuevos);
@@ -33,9 +30,7 @@ void planificarALargoPlazo(){
         pcb->estado = READY;
         list_add(pcbsEnMemoria, pcb);
         loggearCambioDeEstado(pcb->pid, anterior, pcb->estado);
-        ingresarAReady(pcb); 
-        
-     
+        ingresarAReady(pcb);   
     }
 } 
 
@@ -110,7 +105,6 @@ void ingresarAReady(t_pcb *pcb){
 
     sem_post(&hayProcesosReady);
 
-    //Esto es para loggear de la forma pedida 
     pidsInvolucrados = string_new();
     listarPIDS(pcbsREADY);
     log_info(logger, "Cola Ready <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);

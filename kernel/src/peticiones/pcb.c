@@ -5,7 +5,6 @@ char* pidsInvolucrados;
 //Básicos PCB
 
 t_pcb *crearPCB(){
-
     t_pcb *nuevoPCB = malloc(sizeof(t_pcb));
     nuevoPCB->estado = NEW;
     nuevoPCB->pid = procesosCreados;
@@ -16,7 +15,6 @@ t_pcb *crearPCB(){
 
     procesosCreados++;
     
-
     return nuevoPCB;
 }
 
