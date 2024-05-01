@@ -87,7 +87,6 @@ t_list* recibirPaquete(int socket){
 }
 
 
-//FUNCIONES DE USO COLECTIVO PARA EL SERVIDOR:
 int alistarServidor(char *puerto){
 
 	int serverFD = iniciarServidor(puerto);

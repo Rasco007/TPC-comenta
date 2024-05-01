@@ -6,12 +6,14 @@
     #include <commons/log.h>
     #include <commons/config.h>
 
+
     /**
      * @enum t_comando
      * @brief Lista de comandos enumerados.
      */
 
     #define NUM_COMANDOS 19
+
     typedef enum {
         SET, MOV_IN, MOV_OUT, SUM, SUB,
         JNZ, RESIZE, COPY_STRING, WAIT, SIGNAL,
@@ -24,6 +26,7 @@
      * @struct t_instruccion
      * @brief Estructura que sostiene las instrucciones para enviar del Kernel a la CPU (O para que la CPU Parsee la informacion recibida.)
      */
+
     typedef struct {
         t_comando comando; 
         char* parametros[3]; 
