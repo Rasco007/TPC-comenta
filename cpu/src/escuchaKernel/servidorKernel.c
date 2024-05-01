@@ -20,30 +20,40 @@ void escucharAlKernel() {
 }
 
 
+bool noEsBloqueante(t_comando instruccionActual) {
+	t_comando instruccionesBloqueantes[10] = {
+		
+	};
+
+	for (int i = 0; i < 10; i++) 
+		if (instruccionActual == instruccionesBloqueantes[i]) return false;
+
+	return true;
+}
+
 int ejecutarServidorCPU(){
     instruccionActual = -1;
-		int codOP = recibirOperacion(socketCliente);
-		switch (codOP) {
-			case -1:
-				log_info(logger, "El Kernel se desconecto.");
-				if (contextoEjecucion != NULL)
-					destroyContexto ();
+	int codOP = recibirOperacion(socketCliente);
+	switch (codOP) {
+		case -1:
+			log_info(logger, "El Kernel se desconecto.");
+			if (contextoEjecucion != NULL)
+				destroyContexto ();
 				return EXIT_FAILURE;
-			case CONTEXTOEJECUCION:
-				if (contextoEjecucion != NULL) 
-					list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free),
-					list_clean_and_destroy_elements (contextoEjecucion->tablaDeSegmentos, free);
+		case CONTEXTOEJECUCION:
+			if (contextoEjecucion != NULL) 
+				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free),
+				list_clean_and_destroy_elements (contextoEjecucion->tablaDeSegmentos, free);
 				recibirContextoActualizado(socketCliente);
     			rafagaCPU = temporal_create(); 
-                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength 
-					  && (noEsBloqueante(instruccionActual))) {
+                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength && (noEsBloqueante(instruccionActual))) {
                     cicloDeInstruccion();
                 }	
 				temporal_destroy (rafagaCPU);
 				break;
-			default:
-				log_warning(loggerError,"Operacion desconocida. No quieras meter la pata");
-				break;
-		}
+		default:
+			log_warning(loggerError,"Operacion desconocida.");
+			break;
+	}
 }
 

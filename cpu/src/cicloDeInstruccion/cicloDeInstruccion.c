@@ -3,10 +3,11 @@
 char *listaComandos[] = {
     [SET] = "SET",
     [MOV_IN] = "MOV_IN",
-    [MOV_OUT] = "MOV_OUT", 
+    [MOV_OUT] = "MOV_OUT",
+    [SUM]="SUM",
+    [SUB]="SUB",
     [WAIT] = "WAIT",
     [SIGNAL] = "SIGNAL",
-    [YIELD] = "YIELD",
     [EXIT] = "EXIT"
 };
 char* instruccionAEjecutar; 
@@ -67,6 +68,7 @@ void execute() {
             log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
             break; 
     }
+
     switch(instruccionActual){
         case SET:
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
@@ -82,9 +84,6 @@ void execute() {
             break;
         case SIGNAL:
             signal_c(elementosInstruccion[1]);
-            break;
-        case YIELD: 
-            yield_c();
             break;
         case EXIT:
             exit_c();
@@ -112,12 +111,6 @@ void wait_c(char* recurso){
 void signal_c(char* recurso){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "");
-    enviarContextoActualizado(socketCliente);
-}
-
-void yield_c(){ 
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (YIELD, 0, "", "", "");
     enviarContextoActualizado(socketCliente);
 }
 
