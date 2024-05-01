@@ -73,6 +73,18 @@ void execute() {
         case SET:
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
+        case SUM:
+            sum_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case SUB:
+            sub_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case JNZ:
+            jnz(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_GEN_SLEEP:
+            io_gen_sleep(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
         case MOV_IN:
             mov_in(elementosInstruccion[1], elementosInstruccion[2]);
             break;
@@ -100,6 +112,38 @@ void set_c(char* registro, char* valor){
     usleep(tiempoEspera * 1000); 
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
     dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor));
+}
+
+void sum_c(char* registro_destino, char* registro_origen){ 
+    int valorDestino = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_destino));
+    int valorOrigen = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_origen));
+    int resultado = valorDestino + valorOrigen;
+    char* resultadoStr = malloc(sizeof(char) * 10);
+    sprintf(resultadoStr, "%d", resultado);
+    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
+    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
+}
+
+void sub_c(char* registro_destino, char* registro_origen){ 
+    int valorDestino = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_destino));
+    int valorOrigen = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_origen));
+    int resultado = valorDestino - valorOrigen;
+    char* resultadoStr = malloc(sizeof(char) * 10);
+    sprintf(resultadoStr, "%d", resultado);
+    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
+    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
+}
+
+
+void jnz(char* registro, char* instruccion){ 
+    int valorRegistro = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro));
+    if (valorRegistro != 0) {
+        contextoEjecucion->programCounter = atoi(instruccion);
+    }
+}
+
+void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
+    //TODO: Implementar despues de ver como lo hace Santi 
 }
 
 void wait_c(char* recurso){
