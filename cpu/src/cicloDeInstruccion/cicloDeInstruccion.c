@@ -229,7 +229,7 @@ int obtenerTamanioReg(char* registro){
 //mmu
 
 uint32_t mmu(char* direccionLogica, int tamValor){
-    int dirFisica;
+    /*int dirFisica;
     int dirLogica = atoi(direccionLogica);
     int tamMaxSegmento = obtenerTamanioMaxSeg();
 
@@ -258,5 +258,6 @@ uint32_t mmu(char* direccionLogica, int tamValor){
         contextoEjecucion->programCounter = contextoEjecucion->instruccionesLength;
         free (terminado);
         return UINT32_MAX; 
-    }
+    }*/
+    return UINT32_MAX; 
 }

@@ -37,23 +37,27 @@ int ejecutarServidorCPU(){
 	switch (codOP) {
 		case -1:
 			log_info(logger, "El Kernel se desconecto.");
-			if (contextoEjecucion != NULL)
+			if (contextoEjecucion != NULL){
 				destroyContexto ();
-				return EXIT_FAILURE;
+			}
+			return EXIT_FAILURE;
 		case CONTEXTOEJECUCION:
-			if (contextoEjecucion != NULL) 
+			if (contextoEjecucion != NULL){
 				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free),
-				list_clean_and_destroy_elements (contextoEjecucion->tablaDeSegmentos, free);
+					list_clean_and_destroy_elements (contextoEjecucion->tablaDeSegmentos, free);
+			} 		
 				recibirContextoActualizado(socketCliente);
     			rafagaCPU = temporal_create(); 
-                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength && (noEsBloqueante(instruccionActual))) {
+                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength 
+					  && (noEsBloqueante(instruccionActual))) {
                     cicloDeInstruccion();
                 }	
 				temporal_destroy (rafagaCPU);
 				break;
 		default:
 			log_warning(loggerError,"Operacion desconocida.");
-			break;
+				break;
 	}
+	return EXIT_SUCCESS;
 }
 
