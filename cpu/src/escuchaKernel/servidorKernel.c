@@ -1,7 +1,7 @@
 #include <escuchaKernel/servidorKernel.h>
 
 int ejecutarServidorCPU();
-t_contexto *recibirPCB();
+t_contexto *recibirPCB(); //ver
 
 void escucharAlKernel() {
     char *puertoEscuchaDispatch = confGet("PUERTO_ESCUCHA_DISPATCH");
@@ -22,7 +22,7 @@ void escucharAlKernel() {
 
 bool noEsBloqueante(t_comando instruccionActual) {
 	t_comando instruccionesBloqueantes[10] = {
-		
+	//TODO: Completar instrucciones bloqueantes
 	};
 
 	for (int i = 0; i < 10; i++) 
@@ -43,8 +43,7 @@ int ejecutarServidorCPU(){
 			return EXIT_FAILURE;
 		case CONTEXTOEJECUCION:
 			if (contextoEjecucion != NULL){
-				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free),
-					list_clean_and_destroy_elements (contextoEjecucion->tablaDeSegmentos, free);
+				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
 			} 		
 				recibirContextoActualizado(socketCliente);
     			rafagaCPU = temporal_create(); 

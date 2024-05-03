@@ -6,10 +6,22 @@ char *listaComandos[] = {
     [MOV_OUT] = "MOV_OUT",
     [SUM]="SUM",
     [SUB]="SUB",
+    [JNZ]="JNZ",
+    [RESIZE]="RESIZE",
+    [COPY_STRING]="COPY_STRING",
+    [IO_GEN_SLEEP]="IO_GEN_SLEEP",
+    [IO_STDIN_READ]="IO_STDIN_READ",
+    [IO_STDOUT_WRITE]="IO_STDOUT_WRITE",
+    [IO_FS_CREATE]="IO_FS_CREATE",
+    [IO_FS_DELETE]="IO_FS_DELETE",
+    [IO_FS_TRUNCATE]="IO_FS_TRUNCATE",
+    [IO_FS_WRITE]="IO_FS_WRITE",
+    [IO_FS_READ]="IO_FS_READ",
     [WAIT] = "WAIT",
     [SIGNAL] = "SIGNAL",
     [EXIT] = "EXIT"
 };
+
 char* instruccionAEjecutar; 
 char** elementosInstruccion; 
 int instruccionActual; 
@@ -69,7 +81,7 @@ void execute() {
             break; 
     }
 
-    switch(instruccionActual){
+    switch(instruccionActual){//TODO: Completar con instrucciones restantes
         case SET:
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
