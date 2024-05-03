@@ -27,9 +27,3 @@ t_pcb *proximoAEjecutarFIFO(){
 }
 
 
-void calcularEstimadoProximaRafaga(t_pcb *pcb, int64_t rafagaReal){
-    double alfa = obtenerAlfaEstimacion();
-    double estimadoRafaga = alfa * rafagaReal + (1 - alfa) * pcb->estimadoProximaRafaga;
-    pcb->estimadoProximaRafaga = estimadoRafaga;
-}
-

@@ -94,6 +94,29 @@ void asignarPCBAContexto(t_pcb* proceso){
 
 t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     t_dictionary *copia = dictionary_create();
-    //TODO
+    char* AX = malloc(sizeof(char) * (4 + 1));
+    char* BX = malloc(sizeof(char) * (4 + 1));
+    char* CX = malloc(sizeof(char) * (4 + 1));
+    char* DX = malloc(sizeof(char) * (4 + 1));
+    char* EAX = malloc(sizeof(char) * (8 + 1));
+    char* EBX = malloc(sizeof(char) * (8 + 1));
+    char* ECX = malloc(sizeof(char) * (8 + 1));
+    char* EDX = malloc(sizeof(char) * (8 + 1));
+    strncpy(AX, (char *)dictionary_get(aCopiar, "AX"), 4 + 1);
+    strncpy(BX, (char *)dictionary_get(aCopiar, "BX"), 4 + 1);
+    strncpy(CX, (char *)dictionary_get(aCopiar, "CX"), 4 + 1);
+    strncpy(DX, (char *)dictionary_get(aCopiar, "DX"), 4 + 1);
+    strncpy(EAX, (char *)dictionary_get(aCopiar, "EAX"), 8 + 1);
+    strncpy(EBX, (char *)dictionary_get(aCopiar, "EBX"), 8 + 1);
+    strncpy(ECX, (char *)dictionary_get(aCopiar, "ECX"), 8 + 1);
+    strncpy(EDX, (char *)dictionary_get(aCopiar, "EDX"), 8 + 1);
+    dictionary_put(copia, "AX", AX);
+    dictionary_put(copia, "BX", BX);
+    dictionary_put(copia, "CX", CX);
+    dictionary_put(copia, "DX", DX);
+    dictionary_put(copia, "EAX", EAX);
+    dictionary_put(copia, "EBX", EBX);
+    dictionary_put(copia, "ECX", ECX);
+    dictionary_put(copia, "EDX", EDX);
     return copia;
 }

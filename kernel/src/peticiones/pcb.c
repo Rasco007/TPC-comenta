@@ -10,7 +10,6 @@ t_pcb *crearPCB(){
     nuevoPCB->pid = procesosCreados;
     nuevoPCB->programCounter = 0;
     nuevoPCB->instrucciones = list_create();
-    nuevoPCB->estimadoProximaRafaga = obtenerEstimacionInicial();
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
 
     procesosCreados++;
@@ -35,8 +34,6 @@ t_dictionary *crearDiccionarioDeRegistros(){
         dictionary_put(registros, name, string_repeat('0', 4));
         longName[0] = 'E';
         dictionary_put(registros, longName, string_repeat('0', 8));
-        longName[0] = 'R';
-        dictionary_put(registros, longName, string_repeat('0', 16));
         name[0]++, longName[1]++;
     }
 

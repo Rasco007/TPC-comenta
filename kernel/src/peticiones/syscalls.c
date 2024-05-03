@@ -6,7 +6,6 @@ char* invalidResource = "INVALID_RESOURCE";
 char* outOfMemory = "OUT_OF_MEMORY";
 estadoProceso estadoAnterior; 
 int tiempoIO;
-bool hayOpFS;
 
 
 void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {

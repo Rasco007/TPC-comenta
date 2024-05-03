@@ -32,7 +32,6 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     eliminarPaquete (peticion);
     debug ("PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
     recibirOperacion (conexionAMemoria);
-    //recibirTablaDeSegmentosActualizada (pcb); TODO: Manejo de Segmentos
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }

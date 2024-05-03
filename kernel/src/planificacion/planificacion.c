@@ -12,7 +12,7 @@ sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 
 int gradoMultiprogramacion; 
-char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"};
+char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"}; //TODO: USAR ENUM DE PETICIONES
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){

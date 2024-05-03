@@ -11,7 +11,6 @@
 #include <global.h>
 #include <main/configuraciones.h>
 
-
 typedef enum estadoProceso{
     NEW, 
     READY,
@@ -23,7 +22,6 @@ typedef enum estadoProceso{
 typedef struct {
     char AX[4], BX[4], CX[4], DX[4];
     char EAX[8], EBX[8], ECX[8], EDX[8];
-    char RAX[16], RBX[16], RCX[16], RDX[16];
 }t_reg;
 
 
@@ -34,7 +32,6 @@ typedef struct {
     uint32_t programCounter;   
     estadoProceso estado; 
     t_dictionary* registrosCPU;
-    double estimadoProximaRafaga; 
     t_temporal* tiempoEnReady; 
     t_list* recursosAsignados;
 } t_pcb; 
