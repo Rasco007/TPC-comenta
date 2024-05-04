@@ -37,7 +37,8 @@ int main () {
     //Inicializar Hilos
 	int opCodes [2] = {
 		pthread_create(&planificadorLargoPlazo_h, NULL, (void *) planificarALargoPlazo, NULL),
-		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL),
+		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL)
+		//TODO: Agregar hilo para recibir consolas
 	};
 
     if (opCodes [0]) {
@@ -46,11 +47,20 @@ int main () {
 	if (opCodes [1]) {
         error ("Error al generar hilo para el planificador de corto plazo, terminando el programa.");
 	}
+
+	/*t_pcb * primerPCB = crearPCB();
+	t_pcb * segundoPCB = crearPCB();
+	ingresarAReady(primerPCB);
+	ingresarAReady(segundoPCB);
+	planificarACortoPlazoSegunAlgoritmo();*/
+	
+	
+	//Esperar a que los hilos terminen
 		
 	//Hilo Planificador Largo Plazo -> Mueve procesos de NEW a READY
-	pthread_join(planificadorLargoPlazo_h, NULL);
+	//pthread_detach(planificadorLargoPlazo_h);
 	//Hilo Planificador Corto Plazo --> Mueve procesos de READY a EXEC
-	pthread_join(planificadorCortoPlazo_h, NULL);
+	pthread_detach(planificadorCortoPlazo_h);	
 
     exit (0);
 }

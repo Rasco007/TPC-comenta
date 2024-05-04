@@ -50,7 +50,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
         loggearCambioDeEstado(aEjecutar->pid, estadoAnterior, aEjecutar->estado);
 
-        contextoEjecucion = procesarPCB(aEjecutar);
+        contextoEjecucion = procesarPCB(aEjecutar); 
 
         rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
 

@@ -10,6 +10,7 @@ void planificarACortoPlazoSegunAlgoritmo(){
     //Por ahora lo va a hacer por FIFO porque asi esta seteado en el config
     if (!strcmp(algoritmoPlanificador, "FIFO"))
     {
+        log_info(logger, "Ejecutando FIFO");
         planificarACortoPlazo(proximoAEjecutarFIFO);
     } else if(!strcmp(algoritmoPlanificador, "RR")){
         //TODO: Implementar RR

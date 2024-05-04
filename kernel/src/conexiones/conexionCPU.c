@@ -59,8 +59,8 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     bufferContexto = malloc(sizeof(t_buffer));
 
     asignarPCBAContexto(procesoEnEjecucion);
-
-    enviarContextoActualizado(conexionACPU); //Por dispatch
+    
+    enviarContextoActualizado(conexionACPU); //Por dispatch TODO: REVISAR
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
