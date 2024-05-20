@@ -1,7 +1,7 @@
 #include <escuchaKernel/servidorKernel.h>
 
 int ejecutarServidorCPU();
-t_contexto *recibirPCB(); //ver
+t_contexto *recibirPCB(); //???
 
 void escucharAlKernel() {
     char *puertoEscuchaDispatch = confGet("PUERTO_ESCUCHA_DISPATCH");
@@ -16,7 +16,7 @@ void escucharAlKernel() {
 	log_info(logger, "Kernel conectado (interrupt), en socket: %d", socketClienteInterrupt);
 
     log_info(logger,"Conexiones CPU-Kernel OK!");
-    ejecutarServidorCPU();
+    ejecutarServidorCPU(socketClienteDispatch,socketClienteInterrupt);
 }
 
 
@@ -31,9 +31,10 @@ bool noEsBloqueante(t_comando instruccionActual) {
 	return true;
 }
 
-int ejecutarServidorCPU(){
+//CPU recibe instrucciones del Kernel para hacer el ciclo de instruccion
+int ejecutarServidorCPU(int socketClienteDispatch,int socketClienteInterrupt){
     instruccionActual = -1;
-	int codOP = recibirOperacion(socketCliente);
+	int codOP = recibirOperacion(socketClienteDispatch);
 	switch (codOP) {
 		case -1:
 			log_info(logger, "El Kernel se desconecto.");
@@ -45,7 +46,7 @@ int ejecutarServidorCPU(){
 			if (contextoEjecucion != NULL){
 				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
 			} 		
-				recibirContextoActualizado(socketCliente);
+				recibirContextoActualizado(socketClienteDispatch);
     			rafagaCPU = temporal_create(); 
                 while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength 
 					  && (noEsBloqueante(instruccionActual))) {

@@ -17,7 +17,6 @@ extern t_log* loggerError;
 void escucharAlKernel(); 
 
 extern t_contexto* contextoEjecucion;
-extern int socketCliente;
 extern t_temporal* rafagaCPU;
 
 #endif
