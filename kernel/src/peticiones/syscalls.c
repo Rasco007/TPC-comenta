@@ -84,7 +84,10 @@ void exit_s(t_pcb* proceso, char **parametros){
 }
 
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
+    log_info(logger, "Comando recibido en: %s", (char*)contextoEjecucion->motivoDesalojo->comando);
+    
     switch (contextoEjecucion->motivoDesalojo->comando){
+        
 
         case WAIT:
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);

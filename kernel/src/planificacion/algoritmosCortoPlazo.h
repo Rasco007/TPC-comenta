@@ -6,6 +6,7 @@
 #include <commons/string.h>
 #include <commons/collections/list.h>
 #include <commons/temporal.h>
+#include <commons/collections/queue.h>
 #include <string.h>
 #include <global.h>
 #include <main/configuraciones.h>
@@ -29,6 +30,8 @@ void planificarACortoPlazoSegunAlgoritmo();
  * @return el proximo puntero a t_pcb a ejecutar
  */
 t_pcb* proximoAEjecutarFIFO();
+
+t_pcb *proximoAEjecutarRR();
 
 void listarPIDS(t_list* pcbs); 
 void detenerYDestruirCronometro(t_temporal* ); 

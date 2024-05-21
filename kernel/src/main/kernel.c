@@ -48,16 +48,16 @@ int main () {
         error ("Error al generar hilo para el planificador de corto plazo, terminando el programa.");
 	}
 
-	t_pcb * primerPCB = crearPCB();
+	/*t_pcb * primerPCB = crearPCB();
 	t_pcb * segundoPCB = crearPCB();
 	ingresarAReady(primerPCB);
 	ingresarAReady(segundoPCB);
-	planificarACortoPlazoSegunAlgoritmo();	
+	planificarACortoPlazoSegunAlgoritmo();	*/
 	
 	//Esperar a que los hilos terminen
 		
 	//Hilo Planificador Largo Plazo -> Mueve procesos de NEW a READY
-	//pthread_detach(planificadorLargoPlazo_h);
+	pthread_detach(planificadorLargoPlazo_h);
 	//Hilo Planificador Corto Plazo --> Mueve procesos de READY a EXEC
 	pthread_detach(planificadorCortoPlazo_h);	
 
