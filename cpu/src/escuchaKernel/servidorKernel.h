@@ -10,11 +10,13 @@
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
 #include <contextoEjecucion/contextoEjecucion.h>
+#include <cicloDeInstruccion/cicloDeInstruccion.h>
 
 extern t_log* loggerError; 
 
 void escucharAlKernel(); 
 
 extern t_contexto* contextoEjecucion;
+extern t_temporal* rafagaCPU;
 
 #endif

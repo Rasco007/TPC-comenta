@@ -6,7 +6,14 @@
     #include <commons/log.h>
     #include <commons/config.h>
 
-    #define NUM_COMANDOS 16
+
+    /**
+     * @enum t_comando
+     * @brief Lista de comandos enumerados.
+     */
+
+    #define NUM_COMANDOS 19
+
     typedef enum {
         SET, MOV_IN, MOV_OUT, SUM, SUB,
         JNZ, RESIZE, COPY_STRING, WAIT, SIGNAL,
