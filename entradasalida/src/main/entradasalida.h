@@ -16,8 +16,6 @@
 #include <utilsCliente/utilsCliente.h>
 #include <configuraciones/configuraciones.h>
 
-t_log* logger;
-t_log* loggerError;
-t_config* config;
+
 
 #endif
