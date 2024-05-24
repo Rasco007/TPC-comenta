@@ -1,6 +1,6 @@
-#ifndef MEMORIA_CONEXION_KERNEL_H
-#define MEMORIA_CONEXION_KERNEL_H
+#ifndef PETICION_MEMORIA_H
 
+ 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
@@ -10,11 +10,12 @@
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
 #include <estructura/estructura.h>
+#include <conexionKernel/conexionKernel.h>
 
-extern t_config* config;
-extern t_log* logger;
-extern int sockets[3];
 
-int ejecutarServidorKernel(int*);
+extern int sockets[3]; 
+extern t_log* logger; 
+extern t_log* loggerError; 
+extern t_config* config; 
 
 #endif

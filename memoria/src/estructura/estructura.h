@@ -2,6 +2,7 @@
 #define ESTRUCTURA_H
 
 #include <stdlib.h>
+#include <stdint.h>
 
 // Estructura para las entradas de la tabla de páginas
 typedef struct {
@@ -21,6 +22,17 @@ typedef struct {
     void* memoria;             // Espacio de memoria contiguo
     TablaDePaginas* tabla_paginas;  // Tabla de páginas
 } Memoria;
+
+typedef struct {
+    uint32_t pid; 
+    TablaDePaginas* TablaDePaginas;
+} t_proceso; 
+
+typedef struct {
+    uint32_t pid; 
+    EntradaTablaDePaginas* pagina; 
+} t_peticion; 
+
 
 // Función para crear la memoria
 Memoria* crearMemoria(int num_paginas, int tamano_pagina, int num_entradas);
