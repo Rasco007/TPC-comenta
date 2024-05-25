@@ -13,8 +13,6 @@ extern t_log* io_logger;
 extern t_log* io_loggerError;
 extern t_config* io_config;
 
-
-
 extern int fd_kernel;
 extern int fd_memoria;
 
