@@ -1,8 +1,8 @@
 #include <estructura/estructura.h>
 #include <commons/log.h>
-#include <string.h>
 
 extern t_log* logger;
+extern t_log* loggerError;
 
 // Función para traducir una dirección lógica a una dirección física
 int traducirDireccionLogica(Memoria* memoria, int direccion_logica, int* marco, int* desplazamiento) {
@@ -11,14 +11,14 @@ int traducirDireccionLogica(Memoria* memoria, int direccion_logica, int* marco, 
     *desplazamiento = direccion_logica % tamano_pagina;
 
     if (numero_pagina >= memoria->tabla_paginas->numeroDeEntradas) {
-        log_error(logger, "Direccion logica fuera de rango: %d\n", direccion_logica);
+        log_error(loggerError, "Direccion logica fuera de rango: %d\n", direccion_logica);
         return -1;
     }
 
     *marco = memoria->tabla_paginas->entradas[numero_pagina].numeroDeMarco;
 
     if (*marco == -1) {
-        log_error(logger, "Pagina no asignada a un marco: %d\n", numero_pagina);
+        log_error(loggerError, "Pagina no asignada a un marco: %d\n", numero_pagina);
         return -1;
     }
 
@@ -33,14 +33,14 @@ Memoria* crearMemoria(int num_paginas, int tamano_pagina) {
     Memoria* memoria = malloc(sizeof(Memoria));
     
     if (memoria == NULL) {
-        log_info(logger, "Error al asignar memoria. (1)\n");
+        log_error(loggerError, "Error al asignar memoria. (1)\n");
         return NULL;
     }
 
     memoria->memoria = malloc(num_paginas * tamano_pagina);
 
     if (memoria->memoria == NULL) {
-        log_info(logger, "Error al asignar memoria. (2)\n");
+        log_error(loggerError, "Error al asignar memoria. (2)\n");
         free(memoria);
         return NULL;
     }
@@ -48,7 +48,7 @@ Memoria* crearMemoria(int num_paginas, int tamano_pagina) {
     memoria->tabla_paginas = malloc(sizeof(TablaDePaginas));
 
     if (memoria->tabla_paginas == NULL) {
-        log_info(logger, "Error al asignar memoria. (3)\n");
+        log_error(loggerError, "Error al asignar memoria. (3)\n");
         free(memoria->memoria);
         free(memoria);
         return NULL;
@@ -58,7 +58,7 @@ Memoria* crearMemoria(int num_paginas, int tamano_pagina) {
     memoria->tabla_paginas->entradas = malloc(num_paginas * sizeof(EntradaTablaDePaginas));
     
     if (memoria->tabla_paginas->entradas == NULL) {
-        log_info(logger, "Error al asignar memoria. (4)\n");
+        log_error(loggerError, "Error al asignar memoria. (4)\n");
         free(memoria->tabla_paginas);
         free(memoria->memoria);
         free(memoria);
@@ -87,7 +87,7 @@ void destruirMemoria(Memoria* memoria) {
 void escribirMemoria(Memoria* memoria, int direccion_logica, void* datos, int tamano) {
     int marco, desplazamiento;
     if (traducirDireccionLogica(memoria, direccion_logica, &marco, &desplazamiento) == -1) {
-        log_error(logger, "Error al traducir direccion logica: %d\n", direccion_logica);
+        log_error(loggerError, "Error al traducir direccion logica: %d\n", direccion_logica);
         return;
     }
 
@@ -103,7 +103,7 @@ void escribirMemoria(Memoria* memoria, int direccion_logica, void* datos, int ta
 void* leerMemoria(Memoria* memoria, int direccion_logica, int tamano) {
     int marco, desplazamiento;
     if (traducirDireccionLogica(memoria, direccion_logica, &marco, &desplazamiento) == -1) {
-        log_error(logger, "Error al traducir direccion logica: %d\n", direccion_logica);
+        log_error(loggerError, "Error al traducir direccion logica: %d\n", direccion_logica);
         return NULL;
     }
 
