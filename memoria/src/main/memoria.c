@@ -5,7 +5,6 @@ a modo de retardo en la obtención de la instrucción.
 - Esta Compuesta por 2 estructuras principales: Un espacio contiguo de memoria y las Tablas de páginas.*/
 
 #include <main/memoria.h>
-#include <estructura/estructura.h>
 
 int sockets[3];
 pthread_t threadCPU, threadKernel, threadIO;
@@ -51,6 +50,18 @@ int main() {
 	int tamano_pagina = config_get_int_value(config, "TAM_MEMORIA");
     int num_paginas = config_get_int_value(config, "TAM_PAGINA");
     memoria = crearMemoria(num_paginas, tamano_pagina);
+
+    crear_proceso(memoria, 1, 10, "pseudocodigo/procesos/proceso1.pc");
+
+    Pseudocodigo* pseudo = leerPseudocodigo("pseudocodigo/procesos/proceso1.pc");
+    char* instruccion = obtenerInstruccion(pseudo, 0);
+    if (instruccion != NULL) {
+        log_info(logger, "Instrucción obtenida: %s", instruccion);
+    }
+
+    destruir_proceso(memoria, 1, 10);
+
+    liberarPseudocodigo(pseudo);
 
 	// Espera a que los hilos terminen
 	pthread_join (threadCPU, NULL);
