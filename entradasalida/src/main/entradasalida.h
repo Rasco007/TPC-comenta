@@ -10,6 +10,7 @@
 
 #include <conexionKernel/conexionKernel.h>
 #include <conexionMemoria/conexionMemoria.h>
+#include "../include/io_globals.h"
 
 #include <global.h>
 #include <utilsServidor/utilsServidor.h>
