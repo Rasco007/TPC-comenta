@@ -1,9 +1,7 @@
 #include <conexionMemoria/conexionMemoria.h>
 
 void conexionMemoria() {
-    logger = cambiarNombre (logger,"IO-Memoria");
-    loggerError = cambiarNombre (loggerError, "Errores IO-Memoria");
-
+   
     while(1){
         int conexionAMemoria = conexion("MEMORIA");
         
@@ -11,7 +9,7 @@ void conexionMemoria() {
             break;
         }
         else {
-            log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionAMemoria);
+            log_error(io_loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionAMemoria);
             sleep(5);
         }
     }

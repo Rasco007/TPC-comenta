@@ -10,6 +10,7 @@
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
 #include <contextoEjecucion/contextoEjecucion.h>
+#include "../include/io_globals.h"
 
 extern t_log* loggerError;
 
