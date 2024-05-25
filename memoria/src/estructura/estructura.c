@@ -26,18 +26,21 @@ int traducirDireccionLogica(Memoria* memoria, int direccion_logica, int* marco, 
 }
 
 // Función para crear la memoria
-Memoria* crearMemoria(int num_paginas, int tamano_pagina, int num_entradas) {
+Memoria* crearMemoria(int num_paginas, int tamano_pagina) {
+
+    log_info(logger, "Asignando Memoria...\n");
+
     Memoria* memoria = malloc(sizeof(Memoria));
     
     if (memoria == NULL) {
-        log_info(logger, "Error al asignar memoria.\n");
+        log_info(logger, "Error al asignar memoria. (1)\n");
         return NULL;
     }
 
     memoria->memoria = malloc(num_paginas * tamano_pagina);
 
     if (memoria->memoria == NULL) {
-        log_info(logger, "Error al asignar memoria.\n");
+        log_info(logger, "Error al asignar memoria. (2)\n");
         free(memoria);
         return NULL;
     }
@@ -45,7 +48,7 @@ Memoria* crearMemoria(int num_paginas, int tamano_pagina, int num_entradas) {
     memoria->tabla_paginas = malloc(sizeof(TablaDePaginas));
 
     if (memoria->tabla_paginas == NULL) {
-        log_info(logger, "Error al asignar memoria.\n");
+        log_info(logger, "Error al asignar memoria. (3)\n");
         free(memoria->memoria);
         free(memoria);
         return NULL;
@@ -55,7 +58,7 @@ Memoria* crearMemoria(int num_paginas, int tamano_pagina, int num_entradas) {
     memoria->tabla_paginas->entradas = malloc(num_paginas * sizeof(EntradaTablaDePaginas));
     
     if (memoria->tabla_paginas->entradas == NULL) {
-        log_info(logger, "Error al asignar memoria.\n");
+        log_info(logger, "Error al asignar memoria. (4)\n");
         free(memoria->tabla_paginas);
         free(memoria->memoria);
         free(memoria);
@@ -66,6 +69,8 @@ Memoria* crearMemoria(int num_paginas, int tamano_pagina, int num_entradas) {
         memoria->tabla_paginas->entradas[i].numeroDePagina = i;
         memoria->tabla_paginas->entradas[i].numeroDeMarco = -1; // -1 indica que el marco no está asignado
     }
+
+    log_info(logger, "Memoria creada de manera exitosa!\n");
 
     return memoria;
 }

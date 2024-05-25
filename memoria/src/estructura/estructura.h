@@ -23,7 +23,7 @@ typedef struct {
 } Memoria;
 
 // Función para crear la memoria
-Memoria* crearMemoria(int num_paginas, int tamano_pagina, int num_entradas);
+Memoria* crearMemoria(int num_paginas, int tamano_pagina);
 
 // Función para destruir la memoria
 void destruirMemoria(Memoria* memoria);
