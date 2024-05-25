@@ -7,23 +7,37 @@ y le irán dando aviso a dicho módulo una vez completadas.
 
 #include "entradasalida.h"
 
+t_log* io_logger = NULL;
+t_log* io_loggerError = NULL;
+t_config* io_config = NULL;
+int fd_kernel = 0;
+int fd_memoria = 0;
+
+char* TIPO_INTERFAZ = NULL;
+int TIEMPO_UNIDAD_TRABAJO = 0;
+char* IP_KERNEL = NULL;
+char* PUERTO_KERNEL = NULL;
+char* IP_MEMORIA = NULL;
+char* PUERTO_MEMORIA = NULL;
+char* PATH_BASE_DIALFS = NULL;
+int BLOCK_SIZE = 0;
+int BLOCK_COUNT = 0;
+
 
 int main(int argc, char** argv) {
 
 
-	if (argc < 2) {
-			fprintf(stderr, "Usar: %s </home/utnso/tp-2024-1c-Silver-Crime-/entradasalida/entradasalida.config>\n", argv[0]);
-			return EXIT_FAILURE;
-		}
+	
 
-    iniciar_io(argc, argv); //abrir modulo con: ./bin/entradasalida /home/utnso/tp-2024-1c-Silver-Crime-/entradasalida/entradasalida.config
+    iniciar_io(argc, argv); //abrir modulo con: ./bin/entradasalida /home/utnso/tp-2024-1c-Silver-Crime/entradasalida/entradasalida.config
 
-	atexit(terminarPrograma);
+
+	//atexit(terminarPrograma);
+	
 	conexionMemoria();
-	conexionKernel();
+	//conexionKernel();
 
 
-	conexionKernel();
 
 	return EXIT_SUCCESS;
 }

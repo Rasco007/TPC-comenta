@@ -57,5 +57,6 @@ void mostrar_configs(){
     log_info(io_logger, "PUERTO_MEMORIA: %s", PUERTO_MEMORIA);
     log_info(io_logger, "PATH_BASE_DIALFS: %s", PATH_BASE_DIALFS);
     log_info(io_logger, "BLOCK_SIZE: %d", BLOCK_SIZE);
+
     log_info(io_logger, "BLOCK_COUNT: %d", BLOCK_COUNT);
 }
