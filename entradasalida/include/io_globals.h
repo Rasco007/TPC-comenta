@@ -9,9 +9,9 @@
 #include <commons/config.h>
 
 //Var globales
-extern t_log* logger;
-extern t_log* loggerError;
-extern t_config* config;
+extern t_log* io_logger;
+extern t_log* io_loggerError;
+extern t_config* io_config;
 
 
 
