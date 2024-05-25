@@ -1,7 +1,6 @@
 #include <conexionMemoria/conexionMemoria.h>
 
 void conexionMemoria() {
-
     while(1){
          fd_memoria = conexion("MEMORIA");
 
