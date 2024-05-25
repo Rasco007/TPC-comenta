@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
 	atexit(terminarPrograma); //cuando se haga exit, se llamara a terminarPrograma. esto es lo que hace atexit
 
 	conexionMemoria();
-	conexionKernel();
+	//conexionKernel();
 
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
