@@ -12,7 +12,7 @@
 #include <string.h>
 #include <assert.h>
 #include <configuraciones/configuraciones.h>
-
+//#include </home/utnso/tp-2024-1c-Silver-Crime/entradasalida/src/main/entradasalida.h>
 extern t_log *logger;
 extern t_config *config;
 
@@ -26,5 +26,7 @@ t_list * recibirPaquete(int socketCliente);
 char * recibirMensaje(int socketCliente);
 int alistarServidor(char * puerto);
 void elementDestroyer(void * palabra);
+
+
 
 #endif /* UTILS_SERVIDOR_H */ 

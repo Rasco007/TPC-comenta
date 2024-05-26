@@ -11,7 +11,7 @@
 #include <conexiones/conexionMemoria.h>
 #include <conexiones/conexionCPU.h>
 #include <main/configuraciones.h>
-
+#include <escuchaIO/servidorIO.h>
 
 // Utils y funciones del shared
 #include <configuraciones/configuraciones.h>

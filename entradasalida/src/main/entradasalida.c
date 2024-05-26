@@ -23,28 +23,24 @@ char* PATH_BASE_DIALFS ;
 int BLOCK_SIZE ;
 int BLOCK_COUNT ;
 
-// yo lo corro con: ./bin/entradasalida entradasalida.config
+// yo lo corro con: ./bin/entradasalida IntX entradasalida.config
 int main(int argc, char** argv) {
 
-    if (argc < 2) {
-    	fprintf(stderr, "Usar: %s </home/utnso/tp-2024-1c-Grupo-SO-/entradasalida/io.config>\n", argv[0]);
+    if (argc < 3) {
+    	fprintf(stderr, "Usar: %s IntX </home/utnso/tp-2024-1c-Grupo-SO-/entradasalida/io.config>\n", argv[0]);
     	return EXIT_FAILURE;
 	}
 
-
-    iniciar_io(argc, argv); //abrir modulo con: ./bin/entradasalida /home/utnso/tp-2024-1c-Silver-Crime/entradasalida/entradasalida.config
-
+    iniciar_io(argv); //abrir modulo con: ./bin/entradasalida /home/utnso/tp-2024-1c-Silver-Crime/entradasalida/entradasalida.config
 
 	atexit(terminarPrograma); //cuando se haga exit, se llamara a terminarPrograma. esto es lo que hace atexit
 
 	conexionMemoria();
 	conexionKernel();
 
-
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
-    pthread_detach(hilo_kernel);
-	
+    pthread_join(hilo_kernel, NULL);
 
 	return EXIT_SUCCESS;
 }

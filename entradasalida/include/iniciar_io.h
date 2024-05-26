@@ -6,7 +6,7 @@
 #include <./main/entradasalida.h>
 
 
-void iniciar_io(int argc, char** argv);
+void iniciar_io(char** argv);
 void iniciar_logs();
 void iniciar_configs(char* argv);
 void mostrar_configs();

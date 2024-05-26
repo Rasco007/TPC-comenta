@@ -1,8 +1,8 @@
 #include <../include/iniciar_io.h>
 
-void iniciar_io(int argc, char** argv){
+void iniciar_io(char** argv){
     iniciar_logs();
-    iniciar_configs(argv[1]);
+    iniciar_configs(argv[2]);
     mostrar_configs();
 }
 
@@ -22,8 +22,6 @@ void iniciar_logs(){
 	}else{
         log_info (loggerError, "[IO] Error Log inciado correctamente");
     }
-
-
 }
 
 void iniciar_configs(char* arg){
@@ -48,7 +46,6 @@ void iniciar_configs(char* arg){
 }
 
 void mostrar_configs(){
-
     log_info(logger, "TIPO_INTERFAZ: %s", TIPO_INTERFAZ);
     log_info(logger, "TIEMPO_UNIDAD_TRABAJO: %d", TIEMPO_UNIDAD_TRABAJO);
     log_info(logger, "IP_KERNEL: %s", IP_KERNEL);
@@ -57,6 +54,5 @@ void mostrar_configs(){
     log_info(logger, "PUERTO_MEMORIA: %s", PUERTO_MEMORIA);
     log_info(logger, "PATH_BASE_DIALFS: %s", PATH_BASE_DIALFS);
     log_info(logger, "BLOCK_SIZE: %d", BLOCK_SIZE);
-
     log_info(logger, "BLOCK_COUNT: %d", BLOCK_COUNT);
 }

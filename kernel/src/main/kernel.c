@@ -5,13 +5,11 @@
 
 #include <main/kernel.h>
 
-
 int socketCliente;
 t_log* logger;
 t_log* loggerError;
 t_config* config;
 pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, recibirConsolas_h;
-
 
 int main () {
     //Inicializar variables

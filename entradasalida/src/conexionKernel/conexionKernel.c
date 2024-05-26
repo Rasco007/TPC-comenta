@@ -3,7 +3,7 @@
 void conexionKernel() {
    
     while(1){
-         fd_kernel = conexion("KERNEL");
+        fd_kernel = conexion("KERNEL");
         
         if(fd_kernel != -1){
             break;

@@ -15,16 +15,10 @@ void escucharAlIO() {
     // char *puertoEscuchaInterrupt = confGet("PUERTO_ESCUCHA_INTERRUPT"); 
     // int socketClienteInterrupt = alistarServidor(puertoEscuchaInterrupt);
 	// log_info(logger, "IO conectado (interrupt), en socket: %d", socketClienteInterrupt);
-
+    dormirbeta("Int1", 10, socketClienteIO);
     log_info(logger,"Conexiones IO-Kernel OK!");
     //ejecutarServidorKernel();
-
-
-    dormir("12",socketClienteIO);
-
-
 }
-
 
 int ejecutarServidorKernel(){
 	return 0;

@@ -8,5 +8,5 @@
 #include <configuraciones/configuraciones.h>
 
 void io_atender_kernel();
-
+void recibir_mensaje_y_dormir(int socket_cliente); //lo habia puesto en utilsServidor
 #endif
