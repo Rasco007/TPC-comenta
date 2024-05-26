@@ -26,6 +26,11 @@ int BLOCK_COUNT ;
 // yo lo corro con: ./bin/entradasalida entradasalida.config
 int main(int argc, char** argv) {
 
+    if (argc < 2) {
+    	fprintf(stderr, "Usar: %s </home/utnso/tp-2024-1c-Grupo-SO-/entradasalida/io.config>\n", argv[0]);
+    	return EXIT_FAILURE;
+	}
+
 
     iniciar_io(argc, argv); //abrir modulo con: ./bin/entradasalida /home/utnso/tp-2024-1c-Silver-Crime/entradasalida/entradasalida.config
 

@@ -1,4 +1,6 @@
 #include <escuchaIO/servidorIO.h>
+#include <global.h>
+
 
 int ejecutarServidorKernel();
 
@@ -15,7 +17,12 @@ void escucharAlIO() {
 	// log_info(logger, "IO conectado (interrupt), en socket: %d", socketClienteInterrupt);
 
     log_info(logger,"Conexiones IO-Kernel OK!");
-    ejecutarServidorKernel();
+    //ejecutarServidorKernel();
+
+
+    dormir("12",socketClienteIO);
+
+
 }
 
 

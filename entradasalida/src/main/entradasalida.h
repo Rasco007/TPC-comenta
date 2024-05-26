@@ -16,6 +16,9 @@
 #include <utilsCliente/utilsCliente.h>
 #include <configuraciones/configuraciones.h>
 
+#include <../include/iniciar_io.h>
+
+#include <../include/io_kernel.h>
 
 extern t_log* loggerError;
 
