@@ -1,7 +1,10 @@
 #ifndef INICIAR_IO_H_
 #define INICIAR_IO_H_
+#include <contextoEjecucion/contextoEjecucion.h>
+#include <utilsCliente/utilsCliente.h>
+#include <utilsServidor/utilsServidor.h>
+#include <./main/entradasalida.h>
 
-#include "io_globals.h"
 
 void iniciar_io(int argc, char** argv);
 void iniciar_logs();

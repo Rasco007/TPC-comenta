@@ -10,7 +10,8 @@
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
 #include <contextoEjecucion/contextoEjecucion.h>
-#include "../include/io_globals.h"
+#include <./main/entradasalida.h>
+
 
 void conexionKernel(); 
 
