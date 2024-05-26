@@ -41,6 +41,5 @@ int main(int argc, char** argv) {
     pthread_detach(hilo_kernel);
 	
 
-
 	return EXIT_SUCCESS;
 }
