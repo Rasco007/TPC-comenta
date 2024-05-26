@@ -35,7 +35,8 @@ int64_t rafagaCPUEjecutada;
 void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
-    execute();//ejecuta la instruccion 
+    execute();//ejecuta la instruccion
+    check_interrupt(); //revisa si hay interrupciones 
     liberarMemoria();
 }
 
@@ -115,6 +116,10 @@ void execute() {
         default:
             break;
     }
+}
+
+void check_interrupt(){
+    //TODO
 }
 
 // Instrucciones
