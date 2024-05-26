@@ -7,8 +7,8 @@ void iniciar_io(char** argv){
 }
 
 void iniciar_logs(){
-    io_logger = log_create("entradasalida.log", "LOGGER_IO", true, LOG_LEVEL_INFO);
-	if( io_logger == NULL){
+    logger = log_create("entradasalida.log", "LOGGER_IO", true, LOG_LEVEL_INFO);
+	if( logger == NULL){
 		perror ("error al crear log");
 		exit(EXIT_FAILURE);
 	}else{
@@ -25,14 +25,14 @@ void iniciar_logs(){
 }
 
 void iniciar_configs(char* arg){
-    io_config = config_create(arg);
+    config = config_create(arg);
     
-    if (io_config == NULL) {
+    if (config == NULL) {
         // No se pudo crear el config, terminemos el programa
 		perror("Error al intentar cargar el config.");
         exit(EXIT_FAILURE);
     }else{
-        log_info (io_logger, "[IO] Configuracion obtenida correctamente");
+        log_info (logger, "[IO] Configuracion obtenida correctamente");
     }
     TIPO_INTERFAZ = config_get_string_value(config, "TIPO_INTERFAZ");
     TIEMPO_UNIDAD_TRABAJO = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
