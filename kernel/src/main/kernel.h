@@ -11,15 +11,14 @@
 #include <conexiones/conexionMemoria.h>
 #include <conexiones/conexionCPU.h>
 #include <main/configuraciones.h>
+#include <consola/consola.h>
 
-
-// Utils y funciones del shared
 #include <configuraciones/configuraciones.h>
 
 extern int socketCliente;
 extern t_log* logger;
 extern t_log* loggerError;
 extern t_config* config;
-extern pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, recibirConsolas_h;
+extern pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h;
 
 #endif

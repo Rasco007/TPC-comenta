@@ -10,7 +10,7 @@ int socketCliente;
 t_log* logger;
 t_log* loggerError;
 t_config* config;
-pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, recibirConsolas_h;
+pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h;
 
 void escucharAlIO();
 
@@ -35,10 +35,10 @@ int main () {
 	free (nombre);
 
     //Inicializar Hilos
-	int opCodes [2] = {
-		pthread_create(&planificadorLargoPlazo_h, NULL, (void *) planificarALargoPlazo, NULL),
-		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL)
-		//TODO: Agregar hilo para recibir consolas
+	int opCodes [3] = {
+		pthread_create(&planificadorLargoPlazo_h, NULL, (void*) planificarALargoPlazo, NULL),
+		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL),
+		pthread_create(&ejecutarConsola_h,NULL,(void*)ejecutarConsola,NULL)
 	};
 
     if (opCodes [0]) {
@@ -46,6 +46,9 @@ int main () {
 	}
 	if (opCodes [1]) {
         error ("Error al generar hilo para el planificador de corto plazo, terminando el programa.");
+	}
+	if (opCodes [2]){
+		error("Error al generar hilo para ejecutar la consola, terminando el programa.");
 	}
 
 	t_pcb * primerPCB = crearPCB();
@@ -60,6 +63,7 @@ int main () {
 	pthread_detach(planificadorLargoPlazo_h);
 	//Hilo Planificador Corto Plazo --> Mueve procesos de READY a EXEC
 	pthread_detach(planificadorCortoPlazo_h);	
+	pthread_detach(ejecutarConsola_h);
 
     exit (0);
 }
