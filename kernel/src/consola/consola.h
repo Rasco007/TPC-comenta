@@ -30,5 +30,6 @@
 #include <configuraciones/configuraciones.h>
 
 int ejecutarConsola (int, char *archivos[]);
+void ejecutarScript(const char* path);
 
 #endif /* CLIENT_H_ */

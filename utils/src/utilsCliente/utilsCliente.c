@@ -93,7 +93,7 @@ void enviarPaquete(t_paquete *paquete, int socket)
 {
 	int bytes = paquete->buffer->size + 2 * sizeof(int);
 	void *a_enviar = serializarPaquete(paquete, bytes);
-	log_info(logger, a_enviar);
+	log_info(logger, "%s", (char*)a_enviar);
 	log_info(logger, "Enviando paquete con tamaño %d, de %d bytes.", paquete->buffer->size, bytes);
 
 	//debug ("Enviando paquete con tamaño %d, de %d bytes.", paquete->buffer->size, bytes);
