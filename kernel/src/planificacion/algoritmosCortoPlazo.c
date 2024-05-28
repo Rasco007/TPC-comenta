@@ -7,7 +7,7 @@ void detenerYDestruirCronometro(t_temporal *cronometroReady){
 
 void planificarACortoPlazoSegunAlgoritmo(){
     char *algoritmoPlanificador = obtenerAlgoritmoPlanificacion();
-    //Por ahora lo va a hacer por FIFO porque asi esta seteado en el config
+    
     if (!strcmp(algoritmoPlanificador, "FIFO"))
     {
         log_info(logger, "Ejecutando FIFO");
@@ -16,7 +16,7 @@ void planificarACortoPlazoSegunAlgoritmo(){
         log_info(logger, "Ejecutando RR");
         planificarACortoPlazo(proximoAEjecutarRR);
     } else if(!strcmp(algoritmoPlanificador, "VRR")){
-        //TODO: Implementar VRR
+        planificarACortoPlazo(proximoAEjecutarVRR);
     } else {
         log_error(loggerError, "Algoritmo invalido");
         abort();
@@ -55,6 +55,11 @@ t_pcb *proximoAEjecutarRR(){
 
     // Devolver el proceso seleccionado para ejecución
     return pcbActual;    
+}
+
+t_pcb *proximoAEjecutarVRR(){
+    //TODO
+    return list_get(pcbsREADY, 5);
 }
 
 

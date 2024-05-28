@@ -5,7 +5,6 @@ char* pidsInvolucrados;
 //Básicos PCB
 
 t_pcb *crearPCB(){
-
     procesosCreados++;
 
     t_pcb *nuevoPCB = malloc(sizeof(t_pcb));
@@ -14,14 +13,7 @@ t_pcb *crearPCB(){
     nuevoPCB->programCounter = 0;
     nuevoPCB->instrucciones = list_create();
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
-
-    //log_info(logger, "Se crea un nuevo PCB con PID %d y sus instrucciones correctamente", nuevoPCB->pid);
-    /*log_info(logger, "Información del PCB:");
-    log_info(logger, "Estado: %d", nuevoPCB->estado);
-    log_info(logger, "PID: %d", nuevoPCB->pid);
-    log_info(logger, "Program Counter: %d", nuevoPCB->programCounter);
-    log_info(logger, "Instrucciones: %d", list_size(nuevoPCB->instrucciones));
-    log_info(logger, "Registros CPU: %d", dictionary_size(nuevoPCB->registrosCPU));*/
+    log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
     return nuevoPCB;
 }

@@ -19,18 +19,12 @@ extern t_list* pcbsREADY;
 extern int64_t rafagaCPU;
 extern t_log* loggerError;
 
-/** 
- * @brief planificador a corto plazo segun algoritmo de planificacion extraido del archivo de configuraciones
-*/
+
 void planificarACortoPlazoSegunAlgoritmo();
 
-/**
- * @brief Selecciona el proximo pcb a ejecutar segun el algoritmo FIFO
- * @param
- * @return el proximo puntero a t_pcb a ejecutar
- */
-t_pcb* proximoAEjecutarFIFO();
 
+t_pcb* proximoAEjecutarFIFO();
+t_pcb* proximoAEjecutarVRR();
 t_pcb *proximoAEjecutarRR();
 
 void listarPIDS(t_list* pcbs); 

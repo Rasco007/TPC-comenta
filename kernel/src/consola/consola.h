@@ -28,8 +28,10 @@
 
 #include <global.h>
 #include <configuraciones/configuraciones.h>
+#include <planificacion/planificacion.h>
+#include <peticiones/pcb.h>
 
 int ejecutarConsola (int, char *archivos[]);
-void ejecutarScript(const char* path);
+extern t_log* logger;
 
 #endif /* CLIENT_H_ */

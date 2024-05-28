@@ -60,7 +60,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 
     asignarPCBAContexto(procesoEnEjecucion);
     
-    enviarContextoActualizado(conexionACPU); //Por dispatch TODO: REVISAR
+    enviarContextoActualizado(conexionACPU);
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
