@@ -36,14 +36,6 @@
     void liberarMemoria();
     int buscar(char *elemento, char **lista); 
 
-    void set_c(char*, char*);
-    void yield_c(); 
-    void exit_c(); 
-    void mov_in(char*, char*);
-    void mov_out(char*, char*);
-    void wait_c(char*);
-    void signal_c(char* );
-
     uint32_t mmu(char* direccionLogica, int tamValor);
     char* recibirValor(int);
     void destruirTemporizador (t_temporal * temporizador);

@@ -113,6 +113,33 @@ void execute() {
         case EXIT:
             exit_c();
             break;
+        case IO_STDIN_READ:
+            io_stdin_read(elementosInstruccion[1]);
+            break;
+        case IO_STDOUT_WRITE:
+            io_stdout_write(elementosInstruccion[1]);
+            break;
+        case IO_FS_CREATE:
+            io_fs_create(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_DELETE:
+            io_fs_delete(elementosInstruccion[1]);
+            break;
+        case IO_FS_TRUNCATE:
+            io_fs_truncate(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_WRITE:
+            io_fs_write(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_READ:
+            io_fs_read(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case RESIZE:
+            resize(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case COPY_STRING:
+            copy_string(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
         default:
             break;
     }
@@ -123,6 +150,55 @@ void check_interrupt(){
 }
 
 // Instrucciones
+void io_fs_delete(char* registro){
+    char* valor = recibirValor(socketCliente);
+    set_c(registro, valor);
+}
+
+void io_stdout_write(char* registro){
+    char* valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
+    enviarMensaje(socketCliente, valor);
+}
+
+void io_fs_truncate(char* registro, char* tamanio){
+    char* valor = recibirValor(socketCliente);
+    set_c(registro, valor);
+}
+
+void io_fs_create(char* registro, char* tamanio){
+    char* valor = recibirValor(socketCliente);
+    set_c(registro, valor);
+}
+
+void io_fs_write(char* registro, char* tamanio){
+    char* valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
+    enviarMensaje(socketCliente, valor);
+}
+
+void io_fs_read(char* registro, char* tamanio){
+    char* valor = recibirValor(socketCliente);
+    set_c(registro, valor);
+}
+
+void io_stdin_read(char* registro){
+    char* valor = recibirValor(socketCliente);
+    set_c(registro, valor);
+}
+
+void copy_string(char* registro_destino, char* registro_origen){
+    char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
+    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
+    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, string_duplicate(valorOrigen));
+}
+
+void resize(char* registro, char* tamanio){
+    char* valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
+    int tamanioNuevo = atoi(tamanio);
+    char* valorNuevo = malloc(sizeof(char) * tamanioNuevo);
+    memcpy(valorNuevo, valor, tamanioNuevo);
+    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free);
+    dictionary_put(contextoEjecucion->registrosCPU, registro, valorNuevo);
+}
 
 void set_c(char* registro, char* valor){ 
     tiempoEspera = obtenerTiempoEspera();
@@ -160,7 +236,8 @@ void jnz(char* registro, char* instruccion){
 }
 
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
-    //TODO: Implementar despues de ver como lo hace Santi 
+    int tiempoEspera = atoi(unidades_trabajo);
+    usleep(tiempoEspera * 1000);
 }
 
 void wait_c(char* recurso){
@@ -232,7 +309,6 @@ void mov_out(char* direccionLogica, char* registro){
 
     recibirOperacion(conexionAMemoria);
     char * respuesta = recibirMensaje(conexionAMemoria);
-    //debug ("%s", respuesta);
     free (respuesta);
 
     log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", nroSegmento, dirFisica, (char *)valor);
@@ -280,45 +356,13 @@ char* recibirValor(int socket) {
 }
 
 int obtenerTamanioReg(char* registro){
-
     if(string_starts_with(registro, "E")) return 8;
     else if(string_starts_with(registro, "R")) return 16;
     else return 4;
-
 }
 
-//mmu
-
+//MMU
 uint32_t mmu(char* direccionLogica, int tamValor){
-    /*int dirFisica;
-    int dirLogica = atoi(direccionLogica);
-    int tamMaxSegmento = obtenerTamanioMaxSeg();
-
-    nroSegmento = floor(dirLogica/tamMaxSegmento);
-    uint32_t desplazamiento = dirLogica % tamMaxSegmento;
-
-    log_debug(logger, "nrosegmento: %d", nroSegmento);
-    log_debug(logger, "desplazamiento: %d", desplazamiento);
-    log_debug(logger, "tamvalor: %d", tamValor);
-
-    t_segmento* segmento = (t_segmento*)list_get(contextoEjecucion->tablaDeSegmentos, nroSegmento);
-    
-    uint32_t base = segmento->direccionBase;
-    
-    if((desplazamiento + tamValor) < (segmento->tamanio)){
-        dirFisica = base + desplazamiento;
-        return dirFisica;
-    }
-    
-    else{
-        log_info(logger, "PID: <%d> - Error SEG_FAULT - Segmento: <%d> - Offset: <%d> - Tamaño: <%d>", contextoEjecucion->pid, nroSegmento, desplazamiento, tamValor);
-        char * terminado = string_duplicate ("SEG_FAULT");
-        destruirTemporizador(rafagaCPU);
-        modificarMotivoDesalojo (EXIT, 1, terminado, "", "");
-        enviarContextoActualizado(socketCliente);
-        contextoEjecucion->programCounter = contextoEjecucion->instruccionesLength;
-        free (terminado);
-        return UINT32_MAX; 
-    }*/
+    //TODO: Implementacion para paginacion
     return UINT32_MAX; 
 }

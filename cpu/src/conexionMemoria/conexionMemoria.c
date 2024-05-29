@@ -19,4 +19,3 @@ int conexionMemoria() {
         }
     }
 }
-//Se supone que el servidor de memoria manda las instrucciones
