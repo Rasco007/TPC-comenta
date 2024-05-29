@@ -13,6 +13,8 @@ t_pcb *crearPCB(){
     nuevoPCB->programCounter = 0;
     nuevoPCB->instrucciones = list_create();
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
+    nuevoPCB->recursosAsignados = list_create();
+    nuevoPCB->tablaDePaginas = list_create();
     log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
     return nuevoPCB;

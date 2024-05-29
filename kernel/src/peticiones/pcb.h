@@ -22,7 +22,7 @@ typedef enum estadoProceso{
 typedef struct {
     char AX[4], BX[4], CX[4], DX[4];
     char EAX[8], EBX[8], ECX[8], EDX[8];
-}t_reg;
+}t_reg; //SI y DI?
 
 
 typedef struct {
@@ -34,6 +34,7 @@ typedef struct {
     t_dictionary* registrosCPU;
     t_temporal* tiempoEnReady; 
     t_list* recursosAsignados;
+    t_list* tablaDePaginas;
 } t_pcb; 
 
 

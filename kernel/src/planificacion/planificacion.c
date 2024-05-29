@@ -88,7 +88,7 @@ void ingresarANew(t_pcb *pcb)
 {
     pthread_mutex_lock(&mutexListaNew);
     encolar(pcbsNEW, pcb);
-    log_info(logger, "Se crea el proceso <%d> en NEW", pcb->pid);
+    log_info(logger, "Se crea el proceso <%d> en NEW", pcb->pid);//log obligatorio
     pthread_mutex_unlock(&mutexListaNew);
 }
 
