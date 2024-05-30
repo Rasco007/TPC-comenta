@@ -1,25 +1,52 @@
 #include <contextoEjecucion/contextoEjecucion.h>
 t_contexto * contextoEjecucion = NULL;
+t_dictionary *crearDiccionarioDeRegistros2();
 
 // MANEJO DE CONTEXTO
 void enviarContextoActualizado(int socket){ 
     t_paquete * paquete = crearPaquete();
     
     paquete->codigo_operacion = CONTEXTOEJECUCION;
+
+    log_info(logger, "Hardcodeo");
+
+    contextoEjecucion->instrucciones = list_create();
+	contextoEjecucion->instruccionesLength = 0;
+	contextoEjecucion->pid = 1;
+	contextoEjecucion->programCounter = 0;
+	contextoEjecucion->registrosCPU = crearDiccionarioDeRegistros2();
+	contextoEjecucion->tablaDeSegmentos = list_create();
+	contextoEjecucion->tablaDeSegmentosSize = 0;
+    contextoEjecucion->rafagaCPUEjecutada = 0;
+    contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
+    contextoEjecucion->motivoDesalojo->parametros[0] = "";
+    contextoEjecucion->motivoDesalojo->parametros[1] = "";
+    contextoEjecucion->motivoDesalojo->parametros[2] = "";
+    contextoEjecucion->motivoDesalojo->parametrosLength = 0;
+    contextoEjecucion->motivoDesalojo->comando = 0;
+
+    
    
     agregarAPaquete (paquete,(void *)&contextoEjecucion->pid, sizeof(contextoEjecucion->pid));
     agregarAPaquete (paquete,(void *)&contextoEjecucion->programCounter, sizeof(contextoEjecucion->programCounter));
     
-    //debug ("%d %d", contextoEjecucion->pid, contextoEjecucion->programCounter);
-
     agregarInstruccionesAPaquete (paquete, contextoEjecucion->instrucciones);
+    log_info(logger, "Instrucciones agregadas al paquete");
+
     agregarRegistrosAPaquete(paquete, contextoEjecucion->registrosCPU);
+    log_info(logger, "Registros agregados al paquete");
     
     agregarTablaDeSegmentosAPaquete(paquete);
+    log_info(logger, "Tabla de segmentos agregada al paquete");
+
     agregarMotivoAPaquete(paquete, contextoEjecucion->motivoDesalojo);
+    log_info(logger, "Motivo de desalojo agregado al paquete");
+
     agregarAPaquete(paquete, (void *)&contextoEjecucion->rafagaCPUEjecutada, sizeof(contextoEjecucion->rafagaCPUEjecutada));
+    log_info(logger, "Rafaga de CPU agregada al paquete");
 
     enviarPaquete(paquete, socket);
+    log_info(logger, "Procede a eliminar paquete");
 	eliminarPaquete(paquete);
 }
 
@@ -64,10 +91,11 @@ void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU){
 
     char name[3] = "AX", longName[4] = "EAX";
 
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < 2; i++) {
         ssize_t tamanioActual = sizeof(char) * (4 * pow(2, i) + 1);
         for (int j = 0; j < 4; j++) {
             char* registroConCaracterTerminador = (char*) dictionary_get(registrosCPU, (i) ? longName : name); 
+            //log_info(logger, "Registro %s: %s", (i) ? longName : name, registroConCaracterTerminador);
             agregarAPaquete(paquete, (void*) registroConCaracterTerminador, tamanioActual);
             name[0]++, longName[1]++;
         }
@@ -266,4 +294,19 @@ void destroyContextoUnico () {
     free(contextoEjecucion->motivoDesalojo);
     free(contextoEjecucion);
     contextoEjecucion = NULL;
+}
+
+t_dictionary *crearDiccionarioDeRegistros2(){
+
+    t_dictionary *registros = dictionary_create();
+
+    char name[3] = "AX", longName[4] = "EAX";
+    for (int i = 0; i < 4; i++) {
+        dictionary_put(registros, name, string_repeat('0', 4));
+        longName[0] = 'E';
+        dictionary_put(registros, longName, string_repeat('0', 8));
+        name[0]++, longName[1]++;
+    }
+
+    return registros;
 }

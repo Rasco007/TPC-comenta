@@ -20,3 +20,20 @@ void conexionMemoria() {
     }
 }
 
+//Mando el PCB a memoria
+void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
+    char * nombreAnterior = duplicarNombre(logger);
+    logger = cambiarNombre(logger,"Kernel-Memoria");
+    
+    t_paquete* peticion = crearPaquete(); 
+    peticion->codigo_operacion = NEWPCB; 
+
+    agregarAPaquete(peticion,(void*)&pcb->pid, sizeof(uint32_t));
+    enviarPaquete(peticion, conexionAMemoria); 
+    eliminarPaquete (peticion);
+
+    log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
+    recibirOperacion (conexionAMemoria);
+    logger = cambiarNombre(logger, nombreAnterior);
+    free (nombreAnterior);
+}

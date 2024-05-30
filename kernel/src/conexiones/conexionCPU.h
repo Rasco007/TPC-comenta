@@ -7,6 +7,7 @@
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
 #include <global.h>
+#include "../src/peticiones/pcb.h"
 
 extern int conexionACPU;
 extern t_log* loggerError; 
@@ -14,7 +15,9 @@ extern t_contexto* contextoEjecucion;
 
 
 void conexionCPU();
-
+void asignarPCBAContexto(t_pcb* procesoEnEjecucion);
+void actualizarPCB(t_pcb* procesoEnEjecucion);
+t_contexto* procesarPCB(t_pcb* procesoEnEjecucion);
 
 
 // FUNCIONES PARA ENVIO DE CONTEXTO DE EJECUCION
