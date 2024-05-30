@@ -13,6 +13,9 @@
 #include <main/configuraciones.h>
 #include <consola/consola.h>
 
+#include <escuchaIO/servidorIO.h>
+
+// Utils y funciones del shared
 #include <configuraciones/configuraciones.h>
 
 extern int socketCliente;
