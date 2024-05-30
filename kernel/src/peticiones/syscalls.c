@@ -77,50 +77,50 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
 }
 
 //FUNCIONES RETORNO CONTEXTO
-void wait_s(){
+void wait_s(t_pcb *proceso,char **parametros){
 
 }
 
-void signal_s(){
+void signal_s(t_pcb *proceso,char **parametros){
 
 }
 
-void resize_s(){
+void resize_s(t_pcb *proceso,char **parametros){
 
 }
 
-void io_gen_sleep(){
+void io_gen_sleep(t_pcb *proceso,char **parametros){
 
 }
 
-void io_stdin_read(){
+void io_stdin_read(t_pcb *proceso,char **parametros){
 
 }
 
-void io_stdout_write(){
+void io_stdout_write(t_pcb *proceso,char **parametros){
 
 }
 
-void io_fs_create(){
+void io_fs_create(t_pcb *proceso,char **parametros){
 
 }
 
-void io_fs_delete(){
+void io_fs_delete(t_pcb *proceso,char **parametros){
 
 }
 
-void io_fs_truncate(){
+void io_fs_truncate(t_pcb *proceso,char **parametros){
 
 }
 
-void io_fs_write(){
+void io_fs_write(t_pcb *proceso,char **parametros){
 
 }
 
-void io_fs_read(){
+void io_fs_read(t_pcb *proceso,char **parametros){
 
 }
 
-void exit_s(){
+void exit_s(t_pcb *proceso,char **parametros){
 
 }
