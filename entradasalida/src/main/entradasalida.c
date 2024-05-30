@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
     pthread_join(hilo_kernel, NULL);
-
+ 
 	return EXIT_SUCCESS;
 	 
 }
