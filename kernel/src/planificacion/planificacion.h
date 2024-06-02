@@ -72,4 +72,6 @@ void ingresarAReady(t_pcb *pcb);
 
 void loggearCambioDeEstado(uint32_t pid, estadoProceso anterior, estadoProceso actual); 
 
+void crearColasBloqueo();
+
 #endif 

@@ -20,16 +20,12 @@
         IO_GEN_SLEEP, IO_STDIN_READ, IO_STDOUT_WRITE, IO_FS_CREATE,
         IO_FS_DELETE, IO_FS_TRUNCATE, IO_FS_WRITE, IO_FS_READ,
         EXIT
-    } t_comando;
-
-    /**
-     * @struct t_instruccion
-     * @brief Estructura que sostiene las instrucciones para enviar del Kernel a la CPU (O para que la CPU Parsee la informacion recibida.)
-     */
-
+    } t_comando; 
     typedef struct {
         t_comando comando; 
         char* parametros[3]; 
     }t_instruccion; 
 
+void dormir(char* mensaje, int socket_cliente);
+void dormirbeta(char* mensaje, int entero, int socket_cliente);
 #endif

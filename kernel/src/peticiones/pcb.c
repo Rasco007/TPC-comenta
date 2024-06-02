@@ -5,18 +5,18 @@ char* pidsInvolucrados;
 //Básicos PCB
 
 t_pcb *crearPCB(){
+    procesosCreados++;
 
     t_pcb *nuevoPCB = malloc(sizeof(t_pcb));
     nuevoPCB->estado = NEW;
     nuevoPCB->pid = procesosCreados;
     nuevoPCB->programCounter = 0;
     nuevoPCB->instrucciones = list_create();
-    nuevoPCB->estimadoProximaRafaga = obtenerEstimacionInicial();
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
-
-    procesosCreados++;
+    nuevoPCB->recursosAsignados = list_create();
+    nuevoPCB->tablaDePaginas = list_create();
+    log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
-
     return nuevoPCB;
 }
 
@@ -24,6 +24,7 @@ void destruirPCB(t_pcb *pcb){
     list_destroy_and_destroy_elements(pcb->instrucciones, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
     free(pcb);
+    log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
 }
 
 t_dictionary *crearDiccionarioDeRegistros(){
@@ -35,8 +36,6 @@ t_dictionary *crearDiccionarioDeRegistros(){
         dictionary_put(registros, name, string_repeat('0', 4));
         longName[0] = 'E';
         dictionary_put(registros, longName, string_repeat('0', 8));
-        longName[0] = 'R';
-        dictionary_put(registros, longName, string_repeat('0', 16));
         name[0]++, longName[1]++;
     }
 

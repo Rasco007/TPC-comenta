@@ -24,6 +24,9 @@ void volverACPU(t_pcb*);
 
 void bloquearIO(t_pcb * proceso);
 
+void wait_s(t_pcb *proceso, char **parametros);
+
+void signal_s(t_pcb *proceso, char **parametros);
 
 void loggearBloqueoDeProcesos(t_pcb*,char* motivo); 
 

@@ -10,8 +10,9 @@
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
 #include <contextoEjecucion/contextoEjecucion.h>
+#include <./main/entradasalida.h>
 
-extern t_log* loggerError;
+
 
 void conexionMemoria(); 
 
