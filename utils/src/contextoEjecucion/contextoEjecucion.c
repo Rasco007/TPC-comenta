@@ -7,6 +7,25 @@ void enviarContextoActualizado(int socket){
     t_paquete * paquete = crearPaquete();
     
     paquete->codigo_operacion = CONTEXTOEJECUCION;
+
+    log_info(logger, "Hardcodeo");
+
+    contextoEjecucion->instrucciones = list_create();
+	contextoEjecucion->instruccionesLength = 0;
+	contextoEjecucion->pid = 1;
+	contextoEjecucion->programCounter = 0;
+	contextoEjecucion->registrosCPU = crearDiccionarioDeRegistros2();
+	contextoEjecucion->tablaDeSegmentos = list_create();
+	contextoEjecucion->tablaDeSegmentosSize = 0;
+    contextoEjecucion->rafagaCPUEjecutada = 0;
+    contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
+    contextoEjecucion->motivoDesalojo->parametros[0] = "";
+    contextoEjecucion->motivoDesalojo->parametros[1] = "";
+    contextoEjecucion->motivoDesalojo->parametros[2] = "";
+    contextoEjecucion->motivoDesalojo->parametrosLength = 0;
+    contextoEjecucion->motivoDesalojo->comando = 0;
+
+    
    
     agregarAPaquete (paquete,(void *)&contextoEjecucion->pid, sizeof(contextoEjecucion->pid));
     agregarAPaquete (paquete,(void *)&contextoEjecucion->programCounter, sizeof(contextoEjecucion->programCounter));
@@ -77,6 +96,7 @@ void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU){
         ssize_t tamanioActual = sizeof(char) * (4 * pow(2, i) + 1);
         for (int j = 0; j < 4; j++) {
             char* registroConCaracterTerminador = (char*) dictionary_get(registrosCPU, (i) ? longName : name); 
+            //log_info(logger, "Registro %s: %s", (i) ? longName : name, registroConCaracterTerminador);
             agregarAPaquete(paquete, (void*) registroConCaracterTerminador, tamanioActual);
             name[0]++, longName[1]++;
         }
