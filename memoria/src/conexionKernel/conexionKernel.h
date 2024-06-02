@@ -9,11 +9,15 @@
 #include <commons/collections/list.h>
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
+#include <estructura/estructura.h>
+#include <global.h>
+//#include <configuraciones/configuraciones.h>
 
 extern t_config* config;
 extern t_log* logger;
 extern int sockets[3];
 
 int ejecutarServidorKernel(int*);
+t_proceso *crearProcesoEnMemoria(int pid);
 
 #endif

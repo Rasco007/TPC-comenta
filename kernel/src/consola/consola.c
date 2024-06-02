@@ -1,8 +1,8 @@
 #include <consola/consola.h>
 
-int ejecutarConsola (int, char *archivo) {
+int ejecutarConsola (int argc, char *argv[]) {
     logger = cambiarNombre(logger, "Consola");
-    ejecutarScript(archivo);
+    ejecutarScript(argv);
     return EXIT_SUCCESS;
 }
 

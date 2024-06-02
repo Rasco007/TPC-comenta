@@ -26,4 +26,6 @@
         char* parametros[3]; 
     }t_instruccion; 
 
+void dormir(char* mensaje, int socket_cliente);
+void dormirbeta(char* mensaje, int entero, int socket_cliente);
 #endif
