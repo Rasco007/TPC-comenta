@@ -4,14 +4,15 @@
 - Planifica la ejecución de los procesos del sistema en el módulo CPU a través de dos conexiones con el mismo: una de dispatch y otra de interrupt.*/
 
 #include <main/kernel.h>
-
+#include "../src/planificacion/planificacion.h"
 
 int socketCliente;
 t_log* logger;
 t_log* loggerError;
 t_config* config;
-pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, recibirConsolas_h;
+pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h;
 
+void escucharAlIO();
 
 int main () {
     //Inicializar variables
@@ -20,6 +21,11 @@ int main () {
     config = iniciarConfiguracion("kernel.config");
 	atexit (terminarPrograma);
 
+	inicializarSemaforos();
+	atexit (destruirSemaforos);
+	inicializarListasPCBs(); 
+	atexit (destruirListasPCBs);
+
 	conexionMemoria(); 
 	conexionCPU();
 
@@ -27,6 +33,30 @@ int main () {
 	cambiarNombre(logger, nombre);
     escucharAlIO();
 	free (nombre);
+
+    //Inicializar Hilos
+	int opCodes [3] = {
+		pthread_create(&planificadorLargoPlazo_h, NULL, (void*) planificarALargoPlazo, NULL),
+		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL),
+		pthread_create(&ejecutarConsola_h,NULL,(void*)ejecutarConsola,NULL)
+	};
+
+    if (opCodes [0]) {
+        error ("Error al generar hilo para el planificador de largo plazo, terminando el programa.");	
+	}
+	if (opCodes [1]) {
+        error ("Error al generar hilo para el planificador de corto plazo, terminando el programa.");
+	}
+	if (opCodes [2]){
+		error("Error al generar hilo para ejecutar la consola, terminando el programa.");
+	}
+		
+	//Hilo Planificador Largo Plazo -> Mueve procesos de NEW a READY
+	pthread_detach(planificadorLargoPlazo_h);
+	//Hilo Planificador Corto Plazo --> Mueve procesos de READY a EXEC
+	pthread_detach(planificadorCortoPlazo_h);
+	//Hilo para consola	
+	pthread_detach(ejecutarConsola_h);
 
     exit (0);
 }

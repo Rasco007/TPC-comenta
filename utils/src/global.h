@@ -6,17 +6,26 @@
     #include <commons/log.h>
     #include <commons/config.h>
 
-    #define NUM_COMANDOS 16
+
+    /**
+     * @enum t_comando
+     * @brief Lista de comandos enumerados.
+     */
+
+    #define NUM_COMANDOS 19
+
     typedef enum {
         SET, MOV_IN, MOV_OUT, SUM, SUB,
         JNZ, RESIZE, COPY_STRING, WAIT, SIGNAL,
         IO_GEN_SLEEP, IO_STDIN_READ, IO_STDOUT_WRITE, IO_FS_CREATE,
         IO_FS_DELETE, IO_FS_TRUNCATE, IO_FS_WRITE, IO_FS_READ,
-        EXIT,
+        EXIT
     } t_comando; 
     typedef struct {
         t_comando comando; 
         char* parametros[3]; 
     }t_instruccion; 
 
+void dormir(char* mensaje, int socket_cliente);
+void dormirbeta(char* mensaje, int entero, int socket_cliente);
 #endif
