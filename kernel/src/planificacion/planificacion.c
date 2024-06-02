@@ -4,6 +4,7 @@ sem_t hayProcesosReady;
 sem_t hayProcesosNuevos;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
+t_list *pcbsREADYAux;
 t_list *pcbsEnMemoria;
 int32_t procesosCreados = 0;
 pthread_mutex_t mutexListaNew;
