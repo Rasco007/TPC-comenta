@@ -8,6 +8,27 @@ a modo de retardo en la obtención de la instrucción.
 
 int sockets[3];
 pthread_t threadCPU, threadKernel, threadIO;
+Memoria* memoria;
+
+t_log* logger; 
+t_log* loggerError; 
+t_config* config; 
+
+void terminar_programa() {
+    destruirMemoria(memoria);
+}
+
+void iniciar_memoria() {
+    //int tamano_pagina = confGet("TAM_PAGINA"); // Asignar el tamaño de la página según sea necesario
+    int tamano_pagina = 32;
+    int num_paginas = 32; // Número de páginas según sea necesario
+    memoria = crearMemoria(num_paginas, tamano_pagina);
+
+    if (memoria == NULL) {
+        log_error(logger, "Error al crear la memoria");
+        exit(EXIT_FAILURE);
+    }
+}
 
 t_log* logger; 
 t_log* loggerError; 
@@ -87,6 +108,12 @@ int main() {
             printf("Instrucción del proceso 1: %s", instruccion1);
         }
 
+    // Ejemplo de obtener una instrucción
+    Pseudocodigo* pseudo = leerPseudocodigo("pseudocodigo/procesos/proceso1.pc");
+    char* instruccion = obtenerInstruccion(pseudo, 0);
+    if (instruccion != NULL) {
+        log_info(logger, "Instrucción obtenida: %s", instruccion);
+    }
 
         if (!instruccion1) {
             break; // Termina si no hay más instrucciones en ambos procesos
