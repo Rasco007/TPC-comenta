@@ -19,7 +19,7 @@ int ejecutarServidorKernel(int *socketCliente){
 		case ENDPCB:
 			uint32_t pid = recibirPID(*socketCliente);
 			//liberarTodosLasPaginas(pid);
-			eliminarProcesoDeMemoria (buscarProcesoSegun (pid));
+			eliminarProcesoDeMemoria (pid);
 			log_info(logger, "Eliminación de Proceso PID: <%d>", pid);
 			break;
 		//Falta creacion y eliminacion de paginas
@@ -38,7 +38,7 @@ void procesarResultado(int resultado, int socketKernel){
 	return 0;
 }
 
-t_proceso *crearProcesoEnMemoria(uint32_t pid){
+t_proceso *crearProcesoEnMemoria(int pid){
 
 	t_proceso *procesoNuevo = malloc(sizeof(t_proceso));
 	procesoNuevo->pid = pid;

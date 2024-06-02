@@ -3,6 +3,7 @@
 int tiempo;
 char* valorLeido; 
 
+
 //Recibo peticiones de cpu y mando respuesta
 int ejecutarServidorCPU(int * socketCliente){
     tiempo = config_get_int_value(config,"RETARDO_RESPUESTA");
@@ -35,7 +36,7 @@ char* leer(int32_t direccionFisica,int tamanio) {
 
 	usleep(tiempo*1000); 
 
-	char* punteroDireccionFisica = espacioDeUsuario + direccionFisica; 
+	char* punteroDireccionFisica = memoria->memoria + direccionFisica; 
 
 	char* valor = malloc(sizeof(char)*tamanio); 
 	
@@ -102,7 +103,7 @@ void escribir(char* valor, int32_t direccionFisica, int tamanio){
 	
 	usleep(tiempo*1000); 
 
-	char* punteroADirFisica = espacioDeUsuario + direccionFisica; 
+	char* punteroADirFisica = memoria->memoria + direccionFisica; 
 
 	memcpy(punteroADirFisica, valor, tamanio);
 

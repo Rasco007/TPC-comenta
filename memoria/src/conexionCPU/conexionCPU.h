@@ -7,10 +7,14 @@
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
 #include <global.h>
+#include <main/memoria.h>
+#include <estructura/estructura.h>
+//#include <configuraciones/configuraciones.h>
 
 int ejecutarServidorCPU(int*); 
 
 extern void* espacioDeUsuario; 
+extern Memoria* memoria;
 
 
 extern t_config* config;
