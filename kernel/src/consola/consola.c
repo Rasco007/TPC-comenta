@@ -49,7 +49,7 @@ void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de n
 
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){
-    t_pcb* pcb = buscarPCB(pid);
+    t_pcb* pcb = buscarPID(pcbsParaExit,pid);
     destruirPCB(pcb);
     log_info(logger, "Se finaliza el proceso <%d>", pid);    
 }

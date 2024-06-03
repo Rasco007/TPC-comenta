@@ -15,6 +15,13 @@
 #include <conexiones/conexionMemoria.h>
 
 int ejecutarConsola (int, char *archivos[]);
+void ejecutarScript(const char*);
+void iniciarProceso(const char*);
+void finalizarProceso(int);
+void detenerPlanificacion();
+void iniciarPlanificacion();
+void procesoEstado();
+
 extern t_log* logger;
 
 #endif /* CLIENT_H_ */
