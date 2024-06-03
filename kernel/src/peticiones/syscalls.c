@@ -122,5 +122,17 @@ void io_fs_read(t_pcb *proceso,char **parametros){
 }
 
 void exit_s(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = EXIT;
 
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearSalidaDeProceso(proceso, parametros[0]);
+
+    if(!list_is_empty(proceso->recursosAsignados)){
+        liberarRecursosAsignados(proceso);
+    }
+
+    liberarMemoriaPCB(proceso);
+    destroyContextoUnico();
+    sem_post(&semGradoMultiprogramacion);
 }

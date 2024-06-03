@@ -8,6 +8,8 @@
 #include <peticiones/pcb.h>
 #include <planificacion/planificacion.h>
 #include <planificacion/algoritmosCortoPlazo.h>
+#include <peticiones/manejoRecursos.h>
+#include <peticiones/manejoPaginas.h>
 
 
 extern char **nombresRecursos;
