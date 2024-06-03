@@ -1,8 +1,13 @@
 #include <consola/consola.h>
-
+//Se reciben dos archivos:El script con las funciones de kernel y el archivo de instrucciones
 int ejecutarConsola (int argc, char *argv[]) {
+    if (argc != 2) {
+        log_error(logger, "Cantidad de argumentos incorrecta");
+        return EXIT_FAILURE;
+    }
+
     logger = cambiarNombre(logger, "Consola");
-    ejecutarScript(argv);
+    ejecutarScript(argv[1]);
     return EXIT_SUCCESS;
 }
 
@@ -44,17 +49,22 @@ void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de n
 
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){
-    //TODO
+    t_pcb* pcb = buscarPCB(pid);
+    destruirPCB(pcb);
+    log_info(logger, "Se finaliza el proceso <%d>", pid);    
 }
 
 //DETENER_PLANIFICACION
 void detenerPlanificacion(){
-    //TODO
+    pausaPlanificacion=true;
+    log_info(logger, "Planificacion detenida");
 }
 
 //INICIAR_PLANIFICACION
 void iniciarPlanificacion(){
-    //TODO
+    pausaPlanificacion=false;
+    planificarALargoPlazo();
+    log_info(logger, "Planificacion iniciada");
 }
 
 //PROCESO_ESTADO
@@ -65,5 +75,11 @@ void procesoEstado(){
     listarPIDS(pcbsREADY);
     log_info(logger, "Procesos en EXEC");
     listarPIDS(pcbsEnMemoria);
+
+    //Hace falta?
+    log_info(logger, "Procesos en BLOCK");
+    listarPIDS(pcbsBloqueados);
+    log_info(logger, "Procesos en EXIT");
+    listarPIDS(pcbsParaExit);
 }
 

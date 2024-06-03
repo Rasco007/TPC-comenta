@@ -26,6 +26,8 @@ typedef struct {
 typedef struct {
     uint32_t pid; 
     int programCounter;
+    uint32_t SI;
+    uint32_t DI;
     uint32_t instruccionesLength;
     t_list* instrucciones; 
     t_dictionary* registrosCPU;  
@@ -43,7 +45,7 @@ void agregarMotivoAPaquete(t_paquete* paquete, t_motivoDeDesalojo* motivoDesaloj
 void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU);
 void agregarInstruccionesAPaquete(t_paquete* paquete, t_list* instrucciones);
 void agregarTablaDePaginasAPaquete(t_paquete* paquete);
-void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* segmento);
+void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* pagina);
 
 // FUNCIONES PARA ENVIO DE CONTEXTO DE EJECUCION
 void enviarContextoActualizado(int socket);
