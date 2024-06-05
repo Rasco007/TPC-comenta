@@ -4,135 +4,119 @@
 extern t_log* logger;
 extern t_log* loggerError;
 
-// Función para traducir una dirección lógica a una dirección física
-int traducirDireccionLogica(Memoria* memoria, int direccion_logica, int* marco, int* desplazamiento) {
-    int tamano_pagina = memoria->tabla_paginas->numeroDeEntradas; // Tamaño de cada página
-    int numero_pagina = direccion_logica / tamano_pagina;
-    *desplazamiento = direccion_logica % tamano_pagina;
-
-    if (numero_pagina >= memoria->tabla_paginas->numeroDeEntradas) {
-        log_error(loggerError, "Direccion logica fuera de rango: %d\n", direccion_logica);
-        return -1;
+// Implementación de la memoria física
+MemoriaFisica *inicializar_memoria_fisica() {
+    MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
+    mf->memoria = malloc(NUM_MARCOS * TAMANO_PAGINA);
+    for (int i = 0; i < NUM_MARCOS; i++) {
+        mf->marcos[i].libre = true;
+        mf->marcos[i].numero_pagina = -1;
+        mf->marcos[i].pid = -1;
     }
-
-    *marco = memoria->tabla_paginas->entradas[numero_pagina].numeroDeMarco;
-
-    if (*marco == -1) {
-        log_error(loggerError, "Pagina no asignada a un marco: %d\n", numero_pagina);
-        return -1;
-    }
-
-    return 0;
+    return mf;
 }
 
-// Función para crear la memoria
-Memoria* crearMemoria(int num_paginas, int tamano_pagina) {
+void liberar_memoria_fisica(MemoriaFisica *mf) {
+    free(mf->memoria);
+    free(mf);
+}
 
-    log_info(logger, "Asignando Memoria...\n");
+// Implementación de la tabla de páginas
+TablaPaginas *inicializar_tabla_paginas() {
+    TablaPaginas *tp = malloc(sizeof(TablaPaginas));
+    for (int i = 0; i < NUM_PAGINAS; i++) {
+        tp->entradas[i].valido = 0;
+        tp->entradas[i].numero_marco = -1;
+    }
+    return tp;
+}
 
-    Memoria* memoria = malloc(sizeof(Memoria));
+void liberar_tabla_paginas(TablaPaginas *tp) {
+    free(tp);
+}
+
+// Implementación del proceso
+Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
+    Proceso *proceso = malloc(sizeof(Proceso));
+    proceso->pid = pid;
+    proceso->tabla_paginas = inicializar_tabla_paginas();
     
-    if (memoria == NULL) {
-        log_error(loggerError, "Error al asignar memoria. (1)\n");
+    // Leer archivo de pseudocódigo
+    FILE *archivo = fopen(archivo_pseudocodigo, "r");
+    if (!archivo) {
+        perror("Error al abrir el archivo de pseudocódigo");
+        free(proceso);
         return NULL;
     }
-
-    memoria->memoria = malloc(num_paginas * tamano_pagina);
-
-    if (memoria->memoria == NULL) {
-        log_error(loggerError, "Error al asignar memoria. (2)\n");
-        free(memoria);
-        return NULL;
-    }
-
-    memoria->tabla_paginas = malloc(sizeof(TablaDePaginas));
-
-    if (memoria->tabla_paginas == NULL) {
-        log_error(loggerError, "Error al asignar memoria. (3)\n");
-        free(memoria->memoria);
-        free(memoria);
-        return NULL;
-    }
-
-    memoria->tabla_paginas->numeroDeEntradas = num_paginas;
-    memoria->tabla_paginas->entradas = malloc(num_paginas * sizeof(EntradaTablaDePaginas));
     
-    if (memoria->tabla_paginas->entradas == NULL) {
-        log_error(loggerError, "Error al asignar memoria. (4)\n");
-        free(memoria->tabla_paginas);
-        free(memoria->memoria);
-        free(memoria);
+    proceso->numero_instrucciones = 0;
+    proceso->instrucciones = NULL;
+    char linea[256];
+    while (fgets(linea, sizeof(linea), archivo)) {
+        proceso->numero_instrucciones++;
+        proceso->instrucciones = realloc(proceso->instrucciones, proceso->numero_instrucciones * sizeof(char *));
+        proceso->instrucciones[proceso->numero_instrucciones - 1] = strdup(linea);
+    }
+    fclose(archivo);
+    
+    return proceso;
+}
+
+void liberar_proceso(Proceso *proceso) {
+    liberar_tabla_paginas(proceso->tabla_paginas);
+    for (int i = 0; i < proceso->numero_instrucciones; i++) {
+        free(proceso->instrucciones[i]);
+    }
+    free(proceso->instrucciones);
+    free(proceso);
+}
+
+char *obtener_instruccion(Proceso *proceso, int program_counter) {
+    if (program_counter < 0 || program_counter >= proceso->numero_instrucciones) {
         return NULL;
     }
+    return proceso->instrucciones[program_counter];
+}
 
-    for (int i = 0; i < num_paginas; i++) {
-        memoria->tabla_paginas->entradas[i].numeroDePagina = i;
-        memoria->tabla_paginas->entradas[i].numeroDeMarco = -1; // -1 indica que el marco no está asignado
+// Asigna una página en la memoria física
+bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
+    if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
+        return false;
     }
 
-    log_info(logger, "Memoria creada de manera exitosa!\n");
-
-    return memoria;
-}
-
-// Función para destruir la memoria
-void destruirMemoria(Memoria* memoria) {
-    free(memoria->tabla_paginas->entradas);
-    free(memoria->tabla_paginas);
-    free(memoria->memoria);
-    free(memoria);
-}
-
-// Función para escribir en memoria
-void escribirMemoria(Memoria* memoria, int direccion_logica, void* datos, int tamano) {
-    int marco, desplazamiento;
-    if (traducirDireccionLogica(memoria, direccion_logica, &marco, &desplazamiento) == -1) {
-        log_error(loggerError, "Error al traducir direccion logica: %d\n", direccion_logica);
-        return;
+    // Encuentra un marco libre
+    int numero_marco = -1;
+    for (int i = 0; i < NUM_MARCOS; i++) {
+        if (mf->marcos[i].libre) {
+            numero_marco = i;
+            break;
+        }
     }
 
-    int direccion_fisica = (marco * memoria->tabla_paginas->numeroDeEntradas) + desplazamiento;
-
-    log_info(logger, "Escribiendo en direccion fisica: %d\n", direccion_fisica);
-
-    memcpy((char*)memoria->memoria + direccion_fisica, datos, tamano);
-    log_info(logger, "PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d\n", 0, direccion_fisica, tamano);
-}
-
-// Función para leer de memoria
-void* leerMemoria(Memoria* memoria, int direccion_logica, int tamano) {
-    int marco, desplazamiento;
-    if (traducirDireccionLogica(memoria, direccion_logica, &marco, &desplazamiento) == -1) {
-        log_error(loggerError, "Error al traducir direccion logica: %d\n", direccion_logica);
-        return NULL;
+    if (numero_marco == -1) {
+        return false; // No hay marcos libres
     }
 
-    int direccion_fisica = (marco * memoria->tabla_paginas->numeroDeEntradas) + desplazamiento;
+    mf->marcos[numero_marco].libre = false;
+    mf->marcos[numero_marco].numero_pagina = numero_pagina;
+    mf->marcos[numero_marco].pid = proceso->pid;
+    proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
+    proceso->tabla_paginas->entradas[numero_pagina].numero_marco = numero_marco;
 
-    log_info(logger, "Leyendo de direccion fisica: %d\n", direccion_fisica);
-
-    void* buffer = malloc(tamano);
-    memcpy(buffer, (char*)memoria->memoria + direccion_fisica, tamano);
-
-    log_info(logger, "PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d\n", 0, direccion_fisica, tamano);
-    return buffer;
+    return true;
 }
 
-// Función para inicializar la tabla de páginas
-TablaDePaginas* inicializarTablaDePaginas(int numeroDeEntradas) {
-    TablaDePaginas* tabla = malloc(sizeof(TablaDePaginas));
-    tabla->entradas = malloc(sizeof(EntradaTablaDePaginas) * numeroDeEntradas);
-    tabla->numeroDeEntradas = numeroDeEntradas;
-    for (int i = 0; i < numeroDeEntradas; i++) {
-        tabla->entradas[i].numeroDePagina = i;
-        tabla->entradas[i].numeroDeMarco = -1; // Al iniciar ninguna página está en un marco
-        tabla->entradas[i].bitDeValidez = 0; // Al iniciar, ninguna página es válida
+// Traduce una dirección lógica a una dirección física
+void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
+    unsigned long dir = (unsigned long)direccion_logica;
+    int numero_pagina = dir / TAMANO_PAGINA;
+    int desplazamiento = dir % TAMANO_PAGINA;
+
+    if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS || !proceso->tabla_paginas->entradas[numero_pagina].valido) {
+        return NULL; // Dirección no válida
     }
-    return tabla;
+
+    int numero_marco = proceso->tabla_paginas->entradas[numero_pagina].numero_marco;
+    return mf->memoria + numero_marco * TAMANO_PAGINA + desplazamiento;
 }
 
-// Función para liberar la memoria utilizada por la tabla de páginas
-void liberarTablaDePaginas(TablaDePaginas* tabla) {
-    free(tabla->entradas);
-    free(tabla);
-}

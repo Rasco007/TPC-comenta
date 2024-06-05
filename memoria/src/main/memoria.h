@@ -25,8 +25,7 @@
 #include <conexionCPU/conexionCPU.h>
 #include <conexionIO/conexionIO.h>
 
-#include <estructura/estructura.h>
-#include <pseudocodigo/pseudocodigo.h>
+#include <estructura/estructura.h> 
 
 #include <global.h>
 #include <utilsServidor/utilsServidor.h>
