@@ -16,6 +16,7 @@
 
 extern t_list* pcbsNEW; 
 extern t_list* pcbsREADY;
+extern t_list* pcbsREADYaux; //Cola auxiliar de mayor prioridad para VRR
 extern int64_t rafagaCPU;
 extern t_log* loggerError;
 
