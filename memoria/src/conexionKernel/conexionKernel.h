@@ -1,9 +1,6 @@
 #ifndef MEMORIA_CONEXION_KERNEL_H
 #define MEMORIA_CONEXION_KERNEL_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
 #include <commons/log.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
@@ -11,13 +8,19 @@
 #include <utilsServidor/utilsServidor.h>
 #include <estructura/estructura.h>
 #include <global.h>
-//#include <configuraciones/configuraciones.h>
 
-extern t_config* config;
-extern t_log* logger;
-extern int sockets[3];
+// Definiciones de las operaciones
+#define NEWPCB 0
+#define ENDPCB 1
 
-int ejecutarServidorKernel(int*);
-t_proceso *crearProcesoEnMemoria(int pid);
+// Variables globales
+//extern t_log *logger;
+//extern t_config *config;
+extern MemoriaFisica *memoria;
 
-#endif
+// Funciones
+int ejecutarServidorKernel(int *socketCliente);
+Proceso *crearProcesoEnMemoria(int pid);
+void eliminarProcesoDeMemoria(int pid);
+Proceso *buscar_proceso_por_pid(int pid);
+#endif // MEMORIA_CONEXION_KERNEL_H
