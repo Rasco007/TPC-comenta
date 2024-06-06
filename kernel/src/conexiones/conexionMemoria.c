@@ -37,3 +37,20 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }
+
+
+void liberarMemoriaPCB(t_pcb* proceso){
+    
+    char * nombreAnterior = duplicarNombre(logger);
+    logger = cambiarNombre(logger,"Kernel-Memoria");
+
+    log_debug(logger, "PID <%d>: Se envia señal para eliminar estructuras en memoria.", proceso->pid);
+    logger = cambiarNombre(logger, nombreAnterior);
+    free (nombreAnterior);
+
+    t_paquete* peticion = crearPaquete(); 
+    peticion->codigo_operacion = ENDPCB; 
+    agregarAPaquete(peticion,(void*)&proceso->pid, sizeof(uint32_t));
+    enviarPaquete(peticion, conexionAMemoria); 
+    eliminarPaquete (peticion);
+}

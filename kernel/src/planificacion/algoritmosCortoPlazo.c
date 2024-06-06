@@ -16,7 +16,7 @@ void planificarACortoPlazoSegunAlgoritmo(){
         log_info(logger, "Ejecutando RR");
         planificarACortoPlazo(proximoAEjecutarRR);
     } else if(!strcmp(algoritmoPlanificador, "VRR")){
-        planificarACortoPlazo(proximoAEjecutarVRR);
+        //planificarACortoPlazo(proximoAEjecutarVRR);
     } else {
         log_error(loggerError, "Algoritmo invalido");
         abort();
@@ -43,14 +43,14 @@ t_pcb *proximoAEjecutarRR(){
 }
 
 t_pcb *proximoAEjecutarVRR(){
-    char *quantum = obtenerQuantum(); //Obtengo el quantum del config
+    /*char *quantum = obtenerQuantum(); //Obtengo el quantum del config
     t_pcb *pcbActual = desencolar(pcbsREADY); // Saco el primer pcb de la cola de ready
     
     if (quantum <= 0) {
         encolar(pcbsREADYaux, pcbActual); //Si termina el quantum lo mando a la cola auxiliar
     } //Es a modo de ejemplo, creo que no era asi...
 
-    return pcbActual;
+    return pcbActual;*/
 }
 
 
