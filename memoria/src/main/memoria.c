@@ -53,8 +53,8 @@ int main() {
     MemoriaFisica *mf = inicializar_memoria_fisica();
 
     // Inicializa dos procesos con sus archivos de pseudocódigo
-    Proceso *proceso1 = inicializar_proceso(1, "proceso1.pseudo");
-    Proceso *proceso2 = inicializar_proceso(2, "proceso2.pseudo");
+    Proceso *proceso1 = inicializar_proceso(1, "src/pseudocodigo/pseucodigo.pc");
+    Proceso *proceso2 = inicializar_proceso(2, "src/pseudocodigo/pseucodigo.pc");
 
     if (!proceso1 || !proceso2) {
         printf("Error al inicializar los procesos.\n");

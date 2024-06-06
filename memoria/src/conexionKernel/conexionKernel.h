@@ -14,13 +14,13 @@
 #define ENDPCB 1
 
 // Variables globales
-extern t_log *logger;
-extern t_config *config;
+//extern t_log *logger;
+//extern t_config *config;
 extern MemoriaFisica *memoria;
 
 // Funciones
 int ejecutarServidorKernel(int *socketCliente);
 Proceso *crearProcesoEnMemoria(int pid);
 void eliminarProcesoDeMemoria(int pid);
-
+Proceso *buscar_proceso_por_pid(int pid);
 #endif // MEMORIA_CONEXION_KERNEL_H

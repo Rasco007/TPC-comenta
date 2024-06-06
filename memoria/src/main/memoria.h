@@ -44,9 +44,8 @@
  * @param value El valor que recibe del paquete sera recibido como parametro y utilizado como se desee.
  */
 
-//t_log* logger; 
+
 extern t_log* loggerError; 
-//t_config* config; 
 
 extern int sockets[3];
 

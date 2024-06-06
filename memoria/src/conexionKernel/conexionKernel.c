@@ -4,7 +4,24 @@
 int cantidadMaximaPaginas;
 uint32_t direccionBasePagina;
 uint32_t tamanioPagina;
+//serializar tabla de Segmentos
 
+
+
+
+uint32_t recibirPID(int socketCliente) {
+
+	int size, desplazamiento=0; 
+	uint32_t pid; 
+
+	void* buffer = recibirBuffer(socketCliente, &size);
+	desplazamiento += sizeof(int);
+	memcpy(&(pid), buffer + desplazamiento, sizeof(uint32_t));
+
+	free (buffer);
+	return pid; 
+
+}
 int ejecutarServidorKernel(int *socketCliente) {
     cantidadMaximaPaginas = config_get_int_value(config, "TAM_PAGINA");
     while (1) {
@@ -56,14 +73,12 @@ void eliminarProcesoDeMemoria(int pid) {
     }
 }
 
-/*Proceso *buscar_proceso_por_pid(int pid) {
+Proceso *buscar_proceso_por_pid(int pid) { //ver si pasar por referencia
     Proceso *proceso = NULL;
-    for (int i = 0; i < list_size(procesos); i++) {
-        Proceso *p = list_get(procesos, i);
-        if (p->pid == pid) {
-            proceso = p;
-            break;
+    for (int i = 0; i < NUM_MARCOS; i++) {
+        if (memoria->marcos[i].pid == pid) {
+            proceso = memoria->marcos[i].proceso;
         }
     }
     return proceso;
-}*/
+}

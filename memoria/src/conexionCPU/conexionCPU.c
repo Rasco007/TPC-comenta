@@ -2,8 +2,8 @@
 
 int tiempo;
 MemoriaFisica *memoria;
-t_log *logger;
-t_config *config;
+//t_log *logger;
+//t_config *config;
 char* valorLeido; 
 
 // Recibo peticiones de CPU y mando respuesta

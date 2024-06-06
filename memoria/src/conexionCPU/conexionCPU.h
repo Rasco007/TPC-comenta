@@ -17,9 +17,6 @@
 // Variables globales
 extern int tiempo;
 extern MemoriaFisica *memoria;
-extern t_config *config;
-extern t_log *logger;
-extern t_log* loggerError; 
 
 // Funciones
 int ejecutarServidorCPU(int *socketCliente);

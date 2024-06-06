@@ -1,8 +1,8 @@
 #include <estructura/estructura.h>
 #include <commons/log.h>
 
-extern t_log* logger;
-extern t_log* loggerError;
+//extern t_log* logger;
+//extern t_log* loggerError;
 
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica() {
