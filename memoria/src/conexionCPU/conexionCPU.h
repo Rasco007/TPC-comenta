@@ -9,20 +9,21 @@
 #include <global.h>
 #include <main/memoria.h>
 #include <estructura/estructura.h>
-//#include <configuraciones/configuraciones.h>
 
-int ejecutarServidorCPU(int*); 
+// Definiciones de las operaciones
+#define READ 0
+#define WRITE 1
 
-extern void* espacioDeUsuario; 
-extern Memoria* memoria;
+// Variables globales
+extern int tiempo;
+extern MemoriaFisica *memoria;
 
+// Funciones
+int ejecutarServidorCPU(int *socketCliente);
+char* leer(int32_t direccionFisica, int tamanio);
+void recibirPeticionDeLectura(int socketCPU);
+void recibirPeticionDeEscritura(int socketCPU);
+void enviarValorObtenido(int socketCPU);
+void escribir(char* valor, int32_t direccionFisica, int tamanio);
 
-extern t_config* config;
-extern t_log* logger; 
-extern t_log* loggerError; 
-
-
-#endif 
-
-
-
+#endif // MEMORIA_CONEXION_CPU_H
