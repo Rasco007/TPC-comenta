@@ -8,27 +8,10 @@ a modo de retardo en la obtención de la instrucción.
 
 int sockets[3];
 pthread_t threadCPU, threadKernel, threadIO;
-Memoria* memoria;
 
 t_log* logger; 
 t_log* loggerError; 
 t_config* config; 
-
-void terminar_programa() {
-    destruirMemoria(memoria);
-}
-
-void iniciar_memoria() {
-    //int tamano_pagina = confGet("TAM_PAGINA"); // Asignar el tamaño de la página según sea necesario
-    int tamano_pagina = 32;
-    int num_paginas = 32; // Número de páginas según sea necesario
-    memoria = crearMemoria(num_paginas, tamano_pagina);
-
-    if (memoria == NULL) {
-        log_error(logger, "Error al crear la memoria");
-        exit(EXIT_FAILURE);
-    }
-}
 
 int main() {
 
@@ -51,9 +34,6 @@ int main() {
 	sockets[2] = esperarCliente (server_fd);
 	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[2]);
 
-    // Inicialización de la memoria
-    iniciar_memoria();
-
     // Creación de hilos
     int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);
     int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, (void*)&sockets[1]);
@@ -70,21 +50,56 @@ int main() {
         error("Error en iniciar el servidor a Kernel");
     }
 
-    // Creación de un proceso (PID: 1, Tamaño: 10 páginas, Ruta del pseudocódigo: "pseudocodigo/procesos/proceso1.pc")
-    crear_proceso(memoria, 1, 10, "pseudocodigo/procesos/proceso1.pc");
+    MemoriaFisica *mf = inicializar_memoria_fisica();
 
-    // Ejemplo de obtener una instrucción
-    Pseudocodigo* pseudo = leerPseudocodigo("pseudocodigo/procesos/proceso1.pc");
-    char* instruccion = obtenerInstruccion(pseudo, 0);
-    if (instruccion != NULL) {
-        log_info(logger, "Instrucción obtenida: %s", instruccion);
+    // Inicializa dos procesos con sus archivos de pseudocódigo
+    Proceso *proceso1 = inicializar_proceso(1, "src/pseudocodigo/pseucodigo.pc");
+    Proceso *proceso2 = inicializar_proceso(2, "src/pseudocodigo/pseucodigo.pc");
+
+    if (!proceso1 || !proceso2) {
+        printf("Error al inicializar los procesos.\n");
+        liberar_memoria_fisica(mf);
+        return 1;
     }
 
-    // Destrucción del proceso (PID: 1, Tamaño: 10 páginas)
-    destruir_proceso(memoria, 1, 10);
+    // Asigna algunas páginas a los procesos
+    if (!asignar_pagina(mf, proceso1, 0)) {
+        printf("Error al asignar la página 0 al proceso 1.\n");
+    }
+    if (!asignar_pagina(mf, proceso1, 1)) {
+        printf("Error al asignar la página 1 al proceso 1.\n");
+    }
+    if (!asignar_pagina(mf, proceso2, 0)) {
+        printf("Error al asignar la página 0 al proceso 2.\n");
+    }
 
-    // Liberar pseudocódigo
-    liberarPseudocodigo(pseudo);
+    // TODO: el program counter deberia venir del CPU
+    int program_counter = 0;
+    while (1) {
+        char *instruccion1 = obtener_instruccion(proceso1, program_counter);
+        char *instruccion2 = obtener_instruccion(proceso2, program_counter);
+
+        if (instruccion1) {
+            printf("Instrucción del proceso 1 en el PC %d: %s", program_counter, instruccion1);
+        }
+        if (instruccion2) {
+            printf("Instrucción del proceso 2 en el PC %d: %s", program_counter, instruccion2);
+        }
+
+        if (!instruccion1 && !instruccion2) {
+            break; // Termina si no hay más instrucciones en ambos procesos
+        }
+
+        // Simula un retardo en la obtención de la instrucción
+        sleep(5);
+
+        program_counter++;
+    }
+
+    // Libera memoria
+    liberar_proceso(proceso1);
+    liberar_proceso(proceso2);
+    liberar_memoria_fisica(mf);
 
     // Espera a que los hilos terminen
     pthread_join(threadCPU, NULL);

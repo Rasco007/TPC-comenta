@@ -18,23 +18,23 @@ typedef struct {
 }t_motivoDeDesalojo; 
 
 typedef struct {
-    uint32_t id; 
-    uint32_t direccionBase; 
-    uint32_t tamanio; 
-}t_segmento;
+    int idPagina;
+    int idFrame;
+    int bitDeValidez;
+}t_pagina; //Ver si es correcto
 
 typedef struct {
-
     uint32_t pid; 
     int programCounter;
+    uint32_t SI;
+    uint32_t DI;
     uint32_t instruccionesLength;
     t_list* instrucciones; 
     t_dictionary* registrosCPU;  
-    uint32_t tablaDeSegmentosSize;
-    t_list* tablaDeSegmentos; 
+    uint32_t tablaDePaginasSize;
+    t_list* tablaDePaginas; 
     t_motivoDeDesalojo* motivoDesalojo;
     int64_t rafagaCPUEjecutada;
-
 } t_contexto;
 
 extern t_contexto* contextoEjecucion;
@@ -44,8 +44,8 @@ extern int socketCliente;
 void agregarMotivoAPaquete(t_paquete* paquete, t_motivoDeDesalojo* motivoDesalojo);
 void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU);
 void agregarInstruccionesAPaquete(t_paquete* paquete, t_list* instrucciones);
-void agregarTablaDeSegmentosAPaquete(t_paquete* paquete);
-void agregarSegmentoAPaquete(t_paquete* paquete, t_segmento* segmento);
+void agregarTablaDePaginasAPaquete(t_paquete* paquete);
+void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* pagina);
 
 // FUNCIONES PARA ENVIO DE CONTEXTO DE EJECUCION
 void enviarContextoActualizado(int socket);
@@ -55,8 +55,8 @@ void recibirContextoActualizado(int socket);
 void deserializarInstrucciones (void * buffer, int * desplazamiento);
 void deserializarRegistros (void * buffer, int * desplazamiento);
 void deserializarMotivoDesalojo (void * buffer, int * desplazamiento);
-t_segmento*  deserializarSegmento(void* buffer, int* desplazamiento);
-void deserializarTablaDeSegmentos (void * buffer, int * desplazamiento); 
+t_pagina*  deserializarPagina(void* buffer, int* desplazamiento);
+void deserializarTablaDePaginas (void * buffer, int * desplazamiento); 
 
 void iniciarContexto();
 void destroyContexto();

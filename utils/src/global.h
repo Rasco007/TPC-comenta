@@ -23,7 +23,7 @@
     } t_comando; 
     typedef struct {
         t_comando comando; 
-        char* parametros[3]; 
+        char* parametros[5]; 
     }t_instruccion; 
 
 void dormir(char* mensaje, int socket_cliente);

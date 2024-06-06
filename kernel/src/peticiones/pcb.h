@@ -29,7 +29,9 @@ typedef struct {
     uint32_t pid; 
     int socketPCB; 
     t_list* instrucciones; 
-    uint32_t programCounter;   
+    uint32_t programCounter;
+    uint32_t SI;
+    uint32_t DI;   
     estadoProceso estado; 
     t_dictionary* registrosCPU;
     t_temporal* tiempoEnReady; 
