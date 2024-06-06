@@ -65,86 +65,6 @@ int buscar(char *elemento, char **lista) {
     return (i > string_array_size(lista)) ? -1 : i;
 }
  
-void execute() {
-
-    switch(cantParametros) {
-        case 0:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
-            break;
-        case 1:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
-            break;
-        case 2:   
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case 3:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
-            break; 
-    }
-
-    switch(instruccionActual){//TODO: Completar con instrucciones restantes
-        case SET:
-            set_c(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case SUM:
-            sum_c(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case SUB:
-            sub_c(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case JNZ:
-            jnz(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_GEN_SLEEP:
-            io_gen_sleep(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case MOV_IN:
-            mov_in(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case MOV_OUT:
-            mov_out(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case WAIT:
-            wait_c(elementosInstruccion[1]);
-            break;
-        case SIGNAL:
-            signal_c(elementosInstruccion[1]);
-            break;
-        case EXIT:
-            exit_c();
-            break;
-        case IO_STDIN_READ:
-            io_stdin_read(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
-            break;
-        case IO_STDOUT_WRITE:
-            io_stdout_write(elementosInstruccion[1],elementosInstruccion[2], elementosInstruccion[3]);
-            break;
-        case IO_FS_CREATE:
-            io_fs_create(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_FS_DELETE:
-            io_fs_delete(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_FS_TRUNCATE:
-            io_fs_truncate(elementosInstruccion[1], elementosInstruccion[2],elementosInstruccion[3]);
-            break;
-        case IO_FS_WRITE:
-            io_fs_write(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
-            break;
-        case IO_FS_READ:
-            io_fs_read(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
-            break;
-        case RESIZE:
-            resize(elementosInstruccion[1]);
-            break;
-        case COPY_STRING:
-            copy_string(elementosInstruccion[1]);
-            break;
-        default:
-            break;
-    }
-}
-
 void check_interrupt(int socketClienteInterrupt, int socketClienteDispatch){
     if (recv(socketClienteInterrupt, NULL, 0, MSG_PEEK) != -1) {
         //motivo de desalojo???
@@ -369,8 +289,87 @@ int obtenerTamanioReg(char* registro){
 
 }
 
-//mmu
+void execute() {
 
+    switch(cantParametros) {
+        case 0:
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
+            break;
+        case 1:
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
+            break;
+        case 2:   
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case 3:
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
+            break; 
+    }
+
+    switch(instruccionActual){//TODO: Completar con instrucciones restantes
+        case SET:
+            set_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case SUM:
+            sum_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case SUB:
+            sub_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case JNZ:
+            jnz(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_GEN_SLEEP:
+            io_gen_sleep(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case MOV_IN:
+            mov_in(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case MOV_OUT:
+            mov_out(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case WAIT:
+            wait_c(elementosInstruccion[1]);
+            break;
+        case SIGNAL:
+            signal_c(elementosInstruccion[1]);
+            break;
+        case EXIT:
+            exit_c();
+            break;
+        case IO_STDIN_READ:
+            io_stdin_read(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
+            break;
+        case IO_STDOUT_WRITE:
+            io_stdout_write(elementosInstruccion[1],elementosInstruccion[2], elementosInstruccion[3]);
+            break;
+        case IO_FS_CREATE:
+            io_fs_create(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_DELETE:
+            io_fs_delete(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_TRUNCATE:
+            io_fs_truncate(elementosInstruccion[1], elementosInstruccion[2],elementosInstruccion[3]);
+            break;
+        case IO_FS_WRITE:
+            io_fs_write(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
+            break;
+        case IO_FS_READ:
+            io_fs_read(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
+            break;
+        case RESIZE:
+            resize(elementosInstruccion[1]);
+            break;
+        case COPY_STRING:
+            copy_string(elementosInstruccion[1]);
+            break;
+        default:
+            break;
+    }
+}
+
+//MMU
 uint32_t mmu(char* direccionLogica, int tamValor){
     /*int dirFisica;
     int dirLogica = atoi(direccionLogica);
