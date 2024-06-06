@@ -20,17 +20,6 @@ void escucharAlKernel() {
 }
 
 
-bool noEsBloqueante(t_comando instruccionActual) {
-	t_comando instruccionesBloqueantes[10] = {
-	//TODO: Completar instrucciones bloqueantes
-	};
-
-	for (int i = 0; i < 10; i++) 
-		if (instruccionActual == instruccionesBloqueantes[i]) return false;
-
-	return true;
-}
-
 //CPU recibe instrucciones del Kernel para hacer el ciclo de instruccion
 int ejecutarServidorCPU(int socketClienteDispatch,int socketClienteInterrupt){
     instruccionActual = -1;
@@ -48,9 +37,8 @@ int ejecutarServidorCPU(int socketClienteDispatch,int socketClienteInterrupt){
 			} 		
 				recibirContextoActualizado(socketClienteDispatch);
     			rafagaCPU = temporal_create(); 
-                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength 
-					  && (noEsBloqueante(instruccionActual))) {
-                    cicloDeInstruccion();
+                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength) {
+                    cicloDeInstruccion(socketClienteInterrupt,socketClienteDispatch);
                 }	
 				temporal_destroy (rafagaCPU);
 				break;
