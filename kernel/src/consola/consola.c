@@ -1,13 +1,34 @@
 #include <consola/consola.h>
+#include <readline/readline.h>
+#include <readline/history.h>
+
 //Se reciben dos archivos:El script con las funciones de kernel y el archivo de instrucciones
-int ejecutarConsola (int argc, char *argv[]) {
-    if (argc != 2) {
-        log_error(logger, "Cantidad de argumentos incorrecta");
-        return EXIT_FAILURE;
+int ejecutarConsola () {
+    char *linea;
+    log_info(logger,"Consola iniciada. Por favor ingrese un comando");
+    while (1) {
+        linea = readline(">");
+        if (!linea) {
+            break;
+        }
+        if (linea) {
+            add_history(linea);
+            log_info(logger, "Comando ingresado: %s", linea);
+        }
+        if (!strncmp(linea, "exit", 4)) {
+            free(linea);
+            break;
+        }
+        if(strncmp(linea, "INICIAR_PROCESO",15)){
+            iniciarProceso("a");
+        }
+        if(strncmp(linea, "FINALIZAR_PROCESO",17)){
+            finalizarProceso(1);
+        }
+
+        free(linea);
     }
 
-    logger = cambiarNombre(logger, "Consola");
-    ejecutarScript(argv[1]);
     return EXIT_SUCCESS;
 }
 
@@ -30,7 +51,7 @@ void ejecutarScript(const char* path) {
         if (strcmp(line, "INICIAR_PROCESO") == 0) {
             iniciarProceso(line + strlen("INICIAR_PROCESO") + 1);
         } else if (strcmp(line, "FINALIZAR_PROCESO") == 0) {
-            finalizarProceso(line + strlen("FINALIZAR_PROCESO") + 1);
+            //finalizarProceso(line + strlen("FINALIZAR_PROCESO") + 1);
         } else if (strcmp(line, "DETENER_PLANIFICACION") == 0) {
             detenerPlanificacion();
         } else if (strcmp(line, "INICIAR_PLANIFICACION") == 0) {

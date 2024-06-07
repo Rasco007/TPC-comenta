@@ -9,7 +9,7 @@
 #define obtenerAlgoritmoPlanificacion() config_get_string_value(config, "ALGORITMO_PLANIFICACION")
 #define obtenerRecursos()               config_get_array_value (config, "RECURSOS")
 #define obtenerInstanciasRecursos()     config_get_array_value (config, "INSTANCIAS_RECURSOS")
-#define obtenerQuantum()                config_get_int_value(config,"QUANTUM");
+#define obtenerQuantum()                config_get_int_value(config,"QUANTUM")
 
 
 extern t_config* config;

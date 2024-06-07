@@ -137,6 +137,7 @@ void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     ingresarAReady(proceso);
+    return; // Add this line to fix the issue
 }
 
 void io_stdin_read(t_pcb *proceso,char **parametros){
