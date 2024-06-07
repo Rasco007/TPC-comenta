@@ -5,6 +5,7 @@
 #include <contextoEjecucion/contextoEjecucion.h>
 #include <utilsServidor/utilsServidor.h>
 #include <conexiones/conexionMemoria.h>
+#include <escuchaIO/servidorIO.h>
 #include <peticiones/pcb.h>
 #include <planificacion/planificacion.h>
 #include <planificacion/algoritmosCortoPlazo.h>
@@ -24,7 +25,7 @@ extern t_contexto* contextoEjecucion;
 void retornoContexto(t_pcb*, t_contexto*);
 void volverACPU(t_pcb*); 
 
-void bloquearIO(t_pcb * proceso);
+void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo);
 
 void wait_s(t_pcb *proceso, char **parametros);
 void resize_s(t_pcb *proceso, char **parametros);

@@ -20,7 +20,8 @@ void conexionMemoria() {
     }
 }
 
-//Mando el PCB a memoria
+//PETICIONES KERNEL-MEMORIA
+
 void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     char * nombreAnterior = duplicarNombre(logger);
     logger = cambiarNombre(logger,"Kernel-Memoria");
@@ -44,7 +45,7 @@ void liberarMemoriaPCB(t_pcb* proceso){
     char * nombreAnterior = duplicarNombre(logger);
     logger = cambiarNombre(logger,"Kernel-Memoria");
 
-    log_debug(logger, "PID <%d>: Se envia señal para eliminar estructuras en memoria.", proceso->pid);
+    log_info(logger, "PID <%d>: Se envia señal para eliminar estructuras en memoria.", proceso->pid);
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 

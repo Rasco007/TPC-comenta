@@ -51,6 +51,7 @@ t_pcb *proximoAEjecutarVRR(){
     } //Es a modo de ejemplo, creo que no era asi...
 
     return pcbActual;*/
+    return desencolar(pcbsREADYaux);
 }
 
 
