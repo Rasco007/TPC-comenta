@@ -21,6 +21,7 @@ void finalizarProceso(int);
 void detenerPlanificacion();
 void iniciarPlanificacion();
 void procesoEstado();
+void modificarGradoMultiprogramacion(int);
 
 extern t_log* logger;
 
