@@ -84,14 +84,18 @@ void listarPIDS(t_list *pcbs) {
 }
 
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid){
+    
     int cantProcesos = list_size(listaPCBs); 
-
+    log_info(logger, "cantProcesos: %d", cantProcesos);
+     
     t_pcb* pcb;
     for(int i=0;i<cantProcesos;i++){
         
         pcb = list_get(listaPCBs, i);
         if(pcb->pid == pid) return pcb;
     }
+
+    log_info(logger, "NO LO ENCONTRO, RETORNO NULL"); 
 
     return NULL;
 }

@@ -172,6 +172,8 @@ void exit_s(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
     proceso->estado = EXIT;
 
+    encolar(pcbsParaExit,proceso);
+
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
 

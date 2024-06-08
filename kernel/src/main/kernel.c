@@ -26,17 +26,15 @@ int main () {
 	inicializarListasPCBs(); 
 	atexit (destruirListasPCBs);
 
-	
-
 	conexionMemoria(); 
 	conexionCPU();
-	ejecutarConsola();
 	
     char * nombre = string_duplicate("CPU-KERNEL");
 	cambiarNombre(logger, nombre);
     escucharAlIO();
 	free (nombre);
 
+    ejecutarConsola();
 
     //Inicializar Hilos
 	int opCodes [3] = {
