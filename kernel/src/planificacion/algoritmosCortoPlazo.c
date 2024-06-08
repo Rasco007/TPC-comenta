@@ -43,6 +43,7 @@ t_pcb *proximoAEjecutarRR(){
 }
 
 t_pcb *proximoAEjecutarVRR(){
+    t_pcb* pcb=crearPCB();
     /*char *quantum = obtenerQuantum(); //Obtengo el quantum del config
     t_pcb *pcbActual = desencolar(pcbsREADY); // Saco el primer pcb de la cola de ready
     
@@ -51,6 +52,7 @@ t_pcb *proximoAEjecutarVRR(){
     } //Es a modo de ejemplo, creo que no era asi...
 
     return pcbActual;*/
+    return pcb;
 }
 
 

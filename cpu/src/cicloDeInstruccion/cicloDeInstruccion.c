@@ -115,8 +115,9 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     enviarContextoActualizado(socketCliente);
 }
 
-void copy_string(char* tamanio){ //No es bloqueante
+void copy_string(char* tamanio){
     //Copiar contenido de SI a DI
+    contextoEjecucion->DI=contextoEjecucion->DI; //Ver
 }
 
 void resize(char* tamanio){

@@ -54,19 +54,8 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
     }
 }
 
-void volverACPU(t_pcb* proceso) {
-    contextoEjecucion = procesarPCB(proceso);
-    rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
-    retornoContexto(proceso, contextoEjecucion); 
-}
 
-void bloquearIO(t_pcb * proceso){  
-    sleep(tiempoIO);
-    estadoAnterior = proceso->estado;
-    proceso->estado = READY;
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    ingresarAReady(proceso);
-}
+
 
 void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {
     log_info(logger,"PID: <%d> - Bloqueado por: %s", proceso->pid, motivo); //Log obligatorio
@@ -77,8 +66,42 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
 }
 
 //FUNCIONES RETORNO CONTEXTO
+//WAIT
 void wait_s(t_pcb *proceso,char **parametros){
+    char* recurso=parametros[0];
+    int indexRecurso = indiceRecurso(recurso);
 
+    if(indexRecurso==-1){
+        exit_s(proceso,&invalidResource);
+        return;
+    }
+
+    int instanciaRecurso=instanciasRecursos[indexRecurso];
+    instanciaRecurso--;
+    instanciasRecursos[indexRecurso]=instanciaRecurso;
+
+    log_info(logger,"PID:<%d>-WAIT:<%s>-Instancias:<%d>",proceso->pid,recurso,instanciaRecurso);
+
+    if(instanciaRecurso<0){
+        t_list *colaBloqueadosRecurso=(t_list*)list_get(recursos,indexRecurso);
+
+        estadoAnterior = proceso->estado;
+        proceso->estado = BLOCKED;
+
+        list_add(colaBloqueadosRecurso,(void*)proceso);
+
+        loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+        loggearBloqueoDeProcesos(proceso, recurso);
+    } else {
+        list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+        volverACPU(proceso);
+    }
+}
+
+void volverACPU(t_pcb* proceso) {
+    contextoEjecucion = procesarPCB(proceso);
+    rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
+    retornoContexto(proceso, contextoEjecucion); 
 }
 
 void signal_s(t_pcb *proceso,char **parametros){
@@ -89,8 +112,32 @@ void resize_s(t_pcb *proceso,char **parametros){
 
 }
 
+//IO_GEN_SLEEP
 void io_gen_sleep(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
 
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    
+    log_info(logger,"PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
+
+    pthread_t pcb_bloqueado;
+    if(!pthread_create(&pcb_bloqueado, NULL, dormirIO(proceso,parametros[0],parametros[1]), proceso)){
+        pthread_detach(pcb_bloqueado);
+    } else {
+        log_error(loggerError, "Error al crear hilo para dormir IO");
+    }
+}
+
+void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){  
+    //enviarMensaje(socketClienteIO, "IO_GEN_SLEEP",tiempo);
+    //Le mandaria una señal a la interfaz de IO para que duerma el tiempo que le pase por parametro
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    ingresarAReady(proceso);
+    return; // Add this line to fix the issue
 }
 
 void io_stdin_read(t_pcb *proceso,char **parametros){

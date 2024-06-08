@@ -14,7 +14,7 @@
 #include <peticiones/pcb.h>
 #include <conexiones/conexionMemoria.h>
 
-int ejecutarConsola (int, char *archivos[]);
+int ejecutarConsola ();
 void ejecutarScript(const char*);
 void iniciarProceso(const char*);
 void finalizarProceso(int);
