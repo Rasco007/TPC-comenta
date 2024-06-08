@@ -19,10 +19,10 @@ int ejecutarConsola () {
             free(linea);
             break;
         }
-        if(strncmp(linea, "INICIAR_PROCESO",15)){
+        if(!strncmp(linea, "INICIAR_PROCESO",15)){
             iniciarProceso("a");
         }
-        if(strncmp(linea, "FINALIZAR_PROCESO",17)){
+        if(!strncmp(linea, "FINALIZAR_PROCESO",17)){
             finalizarProceso(1);
         }
 
@@ -70,7 +70,9 @@ void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de n
 
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){
-    t_pcb* pcb = buscarPID(pcbsParaExit,pid);
+    log_info(logger, "Busco");   
+    t_pcb* pcb = buscarPID(pcbsNEW,pid); //TODO: esto deberia ser la cola de pcbsParaExit ! 
+    log_info(logger, "Destruyo");   
     destruirPCB(pcb);
     log_info(logger, "Se finaliza el proceso <%d>", pid);    
 }
