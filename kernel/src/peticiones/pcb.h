@@ -10,6 +10,7 @@
 #include <commons/temporal.h>
 #include <global.h>
 #include <main/configuraciones.h>
+#include <conexiones/conexionMemoria.h>
 
 typedef enum estadoProceso{
     NEW, 
@@ -95,7 +96,8 @@ void encolar(t_list* pcbs,t_pcb* pcb);
 t_pcb* desencolar(t_list* pcbs);
 
 void agregarPID(void *value); 
-void listarPIDS(t_list *pcbs); 
+void listarPIDS(t_list *pcbs);
+void imprimirListaPCBs(t_list *pcbs);
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid);
 
 

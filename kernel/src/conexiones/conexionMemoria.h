@@ -7,13 +7,14 @@
 #include <contextoEjecucion/contextoEjecucion.h>
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
-#include "../../src/peticiones/pcb.h"
+#include <peticiones/pcb.h>
 
 
 
 void conexionMemoria();
-void recibirEstructurasInicialesMemoria(t_pcb*); 
+void recibirEstructurasInicialesMemoria(t_pcb* pcb); 
 void liberarMemoriaPCB(t_pcb* proceso);
+
 
 extern t_log* loggerError; 
 
