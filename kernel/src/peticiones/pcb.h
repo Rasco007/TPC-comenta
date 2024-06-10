@@ -10,7 +10,6 @@
 #include <commons/temporal.h>
 #include <global.h>
 #include <main/configuraciones.h>
-#include <conexiones/conexionMemoria.h>
 
 typedef enum estadoProceso{
     NEW, 

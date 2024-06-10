@@ -1,4 +1,5 @@
 #include <peticiones/pcb.h>
+#include "../conexiones/conexionMemoria.h"
 
 char* pidsInvolucrados; 
 
