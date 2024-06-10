@@ -6,9 +6,10 @@
 int ejecutarConsola () {
     char *linea;
     logger=cambiarNombre(logger,"Consola-Kerel");
-    log_info(logger,"Consola iniciada. Por favor ingrese un comando");
+    log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
     while (1) {
         linea = readline(">");
+        string_to_upper(linea);
         if (!linea) {
             break;
         }
@@ -16,7 +17,7 @@ int ejecutarConsola () {
             add_history(linea);
             log_info(logger, "Comando ingresado: %s", linea);
         }
-        if (!strncmp(linea, "exit", 4)) {
+        if (!strncmp(linea, "EXIT", 4)) {
             free(linea);
             break;
         }
@@ -70,6 +71,18 @@ int ejecutarConsola () {
         if(!strncmp(linea, "PROCESO_ESTADO", 14)) {
             procesoEstado();
         }
+        if(!strncmp(linea,"MENU",strlen("MENU"))){
+            log_info(logger,"EJECUTAR_SCRIPT [PATH] - Ejecuta un script con comandos de kernel\n"
+                            "INICIAR_PROCESO [PATH] - Inicia un proceso\n"
+                            "FINALIZAR_PROCESO [PID] - Finaliza un proceso\n"
+                            "DETENER_PLANIFICACION - Detiene la planificacion\n"
+                            "INICIAR_PLANIFICACION - Inicia la planificacion\n"
+                            "MULTIPROGRAMACION [VALOR] - Modifica el grado de multiprogramacion\n"
+                            "PROCESO_ESTADO - Muestra el estado de los procesos\n"
+                            "MENU - Muestra los comandos disponibles\n"
+                            "EXIT - Sale de la consola");
+        }
+
         free(linea);
     }
 
@@ -171,12 +184,11 @@ void iniciarPlanificacion(){
 //PROCESO_ESTADO
 void procesoEstado(){
     log_info(logger, "Procesos en NEW");
-    listarPIDS(pcbsNEW);
+    imprimirListaPCBs(pcbsNEW);
     log_info(logger, "Procesos en READY");
-    listarPIDS(pcbsREADY);
+    imprimirListaPCBs(pcbsREADY);
     log_info(logger, "Procesos en EXEC");
-    listarPIDS(pcbsEnMemoria);
-
+    imprimirListaPCBs(pcbsEnMemoria);
     //Hace falta?
     /*log_info(logger, "Procesos en BLOCK");
     listarPIDS(pcbsBloqueados);
@@ -193,5 +205,4 @@ void modificarGradoMultiprogramacion(int valor){
         gradoMultiprogramacion = valor;
         log_info(logger, "Grado de multiprogramacion modificado a %d", valor);
     }
-    gradoMultiprogramacion = valor;
 }

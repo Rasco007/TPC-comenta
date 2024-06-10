@@ -31,6 +31,7 @@ int ejecutarServidorKernel(int *socketCliente) {
                 int pid = recibirPID(*socketCliente);
                 Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
                 // enviarTablaPaginas(procesoNuevo); // Implementar si es necesario
+                log_info(logger,"Creacion de Proceso PID: <%d>", pid);
                 break;
             }
             case ENDPCB: {
