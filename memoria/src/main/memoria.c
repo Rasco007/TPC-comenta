@@ -55,7 +55,7 @@ int main() {
 
     // Inicializa dos procesos con sus archivos de pseudocódigo
     //Espero a que me llege un path
-    sem_t path;
+    //sem_t path;
     sem_init(&path, 0, 0);
     sem_wait(&path);
     Proceso *proceso = inicializar_proceso(pathInstrucciones);
