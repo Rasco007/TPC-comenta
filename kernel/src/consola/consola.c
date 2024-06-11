@@ -2,6 +2,13 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 
+void str_to_upper(char *str) {
+    for(int i = 0; str[i]!= '\0'; i++) {
+        if(str[i] == ' ') break; // Salta si encuentra un espacio
+        str[i] = toupper((unsigned char)str[i]); // Convierte a mayúscula
+    }
+}
+
 //Se reciben dos archivos:El script con las funciones de kernel y el archivo de instrucciones
 int ejecutarConsola () {
     char *linea;
@@ -9,7 +16,7 @@ int ejecutarConsola () {
     log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
     while (1) {
         linea = readline(">");
-        string_to_upper(linea);
+        str_to_upper(linea);
         if (!linea) {
             break;
         }
@@ -39,7 +46,7 @@ int ejecutarConsola () {
                 char* path = token;
                 iniciarProceso(path);
             } else {
-                log_error(logger, "No se proporcionó un path para INCIIAR_PROCESO");
+                log_error(logger, "No se proporcionó un path para INICIAR_PROCESO");
             }
         }
         if(!strncmp(linea, "FINALIZAR_PROCESO",17)){
