@@ -1,9 +1,12 @@
 #include <conexionKernel/conexionKernel.h>
 #include "conexionKernel.h"
 
+
 int cantidadMaximaPaginas;
 uint32_t direccionBasePagina;
 uint32_t tamanioPagina;
+char* pathInstrucciones;
+sem_t path;
 //serializar tabla de Segmentos
 
 
@@ -29,7 +32,7 @@ int ejecutarServidorKernel(int *socketCliente) {
         switch (peticionRealizada) {
             case NEWPCB: {
                 int pid = recibirPID(*socketCliente);
-                Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
+                //Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
                 // enviarTablaPaginas(procesoNuevo); // Implementar si es necesario
                 log_info(logger,"Creacion de Proceso PID: <%d>", pid);
                 break;
@@ -39,6 +42,12 @@ int ejecutarServidorKernel(int *socketCliente) {
                 // liberarTodosLasPaginas(pid); // Implementar si es necesario
                 eliminarProcesoDeMemoria(pid);
                 log_info(logger, "Eliminación de Proceso PID: <%d>", pid);
+                break;
+            }
+            case MENSAJE:{
+                pathInstrucciones=recibirMensaje(*socketCliente); //Recibo el path
+                log_info(logger,"Path de instrucciones recibido: %s",pathInstrucciones);
+                sem_post(&path);
                 break;
             }
             case -1:

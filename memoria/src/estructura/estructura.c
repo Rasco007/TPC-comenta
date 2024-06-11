@@ -36,9 +36,8 @@ void liberar_tabla_paginas(TablaPaginas *tp) {
 }
 
 // Implementación del proceso
-Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
+Proceso *inicializar_proceso(const char *archivo_pseudocodigo) {
     Proceso *proceso = malloc(sizeof(Proceso));
-    proceso->pid = pid;
     proceso->tabla_paginas = inicializar_tabla_paginas();
     
     // Leer archivo de pseudocódigo

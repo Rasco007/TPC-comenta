@@ -34,7 +34,18 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     eliminarPaquete (peticion);
 
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
-    recibirOperacion (conexionAMemoria);
+    //recibirOperacion (conexionAMemoria);
+    logger = cambiarNombre(logger, nombreAnterior);
+    free (nombreAnterior);
+}
+
+void enviarPathDeInstrucciones(char* path){
+    char * nombreAnterior = duplicarNombre(logger);
+    logger = cambiarNombre(logger,"Kernel-Memoria");
+
+    enviarMensaje(path,conexionAMemoria);
+    
+    log_info(logger,"Se envio el path de instrucciones a memoria.");
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }

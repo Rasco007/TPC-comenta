@@ -153,7 +153,8 @@ void ejecutarScript(const char* path) {
 void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de new
     t_pcb* pcb = crearPCB();
     ingresarANew(pcb);
-} //Falta ver lo del path al FS que dice la consigna.
+    enviarPathDeInstrucciones(path);
+} 
 
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){

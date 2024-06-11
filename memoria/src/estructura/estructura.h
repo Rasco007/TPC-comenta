@@ -43,7 +43,7 @@ TablaPaginas *inicializar_tabla_paginas();
 void liberar_tabla_paginas(TablaPaginas *tp);
 
 // Definiciones para el proceso
-Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo);
+Proceso *inicializar_proceso(const char *archivo_pseudocodigo);
 void liberar_proceso(Proceso *proceso);
 char *obtener_instruccion(Proceso *proceso, int program_counter);
 
