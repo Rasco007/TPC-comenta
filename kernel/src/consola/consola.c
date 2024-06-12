@@ -197,11 +197,10 @@ void procesoEstado(){
     imprimirListaPCBs(pcbsREADY);
     log_info(logger, "Procesos en EXEC");
     imprimirListaPCBs(pcbsEnMemoria);
-    //Hace falta?
-    /*log_info(logger, "Procesos en BLOCK");
+    log_info(logger, "Procesos en BLOCKED");
     listarPIDS(pcbsBloqueados);
     log_info(logger, "Procesos en EXIT");
-    listarPIDS(pcbsParaExit);*/
+    listarPIDS(pcbsParaExit);
 }
 
 //MULTIPROGRAMACION [VALOR]

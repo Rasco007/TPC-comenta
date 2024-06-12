@@ -51,7 +51,7 @@ void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* pagina){
 
 void agregarMotivoAPaquete (t_paquete* paquete, t_motivoDeDesalojo* motivoDesalojo){
 
-    agregarAPaquete (paquete, (void *)&motivoDesalojo->comando, sizeof (motivoDesalojo->comando));
+    agregarAPaquete (paquete, (void *)&motivoDesalojo->motivo, sizeof (motivoDesalojo->motivo));
     agregarAPaquete (paquete, (void *)&motivoDesalojo->parametrosLength, sizeof (motivoDesalojo->parametrosLength));
     for (int i = 0; i < motivoDesalojo->parametrosLength; i++) 
         agregarAPaquete (paquete, (void *)motivoDesalojo->parametros[i], (strlen (motivoDesalojo->parametros[i]) + 1) * sizeof(char));
@@ -212,7 +212,7 @@ t_pagina* deserializarPagina(void* buffer, int* desplazamiento){
 void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
 
     // Desplazamiento: Comando de desalojo y tamaño de parametrosLength.
-    memcpy (&(contextoEjecucion->motivoDesalojo->comando), buffer + (* desplazamiento), sizeof (t_comando));
+    memcpy (&(contextoEjecucion->motivoDesalojo->motivo), buffer + (* desplazamiento), sizeof (t_comando));
     (* desplazamiento) += sizeof (t_comando) + sizeof (int);
 
     // Desplazamiento: parametrosLength.
@@ -251,7 +251,7 @@ void iniciarContexto(){
     contextoEjecucion->motivoDesalojo->parametros[1] = "";
     contextoEjecucion->motivoDesalojo->parametros[2] = "";
     contextoEjecucion->motivoDesalojo->parametrosLength = 0;
-    contextoEjecucion->motivoDesalojo->comando = 0;
+    contextoEjecucion->motivoDesalojo->motivo = 0;
 	
 }
 

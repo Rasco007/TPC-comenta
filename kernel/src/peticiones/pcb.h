@@ -37,6 +37,8 @@ typedef struct {
     t_temporal* tiempoEnReady; 
     t_list* recursosAsignados;
     t_list* tablaDePaginas;
+    int64_t quantum;
+    int32_t rafagasEjecutadas;
 } t_pcb; 
 
 
