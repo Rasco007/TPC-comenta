@@ -251,7 +251,7 @@ void destruirTemporizador (t_temporal * temporizador) {
 
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
-    contextoEjecucion->motivoDesalojo->comando = comando;
+    contextoEjecucion->motivoDesalojo->motivo = comando;
     for (int i = 0; i < numParametros; i++)
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;

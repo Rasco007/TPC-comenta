@@ -54,7 +54,7 @@ Proceso *inicializar_proceso(const char *archivo_pseudocodigo) {
     while (fgets(linea, sizeof(linea), archivo)) {
         proceso->numero_instrucciones++;
         proceso->instrucciones = realloc(proceso->instrucciones, proceso->numero_instrucciones * sizeof(char *));
-        proceso->instrucciones[proceso->numero_instrucciones - 1] = strdup(linea);
+        proceso->instrucciones[proceso->numero_instrucciones - 1] = string_duplicate(linea);
     }
     fclose(archivo);
     
