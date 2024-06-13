@@ -4,7 +4,7 @@ sem_t hayProcesosReady;
 sem_t hayProcesosNuevos;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
-t_list *pcbsREADYAux;
+t_list *pcbsREADYaux;
 t_list *pcbsEnMemoria;
 t_list *pcbsBloqueados;
 t_list *pcbsParaExit;

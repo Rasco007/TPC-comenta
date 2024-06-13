@@ -22,7 +22,7 @@ void detenerPlanificacion();
 void iniciarPlanificacion();
 void procesoEstado();
 void modificarGradoMultiprogramacion(int);
-
+void enviarPathDeInstrucciones(const char *path);
 extern t_log* logger;
 
 #endif /* CLIENT_H_ */

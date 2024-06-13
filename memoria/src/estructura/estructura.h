@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#include <commons/string.h>
+
 // Definiciones para la memoria física
 #define TAMANO_PAGINA 4096 // Tamaño de cada página (4KB)
 #define NUM_MARCOS 64      // Número total de marcos en la memoria física
@@ -46,5 +48,7 @@ void liberar_tabla_paginas(TablaPaginas *tp);
 Proceso *inicializar_proceso(const char *archivo_pseudocodigo);
 void liberar_proceso(Proceso *proceso);
 char *obtener_instruccion(Proceso *proceso, int program_counter);
+
+bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina);
 
 #endif // ESTRUCTURA_H
