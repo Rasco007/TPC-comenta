@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <readline/readline.h>
+#include <readline/history.h>
+
 #include <commons/log.h>
 #include <commons/config.h>
 #include <pthread.h>
