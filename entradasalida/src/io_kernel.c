@@ -22,6 +22,12 @@ void io_atender_kernel(){
    			enviarMensaje("Terminó I/O", fd_kernel);*/
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
+		case IO_STDIN_READ:
+			hacer_funcion_stdin(fd_kernel);
+   			break;
+		case IO_STDOUT_WRITE:
+			hacer_funcion_stdout(fd_kernel);
+   			break;
     	case -1:
    			log_error(logger, "Kernel se desconectó. Terminando servidor");
    			control = 0;
@@ -32,6 +38,19 @@ void io_atender_kernel(){
     	}
 	}
 }
+
+void hacer_funcion_stdin(int socket_cliente) {
+
+	leer_por_consola();
+	printf('hacer funcion stdin');
+    
+}
+
+void hacer_funcion_stdout(int socket_cliente) {
+	printf('hacer funcion stdout');
+    
+}
+
 
 void recibir_mensaje_y_dormir(int socket_cliente) {
     // Buffer para almacenar el mensaje recibido
@@ -60,5 +79,24 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
 	enviarMensaje("Terminó I/O", fd_kernel);
 	log_info(logger, "dps de dormir");
 	
+    
+}
+
+void leer_por_consola() {
+	
+  log_info(logger,"Por favor ingrese un texto y presione Enter.");
+    // Leer la línea de entrada del usuario
+    char *input = readline(">");
+
+    // Verificar si se ha recibido algo
+    if (input != NULL) {
+        // Imprimir lo ingresado
+        log_info(logger, "Has ingresado: %s\n", input);
+        
+        // Liberar la memoria asignada para la entrada
+        free(input);
+    } else {
+        log_error(loggerError,"Error al leer la entrada.\n");
+    }
     
 }

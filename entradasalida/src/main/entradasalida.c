@@ -38,10 +38,26 @@ int main(int argc, char** argv) {
 	conexionMemoria();
 	//conexionKernel();
 
-	pthread_t hilo_kernel;
-    pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
-    pthread_join(hilo_kernel, NULL);
+	// pthread_t hilo_kernel;
+    // pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
+    // pthread_join(hilo_kernel, NULL);
  
+
+  log_info(logger,"Por favor ingrese un texto y presione Enter.");
+    // Leer la línea de entrada del usuario
+    char *input = readline(">");
+
+    // Verificar si se ha recibido algo
+    if (input != NULL) {
+        // Imprimir lo ingresado
+        log_info(logger, "Has ingresado: %s\n", input);
+        
+        // Liberar la memoria asignada para la entrada
+        free(input);
+    } else {
+        log_error(loggerError,"Error al leer la entrada.\n");
+    }
+
 	return EXIT_SUCCESS;
 	 
 }
