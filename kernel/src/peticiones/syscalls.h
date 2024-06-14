@@ -22,9 +22,11 @@ extern t_list* pcbsEnMemoria;
 extern t_contexto* contextoEjecucion;
 
 void retornoContexto(t_pcb*, t_contexto*);
-void volverACPU(t_pcb*); 
+void volverACPU(t_pcb*);
 
-void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo);
+void *dormirIO(t_pcb *proceso, char *interfaz, char *tiempo);
+
+void pasarAReady(t_pcb *proceso);
 
 void wait_s(t_pcb *proceso, char **parametros);
 void resize_s(t_pcb *proceso, char **parametros);
@@ -44,4 +46,9 @@ void loggearBloqueoDeProcesos(t_pcb*,char* motivo);
 
 void loggearSalidaDeProceso(t_pcb*,char* motivo); 
 
+void *mandar_ejecutar_stdout(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio);
+void *mandar_ejecutar_stdin(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio);
+void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero);
+void enviarMensajeSTDIN(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio);
+void enviarMensajeSTDOUT(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio);
 #endif /* SYSCALLS_H_ */

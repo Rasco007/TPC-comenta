@@ -41,7 +41,9 @@ void io_atender_kernel(){
 
 void hacer_funcion_stdin(int socket_cliente) {
 
+	recibir_parametros_stdin(socket_cliente);
 	leer_por_consola();
+	
 	printf('hacer funcion stdin');
     
 }
@@ -79,9 +81,38 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
 	enviarMensaje("Terminó I/O", fd_kernel);
 	log_info(logger, "dps de dormir");
 	
-    
+    //TODO[ MANDAR RTA A KERNEL]
 }
 
+void recibir_parametros_stdin(int socket_cliente){
+	 // Buffer para almacenar el mensaje recibido
+    char buffer[1024];
+    
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket_cliente, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+
+    // Interpretar el mensaje recibido como un entero
+    uint32_t registro_tamanio;
+    memcpy(&registro_tamanio, buffer, sizeof(uint32_t));
+
+	// Interpretar el mensaje recibido como un entero
+    uint32_t registro_direccion;
+    memcpy(&registro_direccion, buffer, sizeof(uint32_t));
+
+	// Extraer el nombre del inicio del buffer
+    char* nombre = buffer + sizeof(int);
+    // Asegurarse de que el nombre esté correctamente terminado por un carácter nulo
+    nombre[bytes_recibidos - sizeof(int)] = '\0';
+	
+	log_info(logger, "Nombre recibido: %s", nombre);
+	log_info(logger, "Registro tamaño recibido: %s", registro_tamanio);
+	log_info(logger, "Registro dirección recibido: %s", registro_direccion);
+}
 void leer_por_consola() {
 	
   log_info(logger,"Por favor ingrese un texto y presione Enter.");
