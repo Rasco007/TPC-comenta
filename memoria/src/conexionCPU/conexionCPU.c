@@ -16,12 +16,18 @@ int ejecutarServidorCPU(int *socketCliente) {
 
         switch (peticion) {
             case READ:
+            log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
                 enviarValorObtenido(*socketCliente);
                 break;
             case WRITE:
                 recibirPeticionDeEscritura(*socketCliente);
                 enviarMensaje("OK", *socketCliente);
+                break;
+            case MMU:
+                log_info(logger, "Llegue al case MMU");
+                /*recibirPeticionDeLectura(*socketCliente);
+                enviarValorObtenido(*socketCliente);*/
                 break;
             case -1:
                 log_error(logger, "El CPU se desconectó");

@@ -8,12 +8,23 @@ solicitar una llamada al Kernel, o deber ser desalojado (interrupción).*/
 
 #include <main/cpu.h>
 
+uint64_t tiempo_actual = 0;
+TLB tlb;
+PageTable *page_table;
+
+void inicializar_tlb() {
+    tlb.size = 32; //todo: tiene que agarrar el CANTIDAD_ENTRADAS_TLB
+    for (size_t i = 0; i < 32; i++) {
+        tlb.entries[i].valid = false;
+    }
+	log_info(logger, "TLB inicializada. Primer entrada: %d", tlb.entries[0].valid);
+}
 
 int main(void){
 	
 	logger = iniciarLogger("cpu.log", "CPU");
 	loggerError = iniciarLogger("errores.log", "Errores CPU");
-	
+
 	config = iniciarConfiguracion("cpu.config");
 
 	atexit(terminarPrograma);
@@ -22,8 +33,17 @@ int main(void){
 
 	char * nombre = string_duplicate("CPU-KERNEL");
 	cambiarNombre(logger, nombre);
-    escucharAlKernel();
+
+	inicializar_tlb(); 
+
+    //escucharAlKernel();
+
+	mmu("12345", 32, tlb);
+	
 
 	free (nombre);
+	/*free(page_table->entries);
+    free(page_table);*/ //TODO: Liberar
+	
 	return EXIT_SUCCESS;
-}	
+}

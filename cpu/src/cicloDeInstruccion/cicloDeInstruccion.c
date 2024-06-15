@@ -193,25 +193,29 @@ void mov_in(char* registro, char* direccionLogica){
     char* valorAInsertar;
     uint32_t tamRegistro = (uint32_t)obtenerTamanioReg(registro);
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(direccionLogica, tamRegistro);
+    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
+
+    log_info(logger, "Direccion fisica: %d", dirFisica);
 
     if(dirFisica!=UINT32_MAX){
-    t_paquete* peticion = crearPaquete();
-    peticion->codigo_operacion = READ;
-    agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
-    agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
-    agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
-    enviarPaquete(peticion, conexionAMemoria);    
-    eliminarPaquete (peticion);
+        t_paquete* peticion = crearPaquete();
+        peticion->codigo_operacion = READ;
+        agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
+        agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
+        agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
+        enviarPaquete(peticion, conexionAMemoria);    
+        eliminarPaquete (peticion);
 
-    recibirOperacion(conexionAMemoria);
-    valorAInsertar = recibirMensaje(conexionAMemoria);
+        recibirOperacion(conexionAMemoria);
+        valorAInsertar = recibirMensaje(conexionAMemoria);
 
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
-    
-    log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
-    free (valorAInsertar);
+        dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
+        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
+        
+        log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
+        free (valorAInsertar);
+    }else {
+        log_info(logger, "Error: Dirección física inválida\n");
     }
 };
 
@@ -221,7 +225,7 @@ void mov_out(char* direccionLogica, char* registro){
     int tamRegistro = obtenerTamanioReg(registro);
 
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(direccionLogica, tamRegistro);
+    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
 
     if(dirFisica != UINT32_MAX){    
     t_paquete* peticion = crearPaquete();
@@ -367,8 +371,102 @@ void execute() {
     }
 }
 
+/*void inicializar_tabla_paginas(size_t num_pages) {
+    page_table = (PageTable *)malloc(sizeof(PageTable));
+    if (page_table == NULL) {
+        perror("Error al inicializar la tabla de páginas.");
+        exit(EXIT_FAILURE);
+    }
+
+    page_table->entries = (PageTableEntry *)malloc(num_pages * sizeof(PageTableEntry));
+    if (page_table->entries == NULL) {
+        free(page_table);
+        perror("Error al inicializar la entrada de la tabla de páginas.");
+        exit(EXIT_FAILURE);
+    }
+
+    page_table->size = num_pages;
+    for (size_t i = 0; i < num_pages; i++) {
+        page_table->entries[i].valid = false;
+    }
+}*/
+
+
 //MMU
-uint32_t mmu(char* direccionLogica, int tamValor){
-    //TODO: Implementacion para paginacion
-    return UINT32_MAX; 
+uint32_t mmu(char* direccionLogica, int tamValor, TLB tlb){
+
+    //log_info(logger, "Dirección lógica: %s - Tam valor: %d", direccionLogica, tamValor);
+
+    uint32_t dirLogica = (uint32_t)strtoul(direccionLogica, NULL, 10);
+    /*log_info(logger, "dirLogica: %u",dirLogica);*/
+
+    uint32_t page_number = dirLogica / PAGE_SIZE;
+    uint32_t offset = dirLogica - page_number * PAGE_SIZE;
+
+    //log_info(logger, "page_number: %d - offset: %d",page_number,offset);
+    
+
+
+    // Consultar la TLB
+    /*log_info(logger, "Consultar la TLB");
+    for (size_t i = 0; i < tlb.size; i++) {
+        if (tlb.entries[i].valid && tlb.entries[i].page_number == page_number) {
+            // TLB Hit
+            //tlb.entries[i].last_used = tiempo_actual++;
+            log_info(logger, "TLB Hit");
+            return tlb.entries[i].frame_number * PAGE_SIZE + offset;
+        }
+    }*/
+
+    log_info(logger, "TLB Miss, consultar la tabla de páginas");
+
+    
+    // TLB Miss, consultar a la memoria para obtener el frame correspondiente a la página buscada
+    t_paquete* peticion = crearPaquete();
+    peticion->codigo_operacion = MMU;
+    /*agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
+    agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
+    agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));*/
+    enviarPaquete(peticion, conexionAMemoria);    
+    /*eliminarPaquete (peticion);
+
+    recibirOperacion(conexionAMemoria);
+    valorAInsertar = recibirMensaje(conexionAMemoria);*/
+
+    // Agregar entrada a la TLB
+    /*bool entrada_agregada = false;
+    for (size_t i = 0; i < tlb.size; i++) {
+        if (!tlb.entries[i].valid) {
+            tlb.entries[i] = (TLBEntry){.page_number = page_number, .frame_number = frame_number, .valid = true, .last_used = tiempo_actual++};
+            entrada_agregada = true;
+            break;
+        }
+    }
+
+    if (!entrada_agregada) {
+        // Reemplazo de la TLB usando LRU (o cualquier otro algoritmo)
+        size_t victim_index = 0;
+        uint64_t oldest_time = tlb.entries[0].last_used;
+        for (size_t i = 1; i < tlb.size; i++) {
+            if (tlb.entries[i].last_used < oldest_time) {
+                oldest_time = tlb.entries[i].last_used;
+                victim_index = i;
+            }
+        }
+        tlb.entries[victim_index] = (TLBEntry){.page_number = page_number, .frame_number = frame_number, .valid = true, .last_used = tiempo_actual++};
+    }
+
+    return frame_number * PAGE_SIZE + offset;*/
+    return UINT32_MAX;
+}
+
+bool manejar_fallo_de_pagina(PageTable *page_table, uint32_t page_number, uint32_t frame_number) {
+    if (page_number >= page_table->size) {
+        return false;  // Número de página fuera del rango
+    }
+
+    page_table->entries[page_number].frame_number = frame_number;
+    page_table->entries[page_number].valid = true;
+
+    return true;
 }
