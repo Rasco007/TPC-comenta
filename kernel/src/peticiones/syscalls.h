@@ -44,4 +44,11 @@ void loggearBloqueoDeProcesos(t_pcb*,char* motivo);
 
 void loggearSalidaDeProceso(t_pcb*,char* motivo); 
 
+
+void *mandar_ejecutar_stdout(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio);
+void *mandar_ejecutar_stdin(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio);
+void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero);
+void enviarMensajeSTDIN(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio);
+void enviarMensajeSTDOUT(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio);
+
 #endif /* SYSCALLS_H_ */
