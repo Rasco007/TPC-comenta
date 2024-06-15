@@ -43,6 +43,7 @@ int main(int argc, char** argv) {
      pthread_join(hilo_kernel, NULL);
  
 
+
 	return EXIT_SUCCESS;
 	 
 }
