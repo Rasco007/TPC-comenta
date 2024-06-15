@@ -11,7 +11,7 @@
 
 typedef struct {
 
-        t_comando comando; 
+        t_comando motivo; 
         int parametrosLength;
         char* parametros[3]; 
 

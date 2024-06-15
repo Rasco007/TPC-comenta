@@ -1,4 +1,5 @@
 #include <peticiones/pcb.h>
+#include "../conexiones/conexionMemoria.h"
 
 char* pidsInvolucrados; 
 
@@ -18,6 +19,8 @@ t_pcb *crearPCB(){
     nuevoPCB->recursosAsignados = list_create();
     nuevoPCB->tablaDePaginas = list_create();
     
+    recibirEstructurasInicialesMemoria(nuevoPCB); //Mando señal a memoria para que reserve espacio para el PCB
+
     log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
     return nuevoPCB;
@@ -26,6 +29,7 @@ t_pcb *crearPCB(){
 void destruirPCB(t_pcb *pcb){
     list_destroy_and_destroy_elements(pcb->instrucciones, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
+    liberarMemoriaPCB(pcb); //Mando señal a memoria para que libere espacio para el PCB
     free(pcb);
     log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
 }
@@ -83,15 +87,26 @@ void listarPIDS(t_list *pcbs) {
     list_iterate(pcbs, agregarPID);
 }
 
-t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid){
-    int cantProcesos = list_size(listaPCBs); 
+void imprimirListaPCBs(t_list *pcbs){
+    for(int i = 0; i < list_size(pcbs); i++){
+        t_pcb *pcb = list_get(pcbs, i);
+        log_info(logger, "PID: %d", pcb->pid);
+    }
+}
 
+t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid){
+    
+    int cantProcesos = list_size(listaPCBs); 
+    log_info(logger, "cantProcesos: %d", cantProcesos);
+     
     t_pcb* pcb;
     for(int i=0;i<cantProcesos;i++){
         
         pcb = list_get(listaPCBs, i);
         if(pcb->pid == pid) return pcb;
     }
+
+    log_info(logger, "NO LO ENCONTRO, RETORNO NULL"); 
 
     return NULL;
 }

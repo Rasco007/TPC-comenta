@@ -4,7 +4,7 @@ sem_t hayProcesosReady;
 sem_t hayProcesosNuevos;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
-t_list *pcbsREADYAux;
+t_list *pcbsREADYaux;
 t_list *pcbsEnMemoria;
 t_list *pcbsBloqueados;
 t_list *pcbsParaExit;
@@ -27,7 +27,7 @@ void planificarALargoPlazo(){
 
         t_pcb *pcb = obtenerSiguienteAReady(); //Agarro un pcb de la cola de new
 
-        recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
+        //recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
 
         estadoProceso anterior = pcb->estado;
         pcb->estado = READY; //Lo cambio a estado ready

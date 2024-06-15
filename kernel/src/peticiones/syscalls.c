@@ -11,7 +11,7 @@ bool hayOpFS;
 //FUNCIONES GENERALES
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
     //Aca trato las instrucciones bloqueantes
-    switch (contextoEjecucion->motivoDesalojo->comando){
+    switch (contextoEjecucion->motivoDesalojo->motivo){
         case WAIT:
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
@@ -50,7 +50,7 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
         default:
             log_error(loggerError, "Comando incorrecto");
-            break;
+            break; //falta un case para el FIN_DE_QUANTUM
     }
 }
 
@@ -168,9 +168,12 @@ void io_fs_read(t_pcb *proceso,char **parametros){
 
 }
 
+//EXIT
 void exit_s(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
     proceso->estado = EXIT;
+
+    encolar(pcbsParaExit,proceso);
 
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
@@ -182,4 +185,19 @@ void exit_s(t_pcb *proceso,char **parametros){
     liberarMemoriaPCB(proceso);
     destroyContextoUnico();
     sem_post(&semGradoMultiprogramacion);
+}
+
+//FIN_DE_QUANTUM
+void finDeQuantum(t_pcb *proceso){
+    char* algoritmo=obtenerAlgoritmoPlanificacion();
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    if(strcmp(algoritmo,"RR")==0){
+        encolar(pcbsREADY,proceso);
+    } 
+    if(strcmp(algoritmo,"VRR")==0){
+        encolar(pcbsREADYaux,proceso);
+    }
+    //ingresarAReady(proceso);?
 }

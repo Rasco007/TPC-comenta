@@ -29,30 +29,31 @@ t_pcb *proximoAEjecutarFIFO(){
 }
 
 t_pcb *proximoAEjecutarRR(){
-    char *quantum = obtenerQuantum(); //Obtengo el quantum del config
+    int *quantumConfig = obtenerQuantum();
 
-    t_pcb *pcbActual = desencolar(pcbsREADY); //Saco el primer pcb de la cola de ready 
-
-    // Verificar si el proceso actual ha agotado su quantum
-    if (quantum <= 0) {
-        encolar(pcbsREADY, pcbActual); // Vuelvo a encolar el proceso actual
-    }
-
-    // Devolver el proceso seleccionado para ejecución
+    t_pcb *pcbActual = desencolar(pcbsREADY); 
+    pcbActual->quantum=quantumConfig; 
+    //Como el quantum es conocido por el pcb y el contexto de ejcucion lleva la cuenta de las rafagas
+    //Puedo delegar la validacion del quantum en el CPU y despues lo manejo en retornoContexto
+    
     return pcbActual;    
 }
 
+//Van a pcbsREADY:los nuevos y los desalojados por fin de q
+//Van a pcbsREADYaux: los que vuelven de IO (q=qConfig-qConsumido)
 t_pcb *proximoAEjecutarVRR(){
-    t_pcb* pcb=crearPCB();
-    /*char *quantum = obtenerQuantum(); //Obtengo el quantum del config
-    t_pcb *pcbActual = desencolar(pcbsREADY); // Saco el primer pcb de la cola de ready
-    
-    if (quantum <= 0) {
-        encolar(pcbsREADYaux, pcbActual); //Si termina el quantum lo mando a la cola auxiliar
-    } //Es a modo de ejemplo, creo que no era asi...
-
-    return pcbActual;*/
-    return pcb;
+    int *quantumConfig = obtenerQuantum();
+    if(list_is_empty(pcbsREADYaux)){
+        t_pcb *pcbActual = desencolar(pcbsREADY);
+        pcbActual->quantum = quantumConfig;
+        return pcbActual;
+    }
+    else{
+        t_pcb *pcbActual = desencolar(pcbsREADYaux);
+        int quantumConsumido=pcbActual->rafagasEjecutadas; //Ver
+        pcbActual->quantum = quantumConfig-quantumConsumido;
+        return pcbActual;
+    }
 }
 
 

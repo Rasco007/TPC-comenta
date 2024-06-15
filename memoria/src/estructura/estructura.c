@@ -36,9 +36,8 @@ void liberar_tabla_paginas(TablaPaginas *tp) {
 }
 
 // Implementación del proceso
-Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
+Proceso *inicializar_proceso(const char *archivo_pseudocodigo) {
     Proceso *proceso = malloc(sizeof(Proceso));
-    proceso->pid = pid;
     proceso->tabla_paginas = inicializar_tabla_paginas();
     
     // Leer archivo de pseudocódigo
@@ -55,7 +54,7 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     while (fgets(linea, sizeof(linea), archivo)) {
         proceso->numero_instrucciones++;
         proceso->instrucciones = realloc(proceso->instrucciones, proceso->numero_instrucciones * sizeof(char *));
-        proceso->instrucciones[proceso->numero_instrucciones - 1] = strdup(linea);
+        proceso->instrucciones[proceso->numero_instrucciones - 1] = string_duplicate(linea);
     }
     fclose(archivo);
     

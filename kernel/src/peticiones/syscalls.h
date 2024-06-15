@@ -12,7 +12,6 @@
 #include <peticiones/manejoRecursos.h>
 #include <peticiones/manejoPaginas.h>
 
-
 extern char **nombresRecursos;
 extern sem_t hayProcesosReady;
 extern int *instanciasRecursos;
@@ -39,7 +38,7 @@ void io_fs_write(t_pcb *proceso, char **parametros);
 void io_fs_delete(t_pcb *proceso, char **parametros);
 void io_fs_truncate(t_pcb *proceso, char **parametros);
 void exit_s(t_pcb *proceso, char **parametros);
-
+void finDeQuantum(t_pcb *proceso);
 
 void loggearBloqueoDeProcesos(t_pcb*,char* motivo); 
 
