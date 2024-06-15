@@ -29,12 +29,16 @@ typedef struct {
     uint32_t pid; 
     int socketPCB; 
     t_list* instrucciones; 
-    uint32_t programCounter;   
+    uint32_t programCounter;
+    uint32_t SI;
+    uint32_t DI;   
     estadoProceso estado; 
     t_dictionary* registrosCPU;
     t_temporal* tiempoEnReady; 
     t_list* recursosAsignados;
     t_list* tablaDePaginas;
+    int64_t quantum;
+    int32_t rafagasEjecutadas;
 } t_pcb; 
 
 
@@ -93,7 +97,8 @@ void encolar(t_list* pcbs,t_pcb* pcb);
 t_pcb* desencolar(t_list* pcbs);
 
 void agregarPID(void *value); 
-void listarPIDS(t_list *pcbs); 
+void listarPIDS(t_list *pcbs);
+void imprimirListaPCBs(t_list *pcbs);
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid);
 
 

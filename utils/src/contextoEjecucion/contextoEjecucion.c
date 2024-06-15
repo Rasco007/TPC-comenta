@@ -15,15 +15,15 @@ void enviarContextoActualizado(int socket){
 	contextoEjecucion->pid = 1;
 	contextoEjecucion->programCounter = 0;
 	contextoEjecucion->registrosCPU = crearDiccionarioDeRegistros2();
-	contextoEjecucion->tablaDeSegmentos = list_create();
-	contextoEjecucion->tablaDeSegmentosSize = 0;
+	contextoEjecucion->tablaDePaginas = list_create();
+	contextoEjecucion->tablaDePaginasSize = 0;
     contextoEjecucion->rafagaCPUEjecutada = 0;
     contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
     contextoEjecucion->motivoDesalojo->parametros[0] = "";
     contextoEjecucion->motivoDesalojo->parametros[1] = "";
     contextoEjecucion->motivoDesalojo->parametros[2] = "";
     contextoEjecucion->motivoDesalojo->parametrosLength = 0;
-    contextoEjecucion->motivoDesalojo->comando = 0;
+    contextoEjecucion->motivoDesalojo->motivo = 0;
 
     
    
@@ -36,8 +36,8 @@ void enviarContextoActualizado(int socket){
     agregarRegistrosAPaquete(paquete, contextoEjecucion->registrosCPU);
     log_info(logger, "Registros agregados al paquete");
     
-    agregarTablaDeSegmentosAPaquete(paquete);
-    log_info(logger, "Tabla de segmentos agregada al paquete");
+    agregarTablaDePaginasAPaquete(paquete);
+    log_info(logger, "Tabla de paginas agregada al paquete");
 
     agregarMotivoAPaquete(paquete, contextoEjecucion->motivoDesalojo);
     log_info(logger, "Motivo de desalojo agregado al paquete");
@@ -50,26 +50,27 @@ void enviarContextoActualizado(int socket){
 	eliminarPaquete(paquete);
 }
 
-
-void agregarTablaDeSegmentosAPaquete(t_paquete* paquete){
+//Ver
+void agregarTablaDePaginasAPaquete(t_paquete* paquete){
     
-    agregarAPaquete (paquete, &(contextoEjecucion->tablaDeSegmentosSize), sizeof contextoEjecucion->tablaDeSegmentosSize);
+    agregarAPaquete (paquete, &(contextoEjecucion->tablaDePaginasSize), sizeof contextoEjecucion->tablaDePaginasSize);
 
     uint32_t i;
-    for(i=0;i<contextoEjecucion->tablaDeSegmentosSize;i++){
-        agregarSegmentoAPaquete(paquete,list_get(contextoEjecucion->tablaDeSegmentos, i));
+    for(i=0;i<contextoEjecucion->tablaDePaginasSize;i++){
+        agregarPaginaAPaquete(paquete,list_get(contextoEjecucion->tablaDePaginas, i));
     }
 }
 
-void agregarSegmentoAPaquete(t_paquete* paquete, t_segmento* segmento){
-	agregarAPaquete(paquete, &(segmento->id), sizeof(uint32_t));
-	agregarAPaquete(paquete, &(segmento->direccionBase), sizeof(uint32_t));
-	agregarAPaquete(paquete, &(segmento->tamanio), sizeof(uint32_t));
+//Ver
+void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* pagina){
+	agregarAPaquete(paquete, &(pagina->idPagina), sizeof(uint32_t));
+	agregarAPaquete(paquete, &(pagina->idFrame), sizeof(uint32_t));
+	agregarAPaquete(paquete, &(pagina->bitDeValidez), sizeof(uint32_t));
 }
 
 void agregarMotivoAPaquete (t_paquete* paquete, t_motivoDeDesalojo* motivoDesalojo){
 
-    agregarAPaquete (paquete, (void *)&motivoDesalojo->comando, sizeof (motivoDesalojo->comando));
+    agregarAPaquete (paquete, (void *)&motivoDesalojo->motivo, sizeof (motivoDesalojo->motivo));
     agregarAPaquete (paquete, (void *)&motivoDesalojo->parametrosLength, sizeof (motivoDesalojo->parametrosLength));
     for (int i = 0; i < motivoDesalojo->parametrosLength; i++) 
         agregarAPaquete (paquete, (void *)motivoDesalojo->parametros[i], (strlen (motivoDesalojo->parametros[i]) + 1) * sizeof(char));
@@ -127,7 +128,7 @@ void recibirContextoActualizado (int socket) {
     deserializarInstrucciones (buffer, &desplazamiento);
     deserializarRegistros (buffer, &desplazamiento);
 
-    deserializarTablaDeSegmentos(buffer, &desplazamiento);
+    deserializarTablaDePaginas(buffer, &desplazamiento);
     
     deserializarMotivoDesalojo (buffer, &desplazamiento);
 
@@ -187,51 +188,51 @@ void deserializarRegistros (void * buffer, int * desplazamiento) {
         longName [1] = 'A', longName [0] = (i == 1) ? 'R' : 'E';
     }
 }
-
-void deserializarTablaDeSegmentos (void * buffer, int * desplazamiento) {
-    list_clean_and_destroy_elements (contextoEjecucion->tablaDeSegmentos, free);
-    // Desplazamiento: tamaño de la lista de segmentos.
-    memcpy(&(contextoEjecucion->tablaDeSegmentosSize), buffer + (* desplazamiento), sizeof(uint32_t));
+//Ver
+void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
+    list_clean_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
+    // Desplazamiento: tamaño de la lista de paginas.
+    memcpy(&(contextoEjecucion->tablaDePaginasSize), buffer + (* desplazamiento), sizeof(uint32_t));
     (* desplazamiento) += sizeof(uint32_t);
     
-    for (uint32_t i = 0; i < contextoEjecucion->tablaDeSegmentosSize; i++) {
+    for (uint32_t i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) {
 
-        t_segmento* segmento = deserializarSegmento(buffer, desplazamiento);
-        list_add (contextoEjecucion->tablaDeSegmentos, segmento);
+        t_pagina* pagina = deserializarPagina(buffer, desplazamiento);
+        list_add (contextoEjecucion->tablaDePaginas, pagina);
     }
 
     (* desplazamiento) += sizeof(int);
 
 }
 
-
-t_segmento* deserializarSegmento(void* buffer, int* desplazamiento){
-    t_segmento* segmento = malloc(sizeof(t_segmento));
+//Ver
+t_pagina* deserializarPagina(void* buffer, int* desplazamiento){
+    t_pagina* pagina = malloc(sizeof(t_pagina));
     int tamanio;
     // id
     memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
     (* desplazamiento) += sizeof (int);
-    memcpy (&(segmento->id), buffer + (* desplazamiento), tamanio);
+    memcpy (&(pagina->idPagina), buffer + (* desplazamiento), tamanio);
     (* desplazamiento) += sizeof (uint32_t);
-    //direccion base
+    //id marco
     memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
     (* desplazamiento) += sizeof (int);
-    memcpy (&(segmento->direccionBase), buffer + (* desplazamiento), tamanio);
+    memcpy (&(pagina->idFrame), buffer + (* desplazamiento), tamanio);
     (* desplazamiento) += sizeof (uint32_t);
-    //tamanio
+    //bit
     memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
     (* desplazamiento) += sizeof (int);
-    memcpy (&(segmento->tamanio), buffer + (* desplazamiento), tamanio);
+    memcpy (&(pagina->bitDeValidez), buffer + (* desplazamiento), tamanio);
     (* desplazamiento) += sizeof (uint32_t);
 
-    return segmento;
+    return pagina;
 }
 
 
 void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
 
     // Desplazamiento: Comando de desalojo y tamaño de parametrosLength.
-    memcpy (&(contextoEjecucion->motivoDesalojo->comando), buffer + (* desplazamiento), sizeof (t_comando));
+    memcpy (&(contextoEjecucion->motivoDesalojo->motivo), buffer + (* desplazamiento), sizeof (t_comando));
     (* desplazamiento) += sizeof (t_comando) + sizeof (int);
 
     // Desplazamiento: parametrosLength.
@@ -262,22 +263,22 @@ void iniciarContexto(){
 	contextoEjecucion->pid = 0;
 	contextoEjecucion->programCounter = 0;
 	contextoEjecucion->registrosCPU = dictionary_create();
-	contextoEjecucion->tablaDeSegmentos = list_create();
-	contextoEjecucion->tablaDeSegmentosSize = 0;
+	contextoEjecucion->tablaDePaginas = list_create();
+	contextoEjecucion->tablaDePaginasSize = 0;
     contextoEjecucion->rafagaCPUEjecutada = 0;
     contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
     contextoEjecucion->motivoDesalojo->parametros[0] = "";
     contextoEjecucion->motivoDesalojo->parametros[1] = "";
     contextoEjecucion->motivoDesalojo->parametros[2] = "";
     contextoEjecucion->motivoDesalojo->parametrosLength = 0;
-    contextoEjecucion->motivoDesalojo->comando = 0;
+    contextoEjecucion->motivoDesalojo->motivo = 0;
 	
 }
 
 void destroyContexto() {
     list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    list_destroy_and_destroy_elements(contextoEjecucion->tablaDeSegmentos, free);
+    list_destroy_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
         if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
     free(contextoEjecucion->motivoDesalojo);
@@ -288,7 +289,7 @@ void destroyContexto() {
 void destroyContextoUnico () {
     list_destroy(contextoEjecucion->instrucciones);
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    list_destroy(contextoEjecucion->tablaDeSegmentos);
+    list_destroy(contextoEjecucion->tablaDePaginas);
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
         if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
     free(contextoEjecucion->motivoDesalojo);

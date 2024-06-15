@@ -28,11 +28,13 @@ int main () {
 
 	conexionMemoria(); 
 	conexionCPU();
-
+	
     char * nombre = string_duplicate("CPU-KERNEL");
 	cambiarNombre(logger, nombre);
     escucharAlIO();
 	free (nombre);
+
+    ejecutarConsola();
 
     //Inicializar Hilos
 	int opCodes [3] = {

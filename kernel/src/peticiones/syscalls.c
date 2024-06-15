@@ -11,7 +11,7 @@ bool hayOpFS;
 //FUNCIONES GENERALES
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
     //Aca trato las instrucciones bloqueantes
-    switch (contextoEjecucion->motivoDesalojo->comando){
+    switch (contextoEjecucion->motivoDesalojo->motivo){
         case WAIT:
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
@@ -50,23 +50,12 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
         default:
             log_error(loggerError, "Comando incorrecto");
-            break;
+            break; //falta un case para el FIN_DE_QUANTUM
     }
 }
 
-void volverACPU(t_pcb* proceso) {
-    contextoEjecucion = procesarPCB(proceso);
-    rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
-    retornoContexto(proceso, contextoEjecucion); 
-}
 
-void bloquearIO(t_pcb * proceso){  
-    sleep(tiempoIO);
-    estadoAnterior = proceso->estado;
-    proceso->estado = READY;
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    ingresarAReady(proceso);
-}
+
 
 void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {
     log_info(logger,"PID: <%d> - Bloqueado por: %s", proceso->pid, motivo); //Log obligatorio
@@ -77,8 +66,42 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
 }
 
 //FUNCIONES RETORNO CONTEXTO
+//WAIT
 void wait_s(t_pcb *proceso,char **parametros){
+    char* recurso=parametros[0];
+    int indexRecurso = indiceRecurso(recurso);
 
+    if(indexRecurso==-1){
+        exit_s(proceso,&invalidResource);
+        return;
+    }
+
+    int instanciaRecurso=instanciasRecursos[indexRecurso];
+    instanciaRecurso--;
+    instanciasRecursos[indexRecurso]=instanciaRecurso;
+
+    log_info(logger,"PID:<%d>-WAIT:<%s>-Instancias:<%d>",proceso->pid,recurso,instanciaRecurso);
+
+    if(instanciaRecurso<0){
+        t_list *colaBloqueadosRecurso=(t_list*)list_get(recursos,indexRecurso);
+
+        estadoAnterior = proceso->estado;
+        proceso->estado = BLOCKED;
+
+        list_add(colaBloqueadosRecurso,(void*)proceso);
+
+        loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+        loggearBloqueoDeProcesos(proceso, recurso);
+    } else {
+        list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+        volverACPU(proceso);
+    }
+}
+
+void volverACPU(t_pcb* proceso) {
+    contextoEjecucion = procesarPCB(proceso);
+    rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
+    retornoContexto(proceso, contextoEjecucion); 
 }
 
 void signal_s(t_pcb *proceso,char **parametros){
@@ -89,8 +112,32 @@ void resize_s(t_pcb *proceso,char **parametros){
 
 }
 
+//IO_GEN_SLEEP
 void io_gen_sleep(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
 
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    
+    log_info(logger,"PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
+
+    pthread_t pcb_bloqueado;
+    if(!pthread_create(&pcb_bloqueado, NULL, dormirIO(proceso,parametros[0],parametros[1]), proceso)){
+        pthread_detach(pcb_bloqueado);
+    } else {
+        log_error(loggerError, "Error al crear hilo para dormir IO");
+    }
+}
+
+void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){  
+    //enviarMensaje(socketClienteIO, "IO_GEN_SLEEP",tiempo);
+    //Le mandaria una señal a la interfaz de IO para que duerma el tiempo que le pase por parametro
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    ingresarAReady(proceso);
+    return; // Add this line to fix the issue
 }
 
 void io_stdin_read(t_pcb *proceso,char **parametros){
@@ -121,6 +168,36 @@ void io_fs_read(t_pcb *proceso,char **parametros){
 
 }
 
+//EXIT
 void exit_s(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = EXIT;
 
+    encolar(pcbsParaExit,proceso);
+
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearSalidaDeProceso(proceso, parametros[0]);
+
+    if(!list_is_empty(proceso->recursosAsignados)){
+        liberarRecursosAsignados(proceso);
+    }
+
+    liberarMemoriaPCB(proceso);
+    destroyContextoUnico();
+    sem_post(&semGradoMultiprogramacion);
+}
+
+//FIN_DE_QUANTUM
+void finDeQuantum(t_pcb *proceso){
+    char* algoritmo=obtenerAlgoritmoPlanificacion();
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    if(strcmp(algoritmo,"RR")==0){
+        encolar(pcbsREADY,proceso);
+    } 
+    if(strcmp(algoritmo,"VRR")==0){
+        encolar(pcbsREADYaux,proceso);
+    }
+    //ingresarAReady(proceso);?
 }

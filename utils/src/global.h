@@ -19,11 +19,11 @@
         JNZ, RESIZE, COPY_STRING, WAIT, SIGNAL,
         IO_GEN_SLEEP, IO_STDIN_READ, IO_STDOUT_WRITE, IO_FS_CREATE,
         IO_FS_DELETE, IO_FS_TRUNCATE, IO_FS_WRITE, IO_FS_READ,
-        EXIT
+        EXIT, FIN_DE_QUANTUM,
     } t_comando; 
     typedef struct {
         t_comando comando; 
-        char* parametros[3]; 
+        char* parametros[5]; 
     }t_instruccion; 
 
 void dormir(char* mensaje, int socket_cliente);

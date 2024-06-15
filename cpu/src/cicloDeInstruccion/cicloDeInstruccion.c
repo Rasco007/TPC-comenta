@@ -32,11 +32,11 @@ int nroSegmento;
 t_temporal* rafagaCPU; 
 int64_t rafagaCPUEjecutada; 
 
-void cicloDeInstruccion(){
+void cicloDeInstruccion(int socketClienteInterrupt, int socketClienteDispatch){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
-    check_interrupt(); //revisa si hay interrupciones 
+    check_interrupt(socketClienteInterrupt,socketClienteDispatch); //revisa si hay interrupciones 
     liberarMemoria();
 }
 
@@ -65,139 +65,65 @@ int buscar(char *elemento, char **lista) {
     return (i > string_array_size(lista)) ? -1 : i;
 }
  
-void execute() {
-
-    switch(cantParametros) {
-        case 0:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
-            break;
-        case 1:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
-            break;
-        case 2:   
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case 3:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
-            break; 
+void check_interrupt(int socketClienteInterrupt, int socketClienteDispatch){
+    if (recv(socketClienteInterrupt, NULL, 0, MSG_PEEK) != -1) {
+        //motivo de desalojo???
+        enviarContextoActualizado(socketClienteDispatch);
     }
-
-    switch(instruccionActual){//TODO: Completar con instrucciones restantes
-        case SET:
-            set_c(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case SUM:
-            sum_c(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case SUB:
-            sub_c(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case JNZ:
-            jnz(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_GEN_SLEEP:
-            io_gen_sleep(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case MOV_IN:
-            mov_in(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case MOV_OUT:
-            mov_out(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case WAIT:
-            wait_c(elementosInstruccion[1]);
-            break;
-        case SIGNAL:
-            signal_c(elementosInstruccion[1]);
-            break;
-        case EXIT:
-            exit_c();
-            break;
-        case IO_STDIN_READ:
-            io_stdin_read(elementosInstruccion[1]);
-            break;
-        case IO_STDOUT_WRITE:
-            io_stdout_write(elementosInstruccion[1]);
-            break;
-        case IO_FS_CREATE:
-            io_fs_create(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_FS_DELETE:
-            io_fs_delete(elementosInstruccion[1]);
-            break;
-        case IO_FS_TRUNCATE:
-            io_fs_truncate(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_FS_WRITE:
-            io_fs_write(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case IO_FS_READ:
-            io_fs_read(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case RESIZE:
-            resize(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        case COPY_STRING:
-            copy_string(elementosInstruccion[1], elementosInstruccion[2]);
-            break;
-        default:
-            break;
-    }
-}
-
-void check_interrupt(){
-    //TODO
 }
 
 // Instrucciones
-void io_fs_delete(char* registro){
-    char* valor = recibirValor(socketCliente);
-    set_c(registro, valor);
+void io_fs_delete(char* interfaz,char* nombreArchivo){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
-void io_stdout_write(char* registro){
-    char* valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    enviarMensaje(socketCliente, valor);
+void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
-void io_fs_truncate(char* registro, char* tamanio){
-    char* valor = recibirValor(socketCliente);
-    set_c(registro, valor);
+void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
-void io_fs_create(char* registro, char* tamanio){
-    char* valor = recibirValor(socketCliente);
-    set_c(registro, valor);
+void io_fs_create(char* interfaz, char* nombreArchivo){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
-void io_fs_write(char* registro, char* tamanio){
-    char* valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    enviarMensaje(socketCliente, valor);
+void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
+    enviarContextoActualizado(socketCliente);
 }
 
-void io_fs_read(char* registro, char* tamanio){
-    char* valor = recibirValor(socketCliente);
-    set_c(registro, valor);
+void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
+    enviarContextoActualizado(socketCliente);
 }
 
-void io_stdin_read(char* registro){
-    char* valor = recibirValor(socketCliente);
-    set_c(registro, valor);
+void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
-void copy_string(char* registro_destino, char* registro_origen){
-    char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
-    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, string_duplicate(valorOrigen));
+void copy_string(char* tamanio){
+    //Copiar contenido de SI a DI
+    contextoEjecucion->DI=contextoEjecucion->DI; //Ver
 }
 
-void resize(char* registro, char* tamanio){
-    char* valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    int tamanioNuevo = atoi(tamanio);
-    char* valorNuevo = malloc(sizeof(char) * tamanioNuevo);
-    memcpy(valorNuevo, valor, tamanioNuevo);
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free);
-    dictionary_put(contextoEjecucion->registrosCPU, registro, valorNuevo);
+void resize(char* tamanio){
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (RESIZE, 1, tamanio, "", "", "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
 void set_c(char* registro, char* valor){ 
@@ -236,26 +162,27 @@ void jnz(char* registro, char* instruccion){
 }
 
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
-    int tiempoEspera = atoi(unidades_trabajo);
-    usleep(tiempoEspera * 1000);
+    destruirTemporizador(rafagaCPU);
+    modificarMotivoDesalojo (IO_GEN_SLEEP, 2, interfaz, unidades_trabajo, "", "", "");
+    enviarContextoActualizado(socketCliente);
 }
 
 void wait_c(char* recurso){
     destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (WAIT, 1, recurso, "", "");
+    modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
     enviarContextoActualizado(socketCliente);
 }
 
 void signal_c(char* recurso){
     destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "");
+    modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
     enviarContextoActualizado(socketCliente);
 }
 
 void exit_c () {
     destruirTemporizador(rafagaCPU);
     char * terminado = string_duplicate ("SUCCESS");
-    modificarMotivoDesalojo (EXIT, 1, terminado, "", "");
+    modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     enviarContextoActualizado(socketCliente);
     free (terminado);
 }
@@ -320,12 +247,11 @@ void mov_out(char* direccionLogica, char* registro){
 void destruirTemporizador (t_temporal * temporizador) {
     temporal_stop(temporizador);
     contextoEjecucion->rafagaCPUEjecutada = temporal_gettime(temporizador);  
-    //temporal_destroy(temporizador); 
 }
 
-void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3) {
-    char * (parametros[3]) = { parm1, parm2, parm3 };
-    contextoEjecucion->motivoDesalojo->comando = comando;
+void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
+    char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
+    contextoEjecucion->motivoDesalojo->motivo = comando;
     for (int i = 0; i < numParametros; i++)
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
@@ -359,6 +285,86 @@ int obtenerTamanioReg(char* registro){
     if(string_starts_with(registro, "E")) return 8;
     else if(string_starts_with(registro, "R")) return 16;
     else return 4;
+}
+
+void execute() {
+
+    switch(cantParametros) {
+        case 0:
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
+            break;
+        case 1:
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
+            break;
+        case 2:   
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case 3:
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
+            break; 
+    }
+
+    switch(instruccionActual){//TODO: Completar con instrucciones restantes
+        case SET:
+            set_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case SUM:
+            sum_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case SUB:
+            sub_c(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case JNZ:
+            jnz(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_GEN_SLEEP:
+            io_gen_sleep(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case MOV_IN:
+            mov_in(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case MOV_OUT:
+            mov_out(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case WAIT:
+            wait_c(elementosInstruccion[1]);
+            break;
+        case SIGNAL:
+            signal_c(elementosInstruccion[1]);
+            break;
+        case EXIT:
+            exit_c();
+            break;
+        case IO_STDIN_READ:
+            io_stdin_read(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
+            break;
+        case IO_STDOUT_WRITE:
+            io_stdout_write(elementosInstruccion[1],elementosInstruccion[2], elementosInstruccion[3]);
+            break;
+        case IO_FS_CREATE:
+            io_fs_create(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_DELETE:
+            io_fs_delete(elementosInstruccion[1], elementosInstruccion[2]);
+            break;
+        case IO_FS_TRUNCATE:
+            io_fs_truncate(elementosInstruccion[1], elementosInstruccion[2],elementosInstruccion[3]);
+            break;
+        case IO_FS_WRITE:
+            io_fs_write(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
+            break;
+        case IO_FS_READ:
+            io_fs_read(elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
+            break;
+        case RESIZE:
+            resize(elementosInstruccion[1]);
+            break;
+        case COPY_STRING:
+            copy_string(elementosInstruccion[1]);
+            break;
+        default:
+            break;
+    }
 }
 
 //MMU

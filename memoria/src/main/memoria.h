@@ -24,6 +24,8 @@
 #include <conexionKernel/conexionKernel.h>
 #include <conexionCPU/conexionCPU.h>
 #include <conexionIO/conexionIO.h>
+#include <semaphore.h>
+#include <estructura/estructura.h> 
 
 #include <estructura/estructura.h> 
 
@@ -46,7 +48,7 @@
 
 
 extern t_log* loggerError; 
-
+extern sem_t path;
 extern int sockets[3];
 
 

@@ -4,28 +4,30 @@ sem_t hayProcesosReady;
 sem_t hayProcesosNuevos;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
+t_list *pcbsREADYaux;
 t_list *pcbsEnMemoria;
+t_list *pcbsBloqueados;
+t_list *pcbsParaExit;
 int32_t procesosCreados = 0;
 pthread_mutex_t mutexListaNew;
 pthread_mutex_t mutexListaReady; 
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
+bool pausaPlanificacion; //Flag para manejar el pausado de la planificacion desde consola
 
 int gradoMultiprogramacion; 
 char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"}; 
 int *instanciasRecursos;
 
-//Faltaria contemplar la elminacion de procesos
 void planificarALargoPlazo(){
-    while (1)
+    while (!pausaPlanificacion) //Mientras no este pausado...
     {
         sem_wait(&hayProcesosNuevos);
-
         sem_wait(&semGradoMultiprogramacion);
 
         t_pcb *pcb = obtenerSiguienteAReady(); //Agarro un pcb de la cola de new
 
-        recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
+        //recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
 
         estadoProceso anterior = pcb->estado;
         pcb->estado = READY; //Lo cambio a estado ready

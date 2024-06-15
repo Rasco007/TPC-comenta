@@ -8,15 +8,13 @@
 #include <utilsServidor/utilsServidor.h>
 #include <estructura/estructura.h>
 #include <global.h>
-
-// Definiciones de las operaciones
-#define NEWPCB 0
-#define ENDPCB 1
+#include <main/memoria.h>
 
 // Variables globales
 //extern t_log *logger;
 //extern t_config *config;
 extern MemoriaFisica *memoria;
+extern char* pathInstrucciones;
 
 // Funciones
 int ejecutarServidorKernel(int *socketCliente);

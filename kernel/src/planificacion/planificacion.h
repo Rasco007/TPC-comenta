@@ -20,6 +20,9 @@
 
 extern t_list* pcbsNEW; 
 extern t_list* pcbsREADY;
+extern t_list *pcbsBloqueados;
+extern t_list *pcbsParaExit;
+extern t_list *pcbsREADYaux;
 
 extern sem_t hayProcesosReady;
 extern sem_t hayProcesosNuevos;
@@ -28,6 +31,7 @@ extern pthread_mutex_t mutexListaReady;
 extern sem_t semGradoMultiprogramacion; 
 extern int gradoMultiprogramacion; 
 extern int *instanciasRecursos;
+extern bool pausaPlanificacion;
 
 extern char *estadosProcesos[5];
 
