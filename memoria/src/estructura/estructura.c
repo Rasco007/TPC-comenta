@@ -28,6 +28,7 @@ TablaPaginas *inicializar_tabla_paginas() {
         tp->entradas[i].valido = 0;
         tp->entradas[i].numero_marco = -1;
     }
+    tp->paginas_asignadas = 0;  // Inicializa el contador de páginas asignadas
     return tp;
 }
 
@@ -36,8 +37,10 @@ void liberar_tabla_paginas(TablaPaginas *tp) {
 }
 
 // Implementación del proceso
-Proceso *inicializar_proceso(const char *archivo_pseudocodigo) {
+Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     Proceso *proceso = malloc(sizeof(Proceso));
+    proceso->pid = pid;
+    //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
     proceso->tabla_paginas = inicializar_tabla_paginas();
     
     // Leer archivo de pseudocódigo
@@ -57,7 +60,7 @@ Proceso *inicializar_proceso(const char *archivo_pseudocodigo) {
         proceso->instrucciones[proceso->numero_instrucciones - 1] = string_duplicate(linea);
     }
     fclose(archivo);
-    
+    //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
     return proceso;
 }
 
@@ -78,11 +81,10 @@ char *obtener_instruccion(Proceso *proceso, int program_counter) {
 }
 
 // Asigna una página en la memoria física
-bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
+/*bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
     if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
         return false;
     }
-
     // Encuentra un marco libre
     int numero_marco = -1;
     for (int i = 0; i < NUM_MARCOS; i++) {
@@ -91,19 +93,18 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
             break;
         }
     }
-
     if (numero_marco == -1) {
         return false; // No hay marcos libres
     }
-
     mf->marcos[numero_marco].libre = false;
     mf->marcos[numero_marco].numero_pagina = numero_pagina;
     mf->marcos[numero_marco].pid = proceso->pid;
     proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
     proceso->tabla_paginas->entradas[numero_pagina].numero_marco = numero_marco;
+    proceso->tabla_paginas->paginas_asignadas++;  // Incrementa el contador de páginas asignadas
 
     return true;
-}
+}*/
 
 // Traduce una dirección lógica a una dirección física
 void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
@@ -119,3 +120,25 @@ void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_lo
     return mf->memoria + numero_marco * TAMANO_PAGINA + desplazamiento;
 }
 
+
+
+bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
+    if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
+        return false; // Número de página fuera de rango
+    }
+    // Busca un marco libre disponible para asignar la página
+    for (int i = 0; i < NUM_MARCOS; i++) {
+        if (mf->marcos[i].libre) {
+            // Se encontró un marco libre, asigna la página
+            mf->marcos[i].libre = false;
+            mf->marcos[i].numero_pagina = numero_pagina;
+            mf->marcos[i].pid = proceso->pid;
+            proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
+            proceso->tabla_paginas->entradas[numero_pagina].numero_marco = i;
+            proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas
+            return true;
+        }
+    }
+    // Si no se encontró ningún marco libre
+    return false;
+}

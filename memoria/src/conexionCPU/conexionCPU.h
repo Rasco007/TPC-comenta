@@ -26,4 +26,6 @@ void recibirPeticionDeEscritura(int socketCPU);
 void enviarValorObtenido(int socketCPU);
 void escribir(char* valor, int32_t direccionFisica, int tamanio);
 
+Proceso *ajustar_tamano_proceso(MemoriaFisica *mf,Proceso *proceso, int nuevo_tamano);
+
 #endif // MEMORIA_CONEXION_CPU_H

@@ -13,6 +13,17 @@ t_log* logger;
 t_log* loggerError; 
 t_config* config; 
 
+// Función para verificar el tamaño del proceso
+/*void verificarTamanioProceso(Proceso *proceso, int nuevoTamano) {
+    printf("Número de instrucciones antes del ajuste: %d\n", proceso->numero_instrucciones);
+    proceso = ajustarTamanioProceso(proceso, nuevoTamano);
+    if (proceso != NULL) {
+        printf("Número de instrucciones después del ajuste: %d\n", proceso->numero_instrucciones);
+    } else {
+        printf("Error: No se pudo ajustar el tamaño del proceso.\n");
+    }
+}*/
+
 int main() {
 
     logger = iniciarLogger ("memoria.log", "Memoria");
@@ -36,8 +47,8 @@ int main() {
 
     // Creación de hilos
     int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);
-    int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, (void*)&sockets[1]);
-    int opCodeKernel = pthread_create(&threadKernel, NULL, (void*)ejecutarServidorKernel, (void*)&sockets[2]);
+    int opCodeKernel = pthread_create(&threadKernel, NULL, (void*)ejecutarServidorKernel, (void*)&sockets[1]);
+    int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, (void*)&sockets[2]);
 
     // Verificación de errores en la creación de hilos
     if (opCodeCPU) {
@@ -50,7 +61,7 @@ int main() {
         error("Error en iniciar el servidor a Kernel");
     }
 
-    
+    //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
     MemoriaFisica *mf = inicializar_memoria_fisica();
 
     // Inicializa dos procesos con sus archivos de pseudocódigo
@@ -58,8 +69,8 @@ int main() {
     //sem_t path;
     sem_init(&path, 0, 0);
     sem_wait(&path);
-    Proceso *proceso = inicializar_proceso(pathInstrucciones);
-
+    Proceso *proceso = inicializar_proceso(1, pathInstrucciones);
+    
     if (!proceso) {
         printf("Error al inicializar el procesos.\n");
         liberar_memoria_fisica(mf);
@@ -73,9 +84,16 @@ int main() {
     if (!asignar_pagina(mf, proceso, 1)) {
         printf("Error al asignar la página 1 al proceso 1.\n");
     }
-    if (!asignar_pagina(mf, proceso, 0)) {
-        printf("Error al asignar la página 0 al proceso 2.\n");
-    }
+    // Ajuste del tamaño del proceso
+    //int nuevo_tamano = TAMANO_PAGINA*4;  // Por ejemplo, ajustar a 3 páginas
+    //printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
+    //proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
+  
+    int nuevo_tamano = TAMANO_PAGINA*10;  // Por ejemplo, ajustar a 3 páginas : TAMANO_PAGINA*3
+    printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
+    proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
+    if (proceso == NULL) 
+        log_error(loggerError, "Error: No se pudo ajustar el tamaño del proceso.");
 
     // TODO: el program counter deberia venir del CPU
     int program_counter = 0;
@@ -88,8 +106,8 @@ int main() {
         }
 
     // Inicializa dos procesos con sus archivos de pseudocódigo
-    Proceso *proceso1 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
-    Proceso *proceso2 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
+    //Proceso *proceso1 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
+    //Proceso *proceso2 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
 
     /*if (!proceso1 || !proceso2) {
         printf("Error al inicializar los procesos.\n");
@@ -146,3 +164,4 @@ int main() {
 
 	
 }
+
