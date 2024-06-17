@@ -13,6 +13,6 @@
 #include <./main/entradasalida.h>
 
 
-void conexionKernel(); 
+void conexionKernel(char **argv); 
 
 #endif
