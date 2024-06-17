@@ -10,13 +10,17 @@ void planificarACortoPlazoSegunAlgoritmo(){
     
     if (!strcmp(algoritmoPlanificador, "FIFO"))
     {
+        contextoEjecucion->algoritmo=FIFO;
         log_info(logger, "Ejecutando FIFO");
         planificarACortoPlazo(proximoAEjecutarFIFO);
     } else if(!strcmp(algoritmoPlanificador, "RR")){
+        contextoEjecucion->algoritmo=RR;
         log_info(logger, "Ejecutando RR");
         planificarACortoPlazo(proximoAEjecutarRR);
     } else if(!strcmp(algoritmoPlanificador, "VRR")){
-        //planificarACortoPlazo(proximoAEjecutarVRR);
+        contextoEjecucion->algoritmo=VRR;
+        log_info(logger, "Ejecutando VRR");
+        planificarACortoPlazo(proximoAEjecutarVRR);
     } else {
         log_error(loggerError, "Algoritmo invalido");
         abort();
@@ -29,9 +33,9 @@ t_pcb *proximoAEjecutarFIFO(){
 }
 
 t_pcb *proximoAEjecutarRR(){
-    int *quantumConfig = obtenerQuantum();
+    int *quantumConfig = obtenerQuantum(); //Obtengo el quantum desde el config
 
-    t_pcb *pcbActual = desencolar(pcbsREADY); 
+    t_pcb *pcbActual = desencolar(pcbsREADY); //desencolo el primer pcb de READY 
     pcbActual->quantum=quantumConfig; 
     //Como el quantum es conocido por el pcb y el contexto de ejcucion lleva la cuenta de las rafagas
     //Puedo delegar la validacion del quantum en el CPU y despues lo manejo en retornoContexto
@@ -41,6 +45,7 @@ t_pcb *proximoAEjecutarRR(){
 
 //Van a pcbsREADY:los nuevos y los desalojados por fin de q
 //Van a pcbsREADYaux: los que vuelven de IO (q=qConfig-qConsumido)
+//La llegada de los procesos a las colas se delega a syscalls
 t_pcb *proximoAEjecutarVRR(){
     int *quantumConfig = obtenerQuantum();
     if(list_is_empty(pcbsREADYaux)){
@@ -50,7 +55,7 @@ t_pcb *proximoAEjecutarVRR(){
     }
     else{
         t_pcb *pcbActual = desencolar(pcbsREADYaux);
-        int quantumConsumido=pcbActual->rafagasEjecutadas; //Ver
+        int quantumConsumido=pcbActual->tiempoDeUsoCPU;
         pcbActual->quantum = quantumConfig-quantumConsumido;
         return pcbActual;
     }

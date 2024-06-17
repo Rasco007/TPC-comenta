@@ -90,6 +90,10 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->programCounter = proceso->programCounter;
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
     contextoEjecucion->registrosCPU = registrosDelCPU(proceso->registrosCPU);
+    contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
+    contextoEjecucion->DI=proceso->DI;
+    contextoEjecucion->SI=proceso->SI;
+    contextoEjecucion->quantum=proceso->quantum;
 }
 
 t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
