@@ -36,9 +36,11 @@ int main(void){
 
 	inicializar_tlb(); 
 
-    //escucharAlKernel();
-
 	mmu("12345", 32, tlb);
+
+    escucharAlKernel();
+
+	
 	
 
 	free (nombre);

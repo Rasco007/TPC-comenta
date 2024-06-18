@@ -11,9 +11,9 @@
 #include <estructura/estructura.h>
 
 // Definiciones de las operaciones
-#define READ 0
+/*#define READ 0
 #define WRITE 1
-#define MMU 2
+#define MMU 2*/
 
 // Variables globales
 extern int tiempo;

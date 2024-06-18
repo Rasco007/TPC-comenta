@@ -26,8 +26,8 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case MMU:
                 log_info(logger, "Llegue al case MMU");
-                /*recibirPeticionDeLectura(*socketCliente);
-                enviarValorObtenido(*socketCliente);*/
+                recibirPeticionDeLectura(*socketCliente);
+                
                 break;
             case -1:
                 log_error(logger, "El CPU se desconectó");
