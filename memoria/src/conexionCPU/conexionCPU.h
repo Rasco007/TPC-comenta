@@ -10,13 +10,10 @@
 #include <main/memoria.h>
 #include <estructura/estructura.h>
 
-// Definiciones de las operaciones
-#define READ 0
-#define WRITE 1
-
 // Variables globales
 extern int tiempo;
 extern MemoriaFisica *memoria;
+extern int indice;
 
 // Funciones
 int ejecutarServidorCPU(int *socketCliente);

@@ -20,10 +20,6 @@ int ejecutarConsola () {
         if (!linea) {
             break;
         }
-        if (linea) {
-            add_history(linea);
-            log_info(logger, "Comando ingresado: %s", linea);
-        }
         if (!strncmp(linea, "EXIT", 4)) {
             free(linea);
             break;
