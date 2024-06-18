@@ -47,7 +47,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
     {
         sem_wait(&hayProcesosReady);
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
-        detenerYDestruirCronometro(aEjecutar->tiempoEnReady);
+        //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
         
         //Paso el proceso a EXEC
         estadoProceso estadoAnterior = aEjecutar->estado;
@@ -58,7 +58,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         //Mando el contexto de ejecucion a la CPU por dispatch
         contextoEjecucion = procesarPCB(aEjecutar); 
 
-        rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
+        rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
 
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
@@ -105,7 +105,6 @@ t_pcb *obtenerSiguienteAReady()
 void ingresarAReady(t_pcb *pcb){
     pthread_mutex_lock(&mutexListaReady);
     encolar(pcbsREADY, pcb);
-    pcb->tiempoEnReady = temporal_create();
     
     pthread_mutex_unlock(&mutexListaReady);
 

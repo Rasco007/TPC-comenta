@@ -30,12 +30,12 @@
 
     extern t_contexto* contextoEjecucion;
 
-    void cicloDeInstruccion(int socket1,int socket2);
+    void cicloDeInstruccion();
     void fetch();
     void decode();
     void execute();
     void liberarMemoria();
-    void check_interrupt(int socket1,int socket2);
+    void check_interrupt();
     int buscar(char *elemento, char **lista); 
 
     uint32_t mmu(char* direccionLogica, int tamValor);

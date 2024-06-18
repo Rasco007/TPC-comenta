@@ -48,6 +48,8 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
         case EXIT:
             exit_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
+        case FIN_DE_QUANTUM:
+            finDeQuantum(proceso);
         default:
             log_error(loggerError, "Comando incorrecto");
             break; //falta un case para el FIN_DE_QUANTUM
@@ -100,7 +102,7 @@ void wait_s(t_pcb *proceso,char **parametros){
 
 void volverACPU(t_pcb* proceso) {
     contextoEjecucion = procesarPCB(proceso);
-    rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
+    rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
     retornoContexto(proceso, contextoEjecucion); 
 }
 
@@ -189,15 +191,16 @@ void exit_s(t_pcb *proceso,char **parametros){
 
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){
-    char* algoritmo=obtenerAlgoritmoPlanificacion();
+    t_algoritmo algoritmo=contextoEjecucion->algoritmo;
+    
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    if(strcmp(algoritmo,"RR")==0){
+
+    if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
         encolar(pcbsREADY,proceso);
     } 
-    if(strcmp(algoritmo,"VRR")==0){
+    if(algoritmo=VRR){//Si es VRR, encolo el proceso en READYaux
         encolar(pcbsREADYaux,proceso);
     }
-    //ingresarAReady(proceso);?
 }
