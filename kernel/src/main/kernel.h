@@ -24,4 +24,5 @@ extern t_log* loggerError;
 extern t_config* config;
 extern pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h;
 
+
 #endif

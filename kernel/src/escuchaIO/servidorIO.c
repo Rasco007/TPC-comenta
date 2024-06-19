@@ -2,9 +2,12 @@
 #include <global.h>
 #define BUFFER_SIZE 1024
 
+
 int ejecutarServidorKernel();
 void hacerHandshake(int socketClienteIO);
 void recibirNombreInterfaz(int socketClienteIO);
+
+
 void escucharAlIO() {
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
@@ -39,9 +42,9 @@ void recibirNombreInterfaz(int socketClienteIO){
 
    int valread = recv(socketClienteIO, buffer, BUFFER_SIZE, 0);
     if (valread < 0) {
-        perror("recv");
+        log_error(loggerError,"recv");
     } else {
-        printf("Received: %s\n", buffer);
+        log_info(logger, "Nombre recibido: %s\n", buffer);
     }
 }
 
@@ -61,6 +64,19 @@ void hacerHandshake(int socketClienteIO){
     }
    
 }
+
+void inicializarStructsIO(Kernel_io *kernel) {
+    kernel->interfaces = NULL;
+    kernel->cantidad = 0;
+}
+void destruirStructsIO (Kernel_io *kernel) {
+    free(kernel->interfaces);
+    kernel->interfaces = NULL;
+    kernel->cantidad = 0;
+}
+
+
+
 int ejecutarServidorKernel(){
 	return 0;
 }
