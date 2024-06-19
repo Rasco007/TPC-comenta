@@ -29,5 +29,5 @@ void destruirStructsIO(Kernel_io *kernel);
 void inicializarStructsIO(Kernel_io *kernel);
 extern t_contexto* contextoEjecucion;
 
-
+extern Kernel_io kernel;
 #endif
