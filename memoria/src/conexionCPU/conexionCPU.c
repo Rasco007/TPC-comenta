@@ -5,7 +5,12 @@ MemoriaFisica *memoria;
 //t_log *logger;
 //t_config *config;
 char* valorLeido; 
+void limpiarBuffer(int socketCliente){
+    int size;
+    void* buffer = recibirBuffer(socketCliente, &size);
+    free(buffer);
 
+}
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
     tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
@@ -26,8 +31,13 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case MMU:
                 log_info(logger, "Llegue al case MMU");
-                recibirPeticionDeLectura(*socketCliente);
-                enviarValorObtenido(1414);
+               // recibirPeticionDeLectura(*socketCliente);
+                log_info(logger, "numero de case?? %d", peticion);
+                int pid=1;
+                int pagina=6;
+                BuscarMarco(pid, pagina);limpiarBuffer(*socketCliente);
+                enviarMensaje("MENSAJE DE MEMORIA A CPU", *socketCliente);
+                //enviarValorObtenido(1414);
                 break;
             case -1:
                 log_error(logger, "El CPU se desconectó");
@@ -40,7 +50,14 @@ int ejecutarServidorCPU(int *socketCliente) {
     }
     return EXIT_SUCCESS;
 }
-
+void BuscarMarco (int pid, int pagina){
+    for (int i=0; i<NUM_MARCOS; i++){
+        if (mf->marcos[i].pid == pid && mf->marcos[i].numero_pagina == pagina){
+            log_info(logger, "Marco encontrado");
+            return;
+        }
+    }
+}
 char* leer(int32_t direccionFisica, int tamanio) {
     usleep(tiempo * 1000); // Simula el retardo
 

@@ -30,10 +30,10 @@ int main(void){
 
 	
 
-    //escucharAlKernel();
+    escucharAlKernel();
 
 	// Insertar algunas entradas de ejemplo en la TLB
-    tlb.entries[0] = (TLBEntry){.pid = 1, .page_number = 6, .frame_number = 100, .valid = true, .last_used = tiempo_actual++};
+    tlb.entries[0] = (TLBEntry){.pid = 1, .page_number = 7, .frame_number = 100, .valid = true, .last_used = tiempo_actual++};
     tlb.entries[1] = (TLBEntry){.pid = 2, .page_number = 3, .frame_number = 101, .valid = true, .last_used = tiempo_actual++};
     tlb.entries[2] = (TLBEntry){.pid = 1, .page_number = 4, .frame_number = 102, .valid = true, .last_used = tiempo_actual++};
     tlb.entries[3] = (TLBEntry){.pid = 3, .page_number = 8, .frame_number = 103, .valid = true, .last_used = tiempo_actual++};
@@ -48,7 +48,7 @@ int main(void){
         log_info(logger,"TLB Miss\n");
     }
     
-    return 0;
+   // return 0;
 	
 
 	free (nombre);

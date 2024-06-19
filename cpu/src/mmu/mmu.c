@@ -7,7 +7,34 @@
 extern TLB tlb;
 extern uint64_t tiempo_actual; // Contador de tiempo para LRU
 
+void solicitarDireccion(int socket){
+    /*t_paquete* peticion = crearPaquete();
+    peticion->codigo_operacion = MMU;
+    
+    enviarPaquete(peticion, conexionAMemoria);    
+    eliminarPaquete (peticion);*/
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = MMU;
+	paquete->buffer = malloc(sizeof(t_buffer));
+	paquete->buffer->size = 1;
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	//memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
 
+	int bytes = paquete->buffer->size + 2 * sizeof(int);
+
+	void *a_enviar = serializarPaquete(paquete, bytes);
+
+	send(socket, a_enviar, bytes, 0);
+
+	free(a_enviar);
+	eliminarPaquete(paquete);
+}
+void limpiarBuffer(int socketCliente){
+    int size;
+    void* buffer = recibirBuffer(socketCliente, &size);
+    free(buffer);
+
+}
 //MMU
 uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor) {
     uint32_t dirLogica = (uint32_t)strtoul(direccionLogica, NULL, 10);
@@ -25,23 +52,44 @@ uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor) {
         // Aquí deberías consultar la tabla de páginas en memoria y actualizar la TLB
         // Por ahora, solo indicamos un TLB Miss
         log_info(logger,"TLB Miss\n");
-
-        t_paquete* peticion = crearPaquete();
+        solicitarDireccion(conexionAMemoria);
+        /*t_paquete* peticion = crearPaquete();
         peticion->codigo_operacion = MMU;
         
-        enviarPaquete(peticion, conexionAMemoria);    
-        eliminarPaquete (peticion);
-
+        enviarPaquete(peticion, conexionAMemoria);    */
+        //eliminarPaquete (peticion);
         
-
+        
+        int control = 1;
+        while(control) {
         recibo = recibirOperacion(conexionAMemoria);
-
-
-        log_info(logger,"Recibo de memoria: %d\n", recibo);
+        log_info(logger,"numero de case??? %d", recibo);
+        switch (recibo){
+            case MMU:
+                valorAInsertar = recibirMensaje(conexionAMemoria);
+                log_info(logger,"valorAInsertar de memoria: %s\n", valorAInsertar);
+                control=0;
+            break;
+        
+            default:
+                log_warning(logger, "Operación desconocida de la memoria.");   
+                valorAInsertar = recibirMensaje(conexionAMemoria);
+                log_info(logger,"valorAInsertar de memoria: %s\n", valorAInsertar);
+                limpiarBuffer(conexionAMemoria);
+                control=0;
+            break;
+            case -1:
+                log_error(logger, "ERROR OPCODE");
+                return EXIT_FAILURE;
+                break;
+            }
+        }
+        
+        /*log_info(logger,"Recibo de memoria: %d\n", recibo);
 
         valorAInsertar = recibirMensaje(conexionAMemoria);
 
-        log_info(logger,"valorAInsertar de memoria: %s\n", valorAInsertar);
+        log_info(logger,"valorAInsertar de memoria: %s\n", valorAInsertar);*/
 
         return UINT32_MAX; // Indica que no se encontró
     }
