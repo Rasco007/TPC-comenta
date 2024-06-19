@@ -32,11 +32,11 @@ int nroSegmento;
 t_temporal* rafagaCPU; 
 int64_t rafagaCPUEjecutada; 
 
-void cicloDeInstruccion(int socketClienteInterrupt, int socketClienteDispatch){
+void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
-    check_interrupt(socketClienteInterrupt,socketClienteDispatch); //revisa si hay interrupciones 
+    check_interrupt(); //control de quantum
     liberarMemoria();
 }
 
@@ -65,10 +65,14 @@ int buscar(char *elemento, char **lista) {
     return (i > string_array_size(lista)) ? -1 : i;
 }
  
-void check_interrupt(int socketClienteInterrupt, int socketClienteDispatch){
-    if (recv(socketClienteInterrupt, NULL, 0, MSG_PEEK) != -1) {
-        //motivo de desalojo???
-        enviarContextoActualizado(socketClienteDispatch);
+void check_interrupt(){
+    int64_t quantum=contextoEjecucion->quantum;
+    t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+    //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
+    if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
+        destruirTemporizador(rafagaCPU);
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoActualizado(socketCliente);
     }
 }
 
@@ -249,8 +253,7 @@ void mov_out(char* direccionLogica, char* registro){
 // Funciones grales
 
 void destruirTemporizador (t_temporal * temporizador) {
-    temporal_stop(temporizador);
-    contextoEjecucion->rafagaCPUEjecutada = temporal_gettime(temporizador);  
+    temporal_stop(temporizador); 
 }
 
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {

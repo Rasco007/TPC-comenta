@@ -4,6 +4,7 @@
 #include <global.h>
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
+#include <commons/temporal.h>
 
 #include "stdlib.h"
 #include "stdint.h"
@@ -23,6 +24,12 @@ typedef struct {
     int bitDeValidez;
 }t_pagina; //Ver si es correcto
 
+typedef enum{
+    FIFO,
+    RR,
+    VRR,
+} t_algoritmo;
+
 typedef struct {
     uint32_t pid; 
     int programCounter;
@@ -34,7 +41,9 @@ typedef struct {
     uint32_t tablaDePaginasSize;
     t_list* tablaDePaginas; 
     t_motivoDeDesalojo* motivoDesalojo;
-    int64_t rafagaCPUEjecutada;
+    t_temporal* tiempoDeUsoCPU;
+    int64_t quantum;
+    t_algoritmo algoritmo;
 } t_contexto;
 
 extern t_contexto* contextoEjecucion;
