@@ -17,9 +17,10 @@ int ejecutarServidorCPU(int *socketCliente) {
 
     while (1) {
         int peticion = recibirOperacion(*socketCliente);
-        log_debug(logger, "Se recibió petición %d del CPU", peticion);
+        log_info(logger, "Se recibió petición %d del CPU", peticion);
 
         switch (peticion) {
+            
             case READ:
             log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
@@ -30,9 +31,8 @@ int ejecutarServidorCPU(int *socketCliente) {
                 enviarMensaje("OK", *socketCliente);
                 break;
             case MMU:
-                log_info(logger, "Llegue al case MMU");
+                log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
                // recibirPeticionDeLectura(*socketCliente);
-                log_info(logger, "numero de case?? %d", peticion);
                 int pid=1;
                 int pagina=6;
                 BuscarMarco(pid, pagina);limpiarBuffer(*socketCliente);

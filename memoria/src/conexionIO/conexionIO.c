@@ -21,7 +21,7 @@ int ejecutarServidorIO(int * socketCliente){
                 return EXIT_FAILURE;
                 break;
             default:
-                log_warning(logger, "Operación desconocida del IO.");
+                log_warning(logger, "Operación desconocida del IO. Peticion %d", peticion);
                 break;
         }
     }
