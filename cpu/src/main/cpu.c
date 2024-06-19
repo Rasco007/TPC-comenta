@@ -8,17 +8,9 @@ solicitar una llamada al Kernel, o deber ser desalojado (interrupción).*/
 
 #include <main/cpu.h>
 
-uint64_t tiempo_actual = 0;
 TLB tlb;
-PageTable *page_table;
+uint64_t tiempo_actual = 0; // Contador de tiempo para LRU
 
-void inicializar_tlb() {
-    tlb.size = 32; //todo: tiene que agarrar el CANTIDAD_ENTRADAS_TLB
-    for (size_t i = 0; i < 32; i++) {
-        tlb.entries[i].valid = false;
-    }
-	log_info(logger, "TLB inicializada. Primer entrada: %d", tlb.entries[0].valid);
-}
 
 int main(void){
 	
@@ -36,11 +28,27 @@ int main(void){
 
 	inicializar_tlb(); 
 
-	mmu("12345", 32, tlb);
-
-    escucharAlKernel();
-
 	
+
+    //escucharAlKernel();
+
+	// Insertar algunas entradas de ejemplo en la TLB
+    tlb.entries[0] = (TLBEntry){.pid = 1, .page_number = 6, .frame_number = 100, .valid = true, .last_used = tiempo_actual++};
+    tlb.entries[1] = (TLBEntry){.pid = 2, .page_number = 3, .frame_number = 101, .valid = true, .last_used = tiempo_actual++};
+    tlb.entries[2] = (TLBEntry){.pid = 1, .page_number = 4, .frame_number = 102, .valid = true, .last_used = tiempo_actual++};
+    tlb.entries[3] = (TLBEntry){.pid = 3, .page_number = 8, .frame_number = 103, .valid = true, .last_used = tiempo_actual++};
+    
+    // Consultar una dirección lógica
+    char* direccionLogica = "12345";
+    uint32_t dirFisica = mmu(1, direccionLogica, 0);
+    
+    if (dirFisica != UINT32_MAX) {
+        log_info(logger,"Dirección Física: %u\n", dirFisica);
+    } else {
+        log_info(logger,"TLB Miss\n");
+    }
+    
+    return 0;
 	
 
 	free (nombre);

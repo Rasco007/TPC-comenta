@@ -27,7 +27,7 @@ int ejecutarServidorCPU(int *socketCliente) {
             case MMU:
                 log_info(logger, "Llegue al case MMU");
                 recibirPeticionDeLectura(*socketCliente);
-                
+                enviarValorObtenido(1414);
                 break;
             case -1:
                 log_error(logger, "El CPU se desconectó");
@@ -99,6 +99,7 @@ void recibirPeticionDeEscritura(int socketCPU) {
 void enviarValorObtenido(int socketCPU) {
     enviarMensaje(valorLeido, socketCPU);
     free(valorLeido);
+    log_info(logger, "Envie valor a CPU");
 }
 
 void escribir(char* valor, int32_t direccionFisica, int tamanio) {
