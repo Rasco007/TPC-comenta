@@ -44,7 +44,8 @@ typedef enum
 	FCREATE,
 	FTRUNCATE,
 	FREAD,
-	FWRITE
+	FWRITE,
+	MMU
 } op_code;
 
 typedef struct

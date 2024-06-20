@@ -204,25 +204,29 @@ void mov_in(char* registro, char* direccionLogica){
     char* valorAInsertar;
     uint32_t tamRegistro = (uint32_t)obtenerTamanioReg(registro);
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(direccionLogica, tamRegistro);
+    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
+
+    log_info(logger, "Direccion fisica: %d", dirFisica);
 
     if(dirFisica!=UINT32_MAX){
-    t_paquete* peticion = crearPaquete();
-    peticion->codigo_operacion = READ;
-    agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
-    agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
-    agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
-    enviarPaquete(peticion, conexionAMemoria);    
-    eliminarPaquete (peticion);
+        t_paquete* peticion = crearPaquete();
+        peticion->codigo_operacion = READ;
+        agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
+        agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
+        agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
+        enviarPaquete(peticion, conexionAMemoria);    
+        eliminarPaquete (peticion);
 
-    recibirOperacion(conexionAMemoria);
-    valorAInsertar = recibirMensaje(conexionAMemoria);
+        recibirOperacion(conexionAMemoria);
+        valorAInsertar = recibirMensaje(conexionAMemoria);
 
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
-    
-    log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
-    free (valorAInsertar);
+        dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
+        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
+        
+        log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
+        free (valorAInsertar);
+    }else {
+        log_info(logger, "Error: Dirección física inválida\n");
     }
 };
 
@@ -232,7 +236,7 @@ void mov_out(char* direccionLogica, char* registro){
     int tamRegistro = obtenerTamanioReg(registro);
 
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(direccionLogica, tamRegistro);
+    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
 
     if(dirFisica != UINT32_MAX){    
     t_paquete* peticion = crearPaquete();
@@ -375,10 +379,4 @@ void execute() {
         default:
             break;
     }
-}
-
-//MMU
-uint32_t mmu(char* direccionLogica, int tamValor){
-    //TODO: Implementacion para paginacion
-    return UINT32_MAX; 
 }
