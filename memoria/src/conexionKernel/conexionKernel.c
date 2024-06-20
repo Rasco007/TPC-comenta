@@ -87,8 +87,8 @@ void eliminarProcesoDeMemoria(int pid) {
 Proceso *buscar_proceso_por_pid(int pid) { //ver si pasar por referencia
     Proceso *proceso = NULL;
     for (int i = 0; i < NUM_MARCOS; i++) {
-        if (memoria->marcos[i].pid == pid) {
-            proceso = memoria->marcos[i].proceso;
+        if (mf->marcos[i].pid == pid) {
+            proceso = mf->marcos[i].proceso;
         }
     }
     return proceso;

@@ -27,5 +27,6 @@ void recibirPeticionDeEscritura(int socketCPU);
 void enviarValorObtenido(int socketCPU);
 void escribir(char* valor, int32_t direccionFisica, int tamanio);
 
-void BuscarMarco (int pid, int pagina);
+void BuscarYEnviarMarco (int pid, int pagina,char *marco,int socketCliente);
+void recibirEnteros(int socket, int *pid, int *pagina);
 #endif // MEMORIA_CONEXION_CPU_H

@@ -1,26 +1,26 @@
 #include <conexionCPU/conexionCPU.h>
 
 int tiempo;
-MemoriaFisica *memoria;
+//MemoriaFisica *mf;
 //t_log *logger;
 //t_config *config;
 char* valorLeido; 
+
 void limpiarBuffer(int socketCliente){
     int size;
     void* buffer = recibirBuffer(socketCliente, &size);
     free(buffer);
-
 }
+
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
     tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
-
     while (1) {
         int peticion = recibirOperacion(*socketCliente);
         log_info(logger, "Se recibió petición %d del CPU", peticion);
 
         switch (peticion) {
-            
+
             case READ:
             log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
@@ -30,14 +30,13 @@ int ejecutarServidorCPU(int *socketCliente) {
                 recibirPeticionDeEscritura(*socketCliente);
                 enviarMensaje("OK", *socketCliente);
                 break;
-            case MMU:
+            case MMU:// recibirPeticionDeLectura(*socketCliente);
                 log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
-               // recibirPeticionDeLectura(*socketCliente);
-                int pid=1;
-                int pagina=6;
-                BuscarMarco(pid, pagina);limpiarBuffer(*socketCliente);
-                enviarMensaje("MENSAJE DE MEMORIA A CPU", *socketCliente);
-                //enviarValorObtenido(1414);
+                int pid,pag;
+                char marco[sizeof(int)];
+                recibirEnteros(*socketCliente,&pid,&pag);
+                BuscarYEnviarMarco(pid, pag, marco,*socketCliente);
+                limpiarBuffer(*socketCliente);
                 break;
             case -1:
                 log_error(logger, "El CPU se desconectó");
@@ -50,18 +49,39 @@ int ejecutarServidorCPU(int *socketCliente) {
     }
     return EXIT_SUCCESS;
 }
-void BuscarMarco (int pid, int pagina){
+
+void recibirEnteros(int socket, int *pid, int *pagina) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    memcpy(pid ,buffer+sizeof(op_code), sizeof(int));
+    memcpy(pagina, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+    printf("Recibido PID: %d, Página: %d\n", *pid, *pagina);
+}
+
+void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
+    int frame=0;
     for (int i=0; i<NUM_MARCOS; i++){
         if (mf->marcos[i].pid == pid && mf->marcos[i].numero_pagina == pagina){
-            log_info(logger, "Marco encontrado");
-            return;
+            log_info(logger, "Marco encontrado: %d", i);
+            frame= i;
+            break;
         }
     }
+    sprintf(marco, "%d", frame);
+    log_info(logger, "PID: <%d> - Pagina: <%d> - Marco: <%s>", pid, pagina, marco);
+    enviarMensaje(marco, socketCliente);
 }
+
 char* leer(int32_t direccionFisica, int tamanio) {
     usleep(tiempo * 1000); // Simula el retardo
 
-    char* punteroDireccionFisica = (char*)memoria->memoria + direccionFisica;
+    char* punteroDireccionFisica = (char*)mf->memoria + direccionFisica;
     char* valor = malloc(sizeof(char) * tamanio);
     
     memcpy(valor, punteroDireccionFisica, tamanio);
@@ -122,12 +142,9 @@ void enviarValorObtenido(int socketCPU) {
 void escribir(char* valor, int32_t direccionFisica, int tamanio) {
     usleep(tiempo * 1000); // Simula el retardo
 
-    char* punteroADirFisica = (char*)memoria->memoria + direccionFisica;
+    char* punteroADirFisica = (char*)mf->memoria + direccionFisica;
     
     memcpy(punteroADirFisica, valor, tamanio);
 
     free(valor);
 }
-
-
-

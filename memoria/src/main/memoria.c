@@ -12,7 +12,7 @@ pthread_t threadCPU, threadKernel, threadIO;
 t_log* logger; 
 t_log* loggerError; 
 t_config* config; 
-    MemoriaFisica *mf;
+MemoriaFisica *mf;
 int main() {
 
     logger = iniciarLogger ("memoria.log", "Memoria");
@@ -52,8 +52,8 @@ int main() {
 
     
     mf= inicializar_memoria_fisica();
-    mf->marcos[0].pid = 1;
-    mf->marcos[0].numero_pagina = 6;
+    mf->marcos[8].pid = 1;
+    mf->marcos[8].numero_pagina = 6;
     // Inicializa dos procesos con sus archivos de pseudocódigo
     //Espero a que me llege un path
     //sem_t path;
@@ -61,7 +61,7 @@ int main() {
     sem_wait(&path);
     
     //log_info(logger,"path de instrucciones: %s", pathInstrucciones);
-    Proceso *proceso = inicializar_proceso(1, pathInstrucciones);
+   Proceso *proceso = inicializar_proceso(1, "src/c-comenta-pruebas/PLANI_1");
 
     if (!proceso) {
         printf("Error al inicializar el procesos.\n");
