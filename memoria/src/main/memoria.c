@@ -61,8 +61,9 @@ int main() {
         error("Error en iniciar el servidor a Kernel");
     }
 
+    int tam_pagina = confGetInt("TAM_PAGINA");
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
-    MemoriaFisica *mf = inicializar_memoria_fisica();
+    MemoriaFisica *mf = inicializar_memoria_fisica(tam_pagina);
 
     // Inicializa dos procesos con sus archivos de pseudocódigo
     //Espero a que me llege un path
@@ -85,11 +86,11 @@ int main() {
         printf("Error al asignar la página 1 al proceso 1.\n");
     }
     // Ajuste del tamaño del proceso
-    //int nuevo_tamano = TAMANO_PAGINA*4;  // Por ejemplo, ajustar a 3 páginas
+    //int nuevo_tamano = tam_pagina*4;  // Por ejemplo, ajustar a 3 páginas
     //printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
     //proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
   
-    int nuevo_tamano = TAMANO_PAGINA*10;  // Por ejemplo, ajustar a 3 páginas : TAMANO_PAGINA*3
+    int nuevo_tamano = tam_pagina*10;  // Por ejemplo, ajustar a 3 páginas : tam_pagina*3
     printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
     proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
     if (proceso == NULL) 
