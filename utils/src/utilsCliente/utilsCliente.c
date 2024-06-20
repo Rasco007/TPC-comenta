@@ -100,21 +100,21 @@ void enviarPaquete(t_paquete *paquete, int socket)
 
 	send(socket, a_enviar, bytes, 0);
 
-	uint32_t respuesta;
-	recv(socket, &respuesta, sizeof(uint32_t), MSG_WAITALL);
+	//uint32_t respuesta;
+	//recv(socket, &respuesta, sizeof(uint32_t), MSG_WAITALL);
 	//int var_recv=recv(socket_cliente, &respuesta, sizeof(uint32_t), MSG_WAITALL);
 	//printf("var_recv: %d\n", var_recv);
 	//printf("respuesta: %d\n", respuesta);
 
-	if(respuesta == bytes){
+	/*if(respuesta == bytes){
 		log_info(logger,"Datos enviados correctamente");
 	}
 	else {
 		log_info(logger,"Han llegado menos bytes que los enviados por el modulo.");
-	}
+	}*/
 
 	free(a_enviar);
-	eliminarPaquete(paquete);
+	//eliminarPaquete(paquete);
 
 }
 

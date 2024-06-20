@@ -10,8 +10,6 @@ sem_t path;
 //serializar tabla de Segmentos
 
 
-
-
 uint32_t recibirPID(int socketCliente) {
 
 	int size, desplazamiento=0; 
@@ -35,7 +33,7 @@ int ejecutarServidorKernel(int *socketCliente) {
                 //Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
                 // enviarTablaPaginas(procesoNuevo); // Implementar si es necesario
                 log_info(logger,"Creacion de Proceso PID: <%d>", pid);
-                sem_post(&path);// ESTE VA??
+               // sem_post(&path);// ESTE VA??
                 break;
             }
             case ENDPCB: {

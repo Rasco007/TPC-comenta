@@ -50,7 +50,6 @@ int main() {
         error("Error en iniciar el servidor a Kernel");
     }
 
-    
     mf= inicializar_memoria_fisica();
     mf->marcos[8].pid = 1;
     mf->marcos[8].numero_pagina = 6;
@@ -61,7 +60,7 @@ int main() {
     sem_wait(&path);
     
     //log_info(logger,"path de instrucciones: %s", pathInstrucciones);
-   Proceso *proceso = inicializar_proceso(1, "src/c-comenta-pruebas/PLANI_1");
+   Proceso *proceso = inicializar_proceso(1, pathInstrucciones);
 
     if (!proceso) {
         printf("Error al inicializar el procesos.\n");
@@ -79,12 +78,10 @@ int main() {
     if (!asignar_pagina(mf, proceso, 0)) {
         printf("Error al asignar la página 0 al proceso 2.\n");
     }
-    log_info(logger, "ANTES DEL WHILE");
     // TODO: el program counter deberia venir del CPU
     int program_counter = 0;
     while (1) {
         char *instruccion1 = obtener_instruccion(proceso, program_counter);
-        log_info(logger, "ENTRO AL WHILE");
 
         if (instruccion1) {
             printf("Instrucción del proceso 1: %s", instruccion1);
