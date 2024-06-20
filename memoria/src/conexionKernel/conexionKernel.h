@@ -14,7 +14,7 @@
 // Variables globales
 //extern t_log *logger;
 //extern t_config *config;
-extern MemoriaFisica *memoria;
+extern MemoriaFisica *mf;
 extern char* pathInstrucciones;
 
 // Funciones

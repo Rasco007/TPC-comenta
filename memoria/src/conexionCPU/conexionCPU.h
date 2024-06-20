@@ -11,12 +11,13 @@
 #include <estructura/estructura.h>
 
 // Definiciones de las operaciones
-#define READ 0
+/*#define READ 0
 #define WRITE 1
+#define MMU 2*/
 
 // Variables globales
 extern int tiempo;
-extern MemoriaFisica *memoria;
+extern MemoriaFisica *mf;
 
 // Funciones
 int ejecutarServidorCPU(int *socketCliente);
@@ -26,4 +27,6 @@ void recibirPeticionDeEscritura(int socketCPU);
 void enviarValorObtenido(int socketCPU);
 void escribir(char* valor, int32_t direccionFisica, int tamanio);
 
+void BuscarYEnviarMarco (int pid, int pagina,char *marco,int socketCliente);
+void recibirEnteros(int socket, int *pid, int *pagina);
 #endif // MEMORIA_CONEXION_CPU_H
