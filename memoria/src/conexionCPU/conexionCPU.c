@@ -4,7 +4,9 @@ int tiempo;
 //MemoriaFisica *mf;
 //t_log *logger;
 //t_config *config;
-char* valorLeido; 
+char* valorLeido;
+int indice;
+char* instruccion; 
 
 void limpiarBuffer(int socketCliente){
     int size;
@@ -41,6 +43,14 @@ int ejecutarServidorCPU(int *socketCliente) {
             case -1:
                 log_error(logger, "El CPU se desconectó");
                 return EXIT_FAILURE;
+                break;
+            case PAQUETE:
+                //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
+                log_info(logger, "Se recibió la peticion de CPU");
+                indice=recibirPaquete(*socketCliente);
+                //INSERTAR SEMAFORO O ALGO...
+                //Espero a que memoria almacene en instruccion la linea que se solicita y la mando a cpu
+                enviarMensaje(instruccion,socketCliente);
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");
