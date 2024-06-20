@@ -26,7 +26,8 @@ int main(void){
 	char * nombre = string_duplicate("CPU-KERNEL");
 	cambiarNombre(logger, nombre);
 
-	inicializar_tlb(); 
+    char *algoritmoTLB = obtenerAlgoritmoTLB();
+	inicializar_tlb(algoritmoTLB); 
 
 	
 

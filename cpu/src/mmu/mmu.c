@@ -56,8 +56,12 @@ uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor) {
                 return EXIT_FAILURE;
                 break;
         }
+
+        // Agregar la nueva entrada a la TLB
+        agregar_a_tlb(pid, page_number, frame);
+
         return frame* PAGE_SIZE + offset;
-      //  }
+        //}
         //return frame_number * PAGE_SIZE + offset;
         /*log_info(logger,"Recibo de memoria: %d\n", recibo);
 
@@ -92,16 +96,17 @@ void solicitarDireccion(int pid, int pagina, int socket){
 	free(a_enviar);
 	free(paquete);
 }
-void inicializar_tlb() {
-    tlb.size = CANTIDAD_ENTRADAS_TLB; // Establece el tamaño de la TLB
+void inicializar_tlb(char* algoritmoTLB) {
+    tlb.size = CANTIDAD_ENTRADAS_TLB;
+    tlb.algoritmo = algoritmoTLB; // Establece el algoritmo de reemplazo
     for (size_t i = 0; i < CANTIDAD_ENTRADAS_TLB; i++) {
-        tlb.entries[i].pid = 0;          // ID de proceso inicializado a 0
-        tlb.entries[i].page_number = 0;  // Número de página inicializado a 0
-        tlb.entries[i].frame_number = 0; // Número de marco inicializado a 0
-        tlb.entries[i].valid = false;    // Marca la entrada como inválida
-        tlb.entries[i].last_used = 0;    // Timestamp inicializado a 0 (opcional)
+        tlb.entries[i].pid = 0;
+        tlb.entries[i].page_number = 0;
+        tlb.entries[i].frame_number = 0;
+        tlb.entries[i].valid = false;
+        tlb.entries[i].last_used = 0;
     }
-    log_info(logger,"TLB inicializada.");
+    log_info(logger,"TLB inicializada con algoritmo %s. Primer entrada: %d\n", algoritmoTLB, tlb.entries[0].valid);
 }
 
 int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
@@ -115,4 +120,45 @@ int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
     }
     // TLB Miss
     return 0; // Indica TLB Miss
+}
+
+void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
+    // Busca una entrada inválida
+    for (size_t i = 0; i < tlb.size; i++) {
+        if (!tlb.entries[i].valid) {
+            tlb.entries[i].pid = pid;
+            tlb.entries[i].page_number = page_number;
+            tlb.entries[i].frame_number = frame_number;
+            tlb.entries[i].valid = true;
+            tlb.entries[i].last_used = tiempo_actual++;
+            return;
+        }
+    }
+
+    // Reemplazar una entrada existente según el algoritmo configurado
+    size_t reemplazo = 0;
+    if (strcmp(tlb.algoritmo, "FIFO") == 0) {
+        // Reemplazo FIFO: Encuentra la entrada más antigua
+        reemplazo = 0;
+        for (size_t i = 1; i < tlb.size; i++) {
+            if (tlb.entries[i].last_used < tlb.entries[reemplazo].last_used) {
+                reemplazo = i;
+            }
+        }
+    } else if (strcmp(tlb.algoritmo, "LRU") == 0) {
+        // Reemplazo LRU: Encuentra la entrada menos recientemente usada
+        reemplazo = 0;
+        for (size_t i = 1; i < tlb.size; i++) {
+            if (tlb.entries[i].last_used < tlb.entries[reemplazo].last_used) {
+                reemplazo = i;
+            }
+        }
+    }
+
+    // Actualiza la entrada reemplazada
+    tlb.entries[reemplazo].pid = pid;
+    tlb.entries[reemplazo].page_number = page_number;
+    tlb.entries[reemplazo].frame_number = frame_number;
+    tlb.entries[reemplazo].valid = true;
+    tlb.entries[reemplazo].last_used = tiempo_actual++;
 }
