@@ -32,18 +32,25 @@ int nroSegmento;
 t_temporal* rafagaCPU; 
 int64_t rafagaCPUEjecutada; 
 
-void cicloDeInstruccion(int socketClienteInterrupt, int socketClienteDispatch){
+void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
-    check_interrupt(socketClienteInterrupt,socketClienteDispatch); //revisa si hay interrupciones 
+    check_interrupt(); //control de quantum
     liberarMemoria();
 }
 
 // ------- Funciones del ciclo ------- //
 void fetch() { 
+    //Mando la linea que voy a leer de la lista de instrucciones de memoria
     int numInstruccionABuscar = contextoEjecucion->programCounter;
-    instruccionAEjecutar = list_get(contextoEjecucion->instrucciones,numInstruccionABuscar); 
+    t_paquete* paquete = crearPaquete();
+    agregarAPaquete(paquete, &numInstruccionABuscar, sizeof(int));
+    enviarPaquete(paquete, conexionAMemoria);
+    
+    //Recibo la instruccion
+    instruccionAEjecutar=recibirMensaje(conexionAMemoria);
+
     contextoEjecucion->programCounter += 1;
 }
 
@@ -65,10 +72,14 @@ int buscar(char *elemento, char **lista) {
     return (i > string_array_size(lista)) ? -1 : i;
 }
  
-void check_interrupt(int socketClienteInterrupt, int socketClienteDispatch){
-    if (recv(socketClienteInterrupt, NULL, 0, MSG_PEEK) != -1) {
-        //motivo de desalojo???
-        enviarContextoActualizado(socketClienteDispatch);
+void check_interrupt(){
+    int64_t quantum=contextoEjecucion->quantum;
+    t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+    //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
+    if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
+        destruirTemporizador(rafagaCPU);
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoActualizado(socketCliente);
     }
 }
 
@@ -193,25 +204,29 @@ void mov_in(char* registro, char* direccionLogica){
     char* valorAInsertar;
     uint32_t tamRegistro = (uint32_t)obtenerTamanioReg(registro);
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(direccionLogica, tamRegistro);
+    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
+
+    log_info(logger, "Direccion fisica: %d", dirFisica);
 
     if(dirFisica!=UINT32_MAX){
-    t_paquete* peticion = crearPaquete();
-    peticion->codigo_operacion = READ;
-    agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
-    agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
-    agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
-    enviarPaquete(peticion, conexionAMemoria);    
-    eliminarPaquete (peticion);
+        t_paquete* peticion = crearPaquete();
+        peticion->codigo_operacion = READ;
+        agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
+        agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
+        agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
+        enviarPaquete(peticion, conexionAMemoria);    
+        eliminarPaquete (peticion);
 
-    recibirOperacion(conexionAMemoria);
-    valorAInsertar = recibirMensaje(conexionAMemoria);
+        recibirOperacion(conexionAMemoria);
+        valorAInsertar = recibirMensaje(conexionAMemoria);
 
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
-    
-    log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
-    free (valorAInsertar);
+        dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
+        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
+        
+        log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
+        free (valorAInsertar);
+    }else {
+        log_info(logger, "Error: Dirección física inválida\n");
     }
 };
 
@@ -221,7 +236,7 @@ void mov_out(char* direccionLogica, char* registro){
     int tamRegistro = obtenerTamanioReg(registro);
 
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(direccionLogica, tamRegistro);
+    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
 
     if(dirFisica != UINT32_MAX){    
     t_paquete* peticion = crearPaquete();
@@ -245,8 +260,7 @@ void mov_out(char* direccionLogica, char* registro){
 // Funciones grales
 
 void destruirTemporizador (t_temporal * temporizador) {
-    temporal_stop(temporizador);
-    contextoEjecucion->rafagaCPUEjecutada = temporal_gettime(temporizador);  
+    temporal_stop(temporizador); 
 }
 
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
@@ -365,10 +379,4 @@ void execute() {
         default:
             break;
     }
-}
-
-//MMU
-uint32_t mmu(char* direccionLogica, int tamValor){
-    //TODO: Implementacion para paginacion
-    return UINT32_MAX; 
 }

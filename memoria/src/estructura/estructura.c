@@ -7,7 +7,7 @@
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina) {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
-    mf->memoria = malloc(NUM_MARCOS * tamano_pagina);
+    mf->memoria = malloc(NUM_MARCOS * 2048);
     for (int i = 0; i < NUM_MARCOS; i++) {
         mf->marcos[i].libre = true;
         mf->marcos[i].numero_pagina = -1;
@@ -42,7 +42,7 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     proceso->pid = pid;
     //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
     proceso->tabla_paginas = inicializar_tabla_paginas();
-    
+    proceso->pid=pid;
     // Leer archivo de pseudocódigo
     FILE *archivo = fopen(archivo_pseudocodigo, "r");
     if (!archivo) {

@@ -36,9 +36,10 @@ int ejecutarServidorCPU(int socketClienteDispatch,int socketClienteInterrupt){
 				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
 			} 		
 				recibirContextoActualizado(socketClienteDispatch);
-    			rafagaCPU = temporal_create(); 
+				//Inicio el cronometro del tiempo de uso de CPU
+				contextoEjecucion->tiempoDeUsoCPU=temporal_create();
                 while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength) {
-                    cicloDeInstruccion(socketClienteInterrupt,socketClienteDispatch);
+                    cicloDeInstruccion();
                 }	
 				temporal_destroy (rafagaCPU);
 				break;

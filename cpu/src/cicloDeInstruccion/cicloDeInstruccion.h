@@ -19,6 +19,9 @@
     #include <escuchaKernel/servidorKernel.h>
 
     #define obtenerTiempoEspera() config_get_int_value(config, "RETARDO_INSTRUCCION")
+    
+
+    
 
     extern char *listaComandos[];
     extern char* instruccionAEjecutar; 
@@ -30,18 +33,24 @@
 
     extern t_contexto* contextoEjecucion;
 
-    void cicloDeInstruccion(int socket1,int socket2);
+    void cicloDeInstruccion();
     void fetch();
     void decode();
     void execute();
     void liberarMemoria();
-    void check_interrupt(int socket1,int socket2);
+    void check_interrupt();
     int buscar(char *elemento, char **lista); 
 
-    uint32_t mmu(char* direccionLogica, int tamValor);
+    
     char* recibirValor(int);
     void destruirTemporizador (t_temporal * temporizador);
     void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5);
     int obtenerTamanioReg(char* registro);
+    
+
+    
+    
+    //
+    
 
 #endif 

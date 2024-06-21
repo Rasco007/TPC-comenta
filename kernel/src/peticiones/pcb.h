@@ -34,13 +34,11 @@ typedef struct {
     uint32_t DI;   
     estadoProceso estado; 
     t_dictionary* registrosCPU;
-    t_temporal* tiempoEnReady; 
+    t_temporal* tiempoDeUsoCPU; 
     t_list* recursosAsignados;
     t_list* tablaDePaginas;
     int64_t quantum;
-    int32_t rafagasEjecutadas;
 } t_pcb; 
-
 
 extern t_list *pcbsNEW;
 extern t_list *pcbsREADY;

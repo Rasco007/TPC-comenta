@@ -48,6 +48,8 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
         case EXIT:
             exit_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
+        case FIN_DE_QUANTUM:
+            finDeQuantum(proceso);
         default:
             log_error(loggerError, "Comando incorrecto");
             break; //falta un case para el FIN_DE_QUANTUM
@@ -66,22 +68,24 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
 }
 
 //FUNCIONES RETORNO CONTEXTO
-//WAIT
+//WAIT [Recurso]
 void wait_s(t_pcb *proceso,char **parametros){
     char* recurso=parametros[0];
     int indexRecurso = indiceRecurso(recurso);
 
-    if(indexRecurso==-1){
-        exit_s(proceso,&invalidResource);
+    if(indexRecurso==-1){ //Verifico que exista el recurso
+        exit_s(proceso,&invalidResource); //Si no existe, va a EXIT
         return;
     }
 
+    //Resto 1 a la instancias del recurso indicado
     int instanciaRecurso=instanciasRecursos[indexRecurso];
-    instanciaRecurso--;
+    instanciaRecurso--; 
     instanciasRecursos[indexRecurso]=instanciaRecurso;
 
     log_info(logger,"PID:<%d>-WAIT:<%s>-Instancias:<%d>",proceso->pid,recurso,instanciaRecurso);
 
+    //Si el numero de instancias es menor a 0 el proceso se bloquea
     if(instanciaRecurso<0){
         t_list *colaBloqueadosRecurso=(t_list*)list_get(recursos,indexRecurso);
 
@@ -92,7 +96,7 @@ void wait_s(t_pcb *proceso,char **parametros){
 
         loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
         loggearBloqueoDeProcesos(proceso, recurso);
-    } else {
+    } else {//Si no, vuelve a cpu
         list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
         volverACPU(proceso);
     }
@@ -100,19 +104,53 @@ void wait_s(t_pcb *proceso,char **parametros){
 
 void volverACPU(t_pcb* proceso) {
     contextoEjecucion = procesarPCB(proceso);
-    rafagaCPU = contextoEjecucion->rafagaCPUEjecutada; 
+    rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
     retornoContexto(proceso, contextoEjecucion); 
 }
-
+//SIGNAL [Recurso]
 void signal_s(t_pcb *proceso,char **parametros){
+    char *recurso = parametros[0];
+    int indexRecurso = indiceRecurso(recurso);
 
+    //Verifico que exista el recurso. Si no existe, va a EXIT
+    if (indexRecurso == -1){
+        exit_s(proceso, &invalidResource); 
+        return;
+    }
+
+    //Sumo 1 instancia del recurso que se especifica
+    int instancRecurso = instanciasRecursos[indexRecurso];
+    instancRecurso++;
+
+    log_info(logger,"PID: <%d> - Signal: <%s> - Instancias: <%d>",proceso->pid, recurso, instancRecurso); 
+    eliminarRecursoLista(proceso->recursosAsignados,recurso); 
+
+    instanciasRecursos[indexRecurso]=instancRecurso;
+
+    if(instancRecurso <= 0){
+        t_list *colaBloqueadosRecurso = (t_list *)list_get(recursos, indexRecurso);
+        t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
+
+        list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
+
+        //estimacionNuevaRafaga(pcbDesbloqueado); 
+
+        estadoAnterior = pcbDesbloqueado->estado;
+        pcbDesbloqueado->estado = READY;
+        loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado); 
+        ingresarAReady(pcbDesbloqueado); 
+    }
+    
+    list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+    volverACPU(proceso);
+    //if (strncmp (parametros[2], "EXIT", 4)) volverACPU(proceso);
 }
-
+//RESIZE [Tamanho]
 void resize_s(t_pcb *proceso,char **parametros){
 
 }
 
-//IO_GEN_SLEEP
+//IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
 void io_gen_sleep(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
@@ -189,15 +227,16 @@ void exit_s(t_pcb *proceso,char **parametros){
 
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){
-    char* algoritmo=obtenerAlgoritmoPlanificacion();
+    t_algoritmo algoritmo=contextoEjecucion->algoritmo;
+    
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    if(strcmp(algoritmo,"RR")==0){
+
+    if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
         encolar(pcbsREADY,proceso);
     } 
-    if(strcmp(algoritmo,"VRR")==0){
+    if(algoritmo=VRR){//Si es VRR, encolo el proceso en READYaux
         encolar(pcbsREADYaux,proceso);
     }
-    //ingresarAReady(proceso);?
 }

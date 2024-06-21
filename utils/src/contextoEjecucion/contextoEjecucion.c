@@ -42,7 +42,7 @@ void enviarContextoActualizado(int socket){
     agregarMotivoAPaquete(paquete, contextoEjecucion->motivoDesalojo);
     log_info(logger, "Motivo de desalojo agregado al paquete");
 
-    agregarAPaquete(paquete, (void *)&contextoEjecucion->rafagaCPUEjecutada, sizeof(contextoEjecucion->rafagaCPUEjecutada));
+    agregarAPaquete(paquete, (void *)&contextoEjecucion->tiempoDeUsoCPU, sizeof(contextoEjecucion->tiempoDeUsoCPU));
     log_info(logger, "Rafaga de CPU agregada al paquete");
 
     enviarPaquete(paquete, socket);
@@ -134,7 +134,7 @@ void recibirContextoActualizado (int socket) {
 
     // Desplazamiento: Tamaño de la rafaga de CPU Ejecutada.
     desplazamiento += sizeof (int);
-    memcpy(&(contextoEjecucion->rafagaCPUEjecutada), buffer + desplazamiento, sizeof (uint64_t));
+    memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof (uint64_t));
 		
 	free(buffer);
 
@@ -265,7 +265,7 @@ void iniciarContexto(){
 	contextoEjecucion->registrosCPU = dictionary_create();
 	contextoEjecucion->tablaDePaginas = list_create();
 	contextoEjecucion->tablaDePaginasSize = 0;
-    contextoEjecucion->rafagaCPUEjecutada = 0;
+    contextoEjecucion->tiempoDeUsoCPU = 0;
     contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
     contextoEjecucion->motivoDesalojo->parametros[0] = "";
     contextoEjecucion->motivoDesalojo->parametros[1] = "";

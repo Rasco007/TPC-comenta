@@ -10,13 +10,10 @@
 #include <main/memoria.h>
 #include <estructura/estructura.h>
 
-// Definiciones de las operaciones
-#define READ 0
-#define WRITE 1
-
 // Variables globales
 extern int tiempo;
 extern MemoriaFisica *memoria;
+extern int indice;
 
 // Funciones
 int ejecutarServidorCPU(int *socketCliente);
@@ -28,4 +25,6 @@ void escribir(char* valor, int32_t direccionFisica, int tamanio);
 
 Proceso *ajustar_tamano_proceso(MemoriaFisica *mf,Proceso *proceso, int nuevo_tamano);
 
+void BuscarYEnviarMarco (int pid, int pagina,char *marco,int socketCliente);
+void recibirEnteros(int socket, int *pid, int *pagina);
 #endif // MEMORIA_CONEXION_CPU_H

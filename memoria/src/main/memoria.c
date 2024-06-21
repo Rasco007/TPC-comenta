@@ -12,43 +12,33 @@ pthread_t threadCPU, threadKernel, threadIO;
 t_log* logger; 
 t_log* loggerError; 
 t_config* config; 
-
-// Función para verificar el tamaño del proceso
-/*void verificarTamanioProceso(Proceso *proceso, int nuevoTamano) {
-    printf("Número de instrucciones antes del ajuste: %d\n", proceso->numero_instrucciones);
-    proceso = ajustarTamanioProceso(proceso, nuevoTamano);
-    if (proceso != NULL) {
-        printf("Número de instrucciones después del ajuste: %d\n", proceso->numero_instrucciones);
-    } else {
-        printf("Error: No se pudo ajustar el tamaño del proceso.\n");
-    }
-}*/
+MemoriaFisica *mf;
 
 int main() {
 
     logger = iniciarLogger ("memoria.log", "Memoria");
-	loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
-	config = iniciarConfiguracion ("memoria.config");
-
-	atexit (terminarPrograma);
-
-	log_info (logger, "Memoria lista para recibir conexiones.");
-
-	int server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
-
-	sockets[0] = esperarCliente(server_fd);
-	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
-
-	sockets[1] = esperarCliente (server_fd);
-	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[1]);
-
-	sockets[2] = esperarCliente (server_fd);
-	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[2]);
+	  loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
+	  config = iniciarConfiguracion ("memoria.config");
+  
+	  atexit (terminarPrograma);
+  
+	  log_info (logger, "Memoria lista para recibir conexiones.");
+  
+	  int server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
+  
+	  sockets[0] = esperarCliente(server_fd);
+	  log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
+  
+	  sockets[1] = esperarCliente (server_fd);
+	  log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[1]);
+  
+	  sockets[2] = esperarCliente (server_fd);
+	  log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[2]);
 
     // Creación de hilos
     int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);
-    int opCodeKernel = pthread_create(&threadKernel, NULL, (void*)ejecutarServidorKernel, (void*)&sockets[1]);
     int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, (void*)&sockets[2]);
+    int opCodeKernel = pthread_create(&threadKernel, NULL, (void*)ejecutarServidorKernel, (void*)&sockets[1]);
 
     // Verificación de errores en la creación de hilos
     if (opCodeCPU) {
@@ -63,7 +53,9 @@ int main() {
 
     int tam_pagina = confGetInt("TAM_PAGINA");
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
-    MemoriaFisica *mf = inicializar_memoria_fisica(tam_pagina);
+    mf = inicializar_memoria_fisica(tam_pagina);
+    mf->marcos[8].pid = 1;
+    mf->marcos[8].numero_pagina = 6;
 
     // Inicializa dos procesos con sus archivos de pseudocódigo
     //Espero a que me llege un path
@@ -89,7 +81,6 @@ int main() {
     //int nuevo_tamano = tam_pagina*4;  // Por ejemplo, ajustar a 3 páginas
     //printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
     //proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
-  
     int nuevo_tamano = tam_pagina*10;  // Por ejemplo, ajustar a 3 páginas : tam_pagina*3
     printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
     proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
@@ -100,7 +91,6 @@ int main() {
     int program_counter = 0;
     while (1) {
         char *instruccion1 = obtener_instruccion(proceso, program_counter);
-    
 
         if (instruccion1) {
             printf("Instrucción del proceso 1: %s", instruccion1);
@@ -162,7 +152,4 @@ int main() {
     pthread_join(threadKernel, NULL);
 
     exit(0);
-
-	
 }
-
