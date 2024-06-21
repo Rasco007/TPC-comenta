@@ -9,8 +9,8 @@ void crearColasBloqueo()
 {
 	instanciasRecursos = NULL; 
 	recursos = list_create();
-    nombresRecursos = obtenerRecursos();
-    char **cantInstanciasRecursos = obtenerInstanciasRecursos();
+    nombresRecursos = obtenerRecursos(); //[RA,RB,RC...]
+    char **cantInstanciasRecursos = obtenerInstanciasRecursos();//[1,2,1...]
     int tamanio = tamanioArrayCharDoble(cantInstanciasRecursos);
 
     cantidadRecursos=tamanio;
@@ -65,27 +65,20 @@ void destruirRecursos(){
 }
 
 //Calcula el tamanio de un array char doble que vienen de los config y termina en NULL
-int tamanioArrayCharDoble (char **arreglo){
-	  
+int tamanioArrayCharDoble (char **arreglo){  
 	    return string_array_size(arreglo);
-
 }
 
 void liberarRecursosAsignados(t_pcb* proceso){
-
     int cantRecursos = list_size(proceso->recursosAsignados);
-
-    //log_debug(logger,"Tengo %d recursos", cantRecursos); 
 
     int i;
     if(cantRecursos!=0){
         for(i=0; i<cantRecursos;cantRecursos--){
             debug ("%d", i);
-            char * parametros[3] = {(char *)list_get(proceso->recursosAsignados, i), "", "EXIT"};
-            //log_debug(logger,"Mi contenido es %s", (char*)list_get(proceso->recursosAsignados,0)); 
+            char * parametros[3] = {(char *)list_get(proceso->recursosAsignados, i), "", "EXIT"}; 
             signal_s(proceso, parametros);
         }
-
     }
 }
 
@@ -95,14 +88,12 @@ void eliminarRecursoLista(t_list* recursos, char* recurso){
     log_debug(logger,"el recurso es %s",(recurso));
     int i;
     
-    for(i=0;i<cantRecursos;i++){
-        
+    for(i=0;i<cantRecursos;i++){ 
         log_debug(logger,"Mi lista tiene %s",(char*)list_get(recursos, i));
         
         if(!strcmp((char*)list_get(recursos,i), recurso)){
             list_remove_and_destroy_element(recursos,i,free);
-            return;
-            
+            return;  
         }
     }
 }
