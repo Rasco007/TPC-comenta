@@ -14,6 +14,7 @@
     #include <commons/string.h>
 
     #define confGet(key) config_get_string_value(config, key)
+    #define confGetInt(key) config_get_int_value(config, key)
 
     extern t_log *logger;
     extern t_log *loggerError;

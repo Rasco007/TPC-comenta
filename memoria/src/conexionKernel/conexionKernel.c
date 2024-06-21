@@ -24,7 +24,7 @@ uint32_t recibirPID(int socketCliente) {
 
 }
 int ejecutarServidorKernel(int *socketCliente) {
-    cantidadMaximaPaginas = config_get_int_value(config, "TAM_PAGINA");
+    cantidadMaximaPaginas = confGetInt("TAM_PAGINA");
     while (1) {
         int peticionRealizada = recibirOperacion(*socketCliente);
         switch (peticionRealizada) {

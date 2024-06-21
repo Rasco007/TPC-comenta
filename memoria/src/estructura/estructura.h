@@ -5,9 +5,9 @@
 #include <stdint.h>
 
 #include <commons/string.h>
+#include <configuraciones/configuraciones.h>
 
 // Definiciones para la memoria física
-#define TAMANO_PAGINA 4096 // Tamaño de cada página (4KB)
 #define NUM_MARCOS 64      // Número total de marcos en la memoria física
 
 // Definiciones para la tabla de páginas
@@ -19,6 +19,7 @@ typedef struct {
 
 typedef struct {
     EntradaTablaPaginas entradas[NUM_PAGINAS];
+    int paginas_asignadas;  // Número de páginas actualmente asignadas
 } TablaPaginas;
 
 typedef struct {
@@ -38,7 +39,7 @@ typedef struct {
     Marco marcos[NUM_MARCOS]; // Arreglo de marcos
 } MemoriaFisica;
 
-MemoriaFisica *inicializar_memoria_fisica();
+MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina);
 void liberar_memoria_fisica(MemoriaFisica *mf);
 
 TablaPaginas *inicializar_tabla_paginas();

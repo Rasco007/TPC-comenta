@@ -10,7 +10,6 @@
 #include <global.h>
 #include <main/memoria.h>
 
-
 // Variables globales
 //extern t_log *logger;
 //extern t_config *config;

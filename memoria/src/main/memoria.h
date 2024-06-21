@@ -27,6 +27,8 @@
 #include <semaphore.h>
 #include <estructura/estructura.h> 
 
+#include <estructura/estructura.h> 
+
 #include <global.h>
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>

@@ -158,3 +158,83 @@ void escribir(char* valor, int32_t direccionFisica, int tamanio) {
 
     free(valor);
 }
+
+Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_tamano) {
+    int tam_pagina = confGetInt("TAM_PAGINA");
+    // Calcula el número total de páginas necesarias para el nuevo tamaño
+    int paginas_necesarias = nuevo_tamano / tam_pagina;
+    if (nuevo_tamano % tam_pagina != 0)
+        paginas_necesarias++;
+    // Si el número de páginas es el mismo, no hay cambio necesario
+    if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas)
+        return proceso;
+    if (paginas_necesarias > NUM_MARCOS){
+        enviarMensaje("No hay suficiente espacio en memoria para asignar más páginas", sockets[0]);
+        log_error(loggerError, "Out of Memory al intentar asignar %d bytes al proceso PID: %d",nuevo_tamano,proceso->pid);
+        return proceso;
+    }
+    // Si se requieren más páginas, asignar las nuevas páginas
+    if (paginas_necesarias > proceso->tabla_paginas->paginas_asignadas) {
+        // Registro de ampliación del proceso
+        //int tamano_a_ampliar = (paginas_necesarias - proceso->tabla_paginas->paginas_asignadas) * tam_pagina;
+        int nuevoTamanio = paginas_necesarias * tam_pagina;
+        log_info(logger, "Ampliación de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Ampliar: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, nuevoTamanio);
+        for (int i = proceso->tabla_paginas->paginas_asignadas; i < paginas_necesarias; i++) {
+            if (!asignar_pagina(mf, proceso, i)) {
+                log_error(loggerError, "Error al asignar página %d al proceso", i);
+                return NULL; // Abortar si no se puede asignar una página
+            }
+        }
+    } else { // Si se requieren menos páginas, liberar las páginas extras
+        // Registro de reducción del proceso
+        //int tamano_a_reducir = (proceso->tabla_paginas->paginas_asignadas - paginas_necesarias) * tam_pagina;
+        int nuevoTamanio = paginas_necesarias * tam_pagina;
+        log_info(logger,"Reducción de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Reducir: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, nuevoTamanio);
+        for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
+            // Liberar la página i
+            proceso->tabla_paginas->entradas[i].valido = 0;
+            proceso->tabla_paginas->entradas[i].numero_marco = -1;
+            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].libre = true;
+            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;
+        }
+    }
+    // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
+    proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
+    return proceso;
+}
+
+/*Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_tamano) {
+    // Calcula el número total de páginas necesarias para el nuevo tamaño
+    int paginas_necesarias = nuevo_tamano / tam_pagina;
+    if (nuevo_tamano % tam_pagina != 0) {
+        paginas_necesarias++;
+    }
+
+    // Si el número de páginas es el mismo, no hay cambio necesario
+    if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas) {
+        return proceso;
+    }
+
+    // Si se requieren más páginas, asignar las nuevas páginas
+    if (paginas_necesarias > proceso->tabla_paginas->paginas_asignadas) {
+        for (int i = proceso->tabla_paginas->paginas_asignadas; i < paginas_necesarias; i++) {
+            if (!asignar_paginaposta(mf, proceso, i)) {
+                log_error(loggerError, "Error al asignar página %d al proceso", i);
+                return NULL; // Abortar si no se puede asignar una página
+            }
+        }
+    } else { // Si se requieren menos páginas, liberar las páginas extras
+        for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
+            // Liberar la página i
+            proceso->tabla_paginas->entradas[i].valido = 0;
+            proceso->tabla_paginas->entradas[i].numero_marco = -1;
+            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].libre = true;
+            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;
+        }
+    }
+
+    // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
+    proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
+
+    return proceso;
+}*/
