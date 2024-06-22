@@ -20,6 +20,7 @@ char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"};
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
+    log_info(logger, "Planificador a largo plazo iniciado");
     while (!pausaPlanificacion) //Mientras no este pausado...
     {
         sem_wait(&hayProcesosNuevos);
@@ -32,16 +33,16 @@ void planificarALargoPlazo(){
         estadoProceso anterior = pcb->estado;
         pcb->estado = READY; //Lo cambio a estado ready
 
-        list_add(pcbsEnMemoria, pcb);
+        //list_add(pcbsEnMemoria, pcb);
         loggearCambioDeEstado(pcb->pid, anterior, pcb->estado);
-        ingresarAReady(pcb);   
+        ingresarAReady(pcb);  
     }
 } 
 
 
 void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
-    crearColasBloqueo();
+    //crearColasBloqueo();
 
     while (1)
     {

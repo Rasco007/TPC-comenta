@@ -17,7 +17,7 @@ void enviarContextoActualizado(int socket){
 	contextoEjecucion->registrosCPU = crearDiccionarioDeRegistros2();
 	contextoEjecucion->tablaDePaginas = list_create();
 	contextoEjecucion->tablaDePaginasSize = 0;
-    contextoEjecucion->rafagaCPUEjecutada = 0;
+    //contextoEjecucion->rafagaCPUEjecutada = 0;
     contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
     contextoEjecucion->motivoDesalojo->parametros[0] = "";
     contextoEjecucion->motivoDesalojo->parametros[1] = "";
