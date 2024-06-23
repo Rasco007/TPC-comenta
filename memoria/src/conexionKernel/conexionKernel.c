@@ -64,7 +64,6 @@ Proceso *crearProcesoEnMemoria(int pid) {
     procesoNuevo->pid = pid;
     procesoNuevo->tabla_paginas = inicializar_tabla_paginas();
     // list_add(procesos, (void *)procesoNuevo); // Implementar si es necesario
-    log_info(logger, "Creación de Proceso PID: <%d>", procesoNuevo->pid);
 
     return procesoNuevo;
 }
