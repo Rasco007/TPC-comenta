@@ -43,11 +43,12 @@ void cicloDeInstruccion(){
 // ------- Funciones del ciclo ------- //
 void fetch() { 
     //Mando la linea que voy a leer de la lista de instrucciones de memoria
+    int pid=contextoEjecucion->pid;
     int numInstruccionABuscar = contextoEjecucion->programCounter;
     t_paquete* paquete = crearPaquete();
-    agregarAPaquete(paquete, &numInstruccionABuscar, sizeof(int));
+    agregarAPaquete(paquete, &numInstruccionABuscar, sizeof(int)); //PC
+    agregarAPaquete(paquete, &pid, sizeof(int));//PID
     enviarPaquete(paquete, conexionAMemoria);
-    
     //Recibo la instruccion
     instruccionAEjecutar=recibirMensaje(conexionAMemoria);
 

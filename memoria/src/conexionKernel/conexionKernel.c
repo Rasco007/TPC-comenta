@@ -30,10 +30,9 @@ int ejecutarServidorKernel(int *socketCliente) {
         switch (peticionRealizada) {
             case NEWPCB: {
                 int pid = recibirPID(*socketCliente);
-                //Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
-                // enviarTablaPaginas(procesoNuevo); // Implementar si es necesario
+                Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
+                //enviarTablaPaginas(procesoNuevo);
                 log_info(logger,"Creacion de Proceso PID: <%d>", pid);
-               // sem_post(&path);// ESTE VA??
                 break;
             }
             case ENDPCB: {
