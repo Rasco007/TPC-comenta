@@ -145,10 +145,6 @@ void signal_s(t_pcb *proceso,char **parametros){
     volverACPU(proceso);
     //if (strncmp (parametros[2], "EXIT", 4)) volverACPU(proceso);
 }
-//RESIZE [Tamanho]
-void resize_s(t_pcb *proceso,char **parametros){
-
-}
 
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
 void io_gen_sleep(t_pcb *proceso,char **parametros){
