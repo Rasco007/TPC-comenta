@@ -6,6 +6,7 @@ int tiempo;
 //t_config *config;
 char* valorLeido;
 int indice;
+int pid;
 char* instruccion; 
 
 void limpiarBuffer(int socketCliente){
@@ -47,9 +48,11 @@ int ejecutarServidorCPU(int *socketCliente) {
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
                 log_info(logger, "Se recibió la peticion de CPU");
-                indice=recibirPaquete(*socketCliente);
-                //INSERTAR SEMAFORO O ALGO...
-                //Espero a que memoria almacene en instruccion la linea que se solicita y la mando a cpu
+                t_list* elementosPaquete=recibirPaquete(*socketCliente);
+                indice=(int)list_get(elementosPaquete,0);
+                pid=(int)list_get(elementosPaquete,1);
+                Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
+                instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
                 enviarMensaje(instruccion,socketCliente);
                 break;
             default:
