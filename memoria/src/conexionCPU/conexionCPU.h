@@ -9,6 +9,7 @@
 #include <global.h>
 #include <main/memoria.h>
 #include <estructura/estructura.h>
+#include <conexionKernel/conexionKernel.h>
 
 // Variables globales
 extern int tiempo;

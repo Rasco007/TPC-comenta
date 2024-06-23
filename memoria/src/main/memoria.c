@@ -15,25 +15,23 @@ t_config* config;
 MemoriaFisica *mf;
 
 int main() {
-
     logger = iniciarLogger ("memoria.log", "Memoria");
-	  loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
-	  config = iniciarConfiguracion ("memoria.config");
+	loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
+	config = iniciarConfiguracion ("memoria.config");
   
-	  atexit (terminarPrograma);
+	atexit (terminarPrograma);
+	log_info (logger, "Memoria lista para recibir conexiones.");
   
-	  log_info (logger, "Memoria lista para recibir conexiones.");
+	int server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
   
-	  int server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
+	sockets[0] = esperarCliente(server_fd);
+	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
   
-	  sockets[0] = esperarCliente(server_fd);
-	  log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
+	sockets[1] = esperarCliente (server_fd);
+	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[1]);
   
-	  sockets[1] = esperarCliente (server_fd);
-	  log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[1]);
-  
-	  sockets[2] = esperarCliente (server_fd);
-	  log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[2]);
+	sockets[2] = esperarCliente (server_fd);
+	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[2]);
 
     // Creación de hilos
     int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);

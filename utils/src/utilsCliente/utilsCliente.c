@@ -96,26 +96,9 @@ void enviarPaquete(t_paquete *paquete, int socket)
 	log_info(logger, "%s", (char*)a_enviar);
 	log_info(logger, "Enviando paquete con tamaño %d, de %d bytes.", paquete->buffer->size, bytes);
 
-	//debug ("Enviando paquete con tamaño %d, de %d bytes.", paquete->buffer->size, bytes);
-
 	send(socket, a_enviar, bytes, 0);
 
-	//uint32_t respuesta;
-	//recv(socket, &respuesta, sizeof(uint32_t), MSG_WAITALL);
-	//int var_recv=recv(socket_cliente, &respuesta, sizeof(uint32_t), MSG_WAITALL);
-	//printf("var_recv: %d\n", var_recv);
-	//printf("respuesta: %d\n", respuesta);
-
-	/*if(respuesta == bytes){
-		log_info(logger,"Datos enviados correctamente");
-	}
-	else {
-		log_info(logger,"Han llegado menos bytes que los enviados por el modulo.");
-	}*/
-
 	free(a_enviar);
-	//eliminarPaquete(paquete);
-
 }
 
 void eliminarPaquete(t_paquete *paquete)
