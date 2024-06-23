@@ -13,18 +13,20 @@ pthread_mutex_t mutexListaNew;
 pthread_mutex_t mutexListaReady; 
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
-bool pausaPlanificacion; //Flag para manejar el pausado de la planificacion desde consola
+bool pausaPlanificacion =false; //Flag para manejar el pausado de la planificacion desde consola
 
 int gradoMultiprogramacion; 
 char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"}; 
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
+    log_info(logger, "Planificador a largo plazo iniciado");
     while (!pausaPlanificacion) //Mientras no este pausado...
     {
+        log_info(logger, "------comienza while");
         sem_wait(&hayProcesosNuevos);
         sem_wait(&semGradoMultiprogramacion);
-
+        log_info(logger, "------obtenerSiguienteAReady");
         t_pcb *pcb = obtenerSiguienteAReady(); //Agarro un pcb de la cola de new
 
         //recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
@@ -32,16 +34,16 @@ void planificarALargoPlazo(){
         estadoProceso anterior = pcb->estado;
         pcb->estado = READY; //Lo cambio a estado ready
 
-        list_add(pcbsEnMemoria, pcb);
+        //list_add(pcbsEnMemoria, pcb);
         loggearCambioDeEstado(pcb->pid, anterior, pcb->estado);
-        ingresarAReady(pcb);   
+        ingresarAReady(pcb);  
     }
 } 
 
 
 void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
-    crearColasBloqueo();
+    //crearColasBloqueo();
 
     while (1)
     {
@@ -92,6 +94,7 @@ void ingresarANew(t_pcb *pcb)
     encolar(pcbsNEW, pcb);
     log_info(logger, "Se crea el proceso <%d> en NEW", pcb->pid);//log obligatorio
     pthread_mutex_unlock(&mutexListaNew);
+    sem_post(&hayProcesosNuevos);
 }
 
 t_pcb *obtenerSiguienteAReady()

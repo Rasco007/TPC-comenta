@@ -34,7 +34,7 @@ int main () {
     escucharAlIO();
 	free (nombre);
 
-    ejecutarConsola();
+    //ejecutarConsola();
 
     //Inicializar Hilos
 	int opCodes [3] = {
@@ -44,21 +44,21 @@ int main () {
 	};
 
     if (opCodes [0]) {
-        error ("Error al generar hilo para el planificador de largo plazo, terminando el programa.");	
+        log_error (logger,"Error al generar hilo para el planificador de largo plazo, terminando el programa.");	
 	}
 	if (opCodes [1]) {
-        error ("Error al generar hilo para el planificador de corto plazo, terminando el programa.");
+        log_error (logger,"Error al generar hilo para el planificador de corto plazo, terminando el programa.");
 	}
 	if (opCodes [2]){
-		error("Error al generar hilo para ejecutar la consola, terminando el programa.");
+		log_error(logger,"Error al generar hilo para ejecutar la consola, terminando el programa.");
 	}
 		
 	//Hilo Planificador Largo Plazo -> Mueve procesos de NEW a READY
-	pthread_detach(planificadorLargoPlazo_h);
+	pthread_join(planificadorLargoPlazo_h,NULL);
 	//Hilo Planificador Corto Plazo --> Mueve procesos de READY a EXEC
-	pthread_detach(planificadorCortoPlazo_h);
+	pthread_join(planificadorCortoPlazo_h,NULL);
 	//Hilo para consola	
-	pthread_detach(ejecutarConsola_h);
+	pthread_join(ejecutarConsola_h,NULL);
 
     exit (0);
 }

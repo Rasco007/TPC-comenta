@@ -6,11 +6,12 @@ void detenerYDestruirCronometro(t_temporal *cronometroReady){
 }
 
 void planificarACortoPlazoSegunAlgoritmo(){
+    log_info(logger, "Planificadior a corto plazo");
     char *algoritmoPlanificador = obtenerAlgoritmoPlanificacion();
     
     if (!strcmp(algoritmoPlanificador, "FIFO"))
     {
-        contextoEjecucion->algoritmo=FIFO;
+        //contextoEjecucion->algoritmo=FIFO;
         log_info(logger, "Ejecutando FIFO");
         planificarACortoPlazo(proximoAEjecutarFIFO);
     } else if(!strcmp(algoritmoPlanificador, "RR")){
