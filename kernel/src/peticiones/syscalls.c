@@ -16,7 +16,7 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case RESIZE:
-            resize_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
+            //resize_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case SIGNAL:
             signal_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
@@ -232,7 +232,7 @@ void finDeQuantum(t_pcb *proceso){
     if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
         encolar(pcbsREADY,proceso);
     } 
-    if(algoritmo=VRR){//Si es VRR, encolo el proceso en READYaux
+    if(algoritmo==VRR){//Si es VRR, encolo el proceso en READYaux
         encolar(pcbsREADYaux,proceso);
     }
 }

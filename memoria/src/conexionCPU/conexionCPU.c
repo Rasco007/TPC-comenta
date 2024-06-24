@@ -53,7 +53,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 pid=(int)list_get(elementosPaquete,1);
                 Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
                 instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
-                enviarMensaje(instruccion,socketCliente);
+                enviarMensaje(instruccion,*socketCliente);
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");

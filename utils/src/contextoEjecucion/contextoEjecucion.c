@@ -194,8 +194,8 @@ void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
     // Desplazamiento: tamaño de la lista de paginas.
     memcpy(&(contextoEjecucion->tablaDePaginasSize), buffer + (* desplazamiento), sizeof(uint32_t));
     (* desplazamiento) += sizeof(uint32_t);
-    
-    for (uint32_t i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) {
+    //log_info(logger, "Tamaño de la tabla de paginas: %d", contextoEjecucion->tablaDePaginasSize);
+    for (uint32_t i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) { // SE QUEDA TRABADO EN ESTE FOR
 
         t_pagina* pagina = deserializarPagina(buffer, desplazamiento);
         list_add (contextoEjecucion->tablaDePaginas, pagina);
@@ -212,17 +212,17 @@ t_pagina* deserializarPagina(void* buffer, int* desplazamiento){
     // id
     memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
     (* desplazamiento) += sizeof (int);
-    memcpy (&(pagina->idPagina), buffer + (* desplazamiento), tamanio);
+    memcpy (&(pagina->idPagina), buffer + (* desplazamiento), sizeof(tamanio));
     (* desplazamiento) += sizeof (uint32_t);
     //id marco
     memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
     (* desplazamiento) += sizeof (int);
-    memcpy (&(pagina->idFrame), buffer + (* desplazamiento), tamanio);
+    memcpy (&(pagina->idFrame), buffer + (* desplazamiento), sizeof(tamanio));
     (* desplazamiento) += sizeof (uint32_t);
     //bit
     memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
     (* desplazamiento) += sizeof (int);
-    memcpy (&(pagina->bitDeValidez), buffer + (* desplazamiento), tamanio);
+    memcpy (&(pagina->bitDeValidez), buffer + (* desplazamiento), sizeof(tamanio));
     (* desplazamiento) += sizeof (uint32_t);
 
     return pagina;

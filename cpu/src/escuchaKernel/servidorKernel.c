@@ -34,15 +34,15 @@ int ejecutarServidorCPU(int socketClienteDispatch,int socketClienteInterrupt){
 		case CONTEXTOEJECUCION:
 			if (contextoEjecucion != NULL){
 				list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
-			} 		
-				recibirContextoActualizado(socketClienteDispatch);
-				//Inicio el cronometro del tiempo de uso de CPU
-				contextoEjecucion->tiempoDeUsoCPU=temporal_create();
-                while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength) {
-                    cicloDeInstruccion();
-                }	
-				temporal_destroy (rafagaCPU);
-				break;
+			}
+			recibirContextoActualizado(socketClienteDispatch);
+			//Inicio el cronometro del tiempo de uso de CPU
+			contextoEjecucion->tiempoDeUsoCPU=temporal_create();
+            while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength) {
+                cicloDeInstruccion();
+            }
+			temporal_destroy (rafagaCPU);
+			break;
 		default:
 			log_warning(loggerError,"Operacion desconocida.");
 				break;
