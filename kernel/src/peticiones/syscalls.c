@@ -108,10 +108,6 @@ void signal_s(t_pcb *proceso,char **parametros){
 
 }
 
-void resize_s(t_pcb *proceso,char **parametros){
-
-}
-
 //IO_GEN_SLEEP
 void io_gen_sleep(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
@@ -149,23 +145,143 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
 }
 
 void io_fs_create(t_pcb *proceso,char **parametros){
+    char* interfaz=parametros[0];
+    char* nombreArchivo = parametros[1];
+
+    log_info(logger, "PID: <%d> - Crear Archivo: <%s>",contextoEjecucion->pid,nombreArchivo);
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=FCREATE;
+    agregarAPaquete(paquete,interfaz,sizeof(interfaz));
+    agregarAPaquete(paquete,nombreArchivo,sizeof(nombreArchivo));
+
+    //Falta mandar el paquete a IO para que cree el archivo en FS
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+    volverACPU(proceso);
 
 }
 
 void io_fs_delete(t_pcb *proceso,char **parametros){
+    char* interfaz=parametros[0];
+    char* nombreArchivo = parametros[1];
 
+    log_info(logger, "PID: <%d> - Borrar Archivo: <%s>",contextoEjecucion->pid,nombreArchivo);
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=FDEL;
+    agregarAPaquete(paquete,interfaz,sizeof(interfaz));
+    agregarAPaquete(paquete,nombreArchivo,sizeof(nombreArchivo));
+
+    //Falta mandar el paquete a IO para que borre el archivo en FS
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+    volverACPU(proceso);
 }
 
 void io_fs_truncate(t_pcb *proceso,char **parametros){
+    char* interfaz=parametros[0];
+    char* nombreArchivo = parametros[1];
+    char* tamanioRegistro=parametros[2];
 
+    log_info(logger, "PID: <%d> - Truncar Archivo: <%s>",contextoEjecucion->pid,nombreArchivo);
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=FTRUNCATE;
+    agregarAPaquete(paquete,interfaz,sizeof(interfaz));
+    agregarAPaquete(paquete,nombreArchivo,sizeof(nombreArchivo));
+    agregarAPaquete(paquete,tamanioRegistro,sizeof(tamanioRegistro));
+
+    //Falta mandar el paquete a IO para que trunque el archivo en FS
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+    volverACPU(proceso);
 }
 
 void io_fs_write(t_pcb *proceso,char **parametros){
+    char* interfaz=parametros[0];
+    char* nombreArchivo = parametros[1];
+    char* direccionRegistro=parametros[2];
+    char* tamanioRegistro=parametros[3];
+    char* punteroArchivo=parametros[4];
 
+    log_info(logger, "PID: <%d> - Escribir Archivo: <%s>",contextoEjecucion->pid,nombreArchivo);
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=FWRITE;
+    agregarAPaquete(paquete,interfaz,sizeof(interfaz));
+    agregarAPaquete(paquete,nombreArchivo,sizeof(nombreArchivo));
+    agregarAPaquete(paquete,direccionRegistro,sizeof(direccionRegistro));
+    agregarAPaquete(paquete,tamanioRegistro,sizeof(tamanioRegistro));
+    agregarAPaquete(paquete,punteroArchivo,sizeof(punteroArchivo));
+
+    //Falta mandar el paquete a IO para que escriba el archivo en FS
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+    volverACPU(proceso);
 }
 
 void io_fs_read(t_pcb *proceso,char **parametros){
+    char* interfaz=parametros[0];
+    char* nombreArchivo = parametros[1];
+    char* direccionRegistro=parametros[2];
+    char* tamanioRegistro=parametros[3];
+    char* punteroArchivo=parametros[4];
 
+    log_info(logger, "PID: <%d> - Leer Archivo: <%s>",contextoEjecucion->pid,nombreArchivo);
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=FREAD;
+    agregarAPaquete(paquete,interfaz,sizeof(interfaz));
+    agregarAPaquete(paquete,nombreArchivo,sizeof(nombreArchivo));
+    agregarAPaquete(paquete,direccionRegistro,sizeof(direccionRegistro));
+    agregarAPaquete(paquete,tamanioRegistro,sizeof(tamanioRegistro));
+    agregarAPaquete(paquete,punteroArchivo,sizeof(punteroArchivo));
+
+    //Falta mandar el paquete a IO para que lea el archivo en FS
+
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    loggearBloqueoDeProcesos(proceso, nombreArchivo);
+    volverACPU(proceso);
 }
 
 //EXIT
