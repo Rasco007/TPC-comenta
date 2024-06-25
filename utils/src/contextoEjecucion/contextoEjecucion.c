@@ -195,6 +195,7 @@ void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
     memcpy(&(contextoEjecucion->tablaDePaginasSize), buffer + (* desplazamiento), sizeof(uint32_t));
     (* desplazamiento) += sizeof(uint32_t);
     //log_info(logger, "Tamaño de la tabla de paginas: %d", contextoEjecucion->tablaDePaginasSize);
+    
     for (uint32_t i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) { // SE QUEDA TRABADO EN ESTE FOR
 
         t_pagina* pagina = deserializarPagina(buffer, desplazamiento);
