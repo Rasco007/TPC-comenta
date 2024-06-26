@@ -11,7 +11,7 @@
 #include <planificacion/algoritmosCortoPlazo.h>
 #include <peticiones/manejoRecursos.h>
 #include <peticiones/manejoPaginas.h>
-
+#include <main/kernel.h>
 extern char **nombresRecursos;
 extern sem_t hayProcesosReady;
 extern int *instanciasRecursos;

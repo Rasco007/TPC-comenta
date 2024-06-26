@@ -15,11 +15,15 @@ void io_atender_kernel(){
    	 	//list_iterate(lista, (void*) iterator);
    	  //   break;*/
    		case IO_GEN_SLEEP:
-   			/*recibirBuffer(fd_kernel,&size);
-        	log_info(logger, "antes de dormir");
-   			sleep(5 * TIEMPO_UNIDAD_TRABAJO/1000);
-        	log_info(logger, "dps de dormir");
-   			enviarMensaje("Terminó I/O", fd_kernel);*/
+   			
+			recibir_mensaje_y_dormir(fd_kernel);
+   			break;
+		case IO_STDIN_READ:
+   			
+			recibir_mensaje_y_dormir(fd_kernel);
+   			break;
+		case IO_STDOUT_WRITE:
+   			
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
     	case -1:

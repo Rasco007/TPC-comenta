@@ -31,10 +31,6 @@ void escucharAlIO() {
      pthread_detach(thread);
  }
     
-   
-    //dormirbeta("Int1", 10, socketClienteIO);
-    //log_info(logger,"Conexiones IO-Kernel OK!");
-    //ejecutarServidorKernel();
 }
 
 void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
@@ -64,6 +60,8 @@ void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], 
     kernel->interfaces[kernel->cantidad].socket_interfaz = socketClienteIO;
     kernel->cantidad++;
     log_info(logger,"Se llegó la informacion de la Interfaz %s conectada con socket %d\n", nombreInterfaz, socketClienteIO);
+
+    
 }
 
 void hacerHandshake(int socketClienteIO){
@@ -93,6 +91,7 @@ void destruirStructsIO (Kernel_io *kernel) {
     kernel->cantidad = 0;
 }
 
+//esta funcion anda flama
 int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
     for (size_t i = 0; i < kernel->cantidad; i++) {
         if (strcmp(kernel->interfaces[i].nombre_interfaz, nombre_interfaz) == 0) {
@@ -121,6 +120,7 @@ void desconectar_interfaz(Kernel_io *kernel, const char *nombre_interfaz) {
 
 
 int ejecutarServidorKernel(){
-	return 0;
+     return  0;
+
 }
 

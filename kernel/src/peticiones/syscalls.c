@@ -249,6 +249,7 @@ void *mandar_ejecutar_stdout(t_pcb *proceso, char *interfaz,char *registroDirecc
 
 //STDIN
 void *mandar_ejecutar_stdin(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio){
+   int socketClienteIO = obtener_socket(kernel, interfaz);
     //enviarMensajeSTDIN(socketClienteIO, interfaz, registroDireccion, registroTamanio);//como hago para recuperar el socket del IO que obtuve en escucharIO
         
     // TODO: esperar la rta de IO
@@ -307,47 +308,27 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero)
 }
 
 void enviarMensajeSTDIN(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio){
-   
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = IO_STDIN_READ;
-    paquete->buffer = malloc(sizeof(t_buffer));
+    // Crear paquete
+    t_paquete *paquete = crearPaquete();
 
-    // Calcular el tamaño total del buffer
-    int nombre_len = strlen(nombreInterfaz) + 1;
-    int param1_len = strlen(registroDireccion) + 1;
-    int param2_len = strlen(registroTamanio) + 1;
+    // Agregar la primera variable char* al paquete
+    agregarAPaquete(paquete, registroDireccion, strlen(registroDireccion) + 1);
 
-    int total_size = sizeof(int) + nombre_len + sizeof(int) + param1_len + sizeof(int) + param2_len + sizeof(int);
+    // Agregar la segunda variable char* al paquete
+    agregarAPaquete(paquete, registroTamanio, strlen(registroTamanio) + 1);
 
-    paquete->buffer->size = total_size;
-    paquete->buffer->stream = malloc(total_size);
+    // // Agregar el tamaño al paquete
+    // agregarAPaquete(paquete, &tamanio, sizeof(int));
 
-    // Serializar los datos en el buffer
-    int desplazamiento = 0;
+    // // Agregar la dirección al paquete
+    // agregarAPaquete(paquete, direccion, sizeof(void*));
 
-    memcpy(paquete->buffer->stream + desplazamiento, &nombre_len, sizeof(int));
-    desplazamiento += sizeof(int);
-    memcpy(paquete->buffer->stream + desplazamiento, nombreInterfaz, nombre_len);
-    desplazamiento += nombre_len;
+    // Enviar el paquete a través del socket
+    enviarPaquete(paquete, socketClienteIO);
 
-    memcpy(paquete->buffer->stream + desplazamiento, &param1_len, sizeof(int));
-    desplazamiento += sizeof(int);
-    memcpy(paquete->buffer->stream + desplazamiento, registroDireccion, param1_len);
-    desplazamiento += param1_len;
-
-    memcpy(paquete->buffer->stream + desplazamiento, &param2_len, sizeof(int));
-    desplazamiento += sizeof(int);
-    memcpy(paquete->buffer->stream + desplazamiento, registroTamanio, param2_len);
-    desplazamiento += param2_len;
-
-    // Serializar y enviar el paquete
-    int bytes = paquete->buffer->size + 2 * sizeof(int);
-    void *a_enviar = serializarPaquete(paquete, bytes);
-
-    send(socket, a_enviar, bytes, 0);
-
-    free(a_enviar);
+    // Eliminar el paquete después de enviarlo
     eliminarPaquete(paquete);
+    
 }
 
 void enviarMensajeSTDOUT(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio){
