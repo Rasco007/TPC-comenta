@@ -38,6 +38,8 @@ void conexionCPU() {
             sleep(5);
         }
     }
+    //log_info(logger, "Enviando HOLA!!");
+    //enviarMensaje("HOLA!!", conexionACPU);
 }
 
 int recibirOperacionDeCPU(){ 

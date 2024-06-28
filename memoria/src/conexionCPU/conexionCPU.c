@@ -47,7 +47,8 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
-                log_info(logger, "Se recibió la peticion de CPU");
+                log_info(logger, "Se recibió la peticion de CPU"); //TODO: LLEGAMOS HASTA ACA
+                
                 t_list* elementosPaquete=recibirPaquete(*socketCliente);
                 indice=(int)list_get(elementosPaquete,0);
                 pid=(int)list_get(elementosPaquete,1);

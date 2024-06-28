@@ -8,7 +8,7 @@ void enviarContextoActualizado(int socket){
     
     paquete->codigo_operacion = CONTEXTOEJECUCION;
 
-    log_info(logger, "Hardcodeo");
+    /*log_info(logger, "Hardcodeo");
 
     contextoEjecucion->instrucciones = list_create();
 	contextoEjecucion->instruccionesLength = 0;
@@ -23,7 +23,7 @@ void enviarContextoActualizado(int socket){
     contextoEjecucion->motivoDesalojo->parametros[1] = "";
     contextoEjecucion->motivoDesalojo->parametros[2] = "";
     contextoEjecucion->motivoDesalojo->parametrosLength = 0;
-    contextoEjecucion->motivoDesalojo->motivo = 0;
+    contextoEjecucion->motivoDesalojo->motivo = 0;*/
 
     
    
@@ -31,22 +31,22 @@ void enviarContextoActualizado(int socket){
     agregarAPaquete (paquete,(void *)&contextoEjecucion->programCounter, sizeof(contextoEjecucion->programCounter));
     
     agregarInstruccionesAPaquete (paquete, contextoEjecucion->instrucciones);
-    log_info(logger, "Instrucciones agregadas al paquete");
+    //log_info(logger, "Instrucciones agregadas al paquete");
 
     agregarRegistrosAPaquete(paquete, contextoEjecucion->registrosCPU);
-    log_info(logger, "Registros agregados al paquete");
+    //log_info(logger, "Registros agregados al paquete");
     
     agregarTablaDePaginasAPaquete(paquete);
-    log_info(logger, "Tabla de paginas agregada al paquete");
+    //log_info(logger, "Tabla de paginas agregada al paquete");
 
     agregarMotivoAPaquete(paquete, contextoEjecucion->motivoDesalojo);
-    log_info(logger, "Motivo de desalojo agregado al paquete");
+    //log_info(logger, "Motivo de desalojo agregado al paquete");
 
     agregarAPaquete(paquete, (void *)&contextoEjecucion->tiempoDeUsoCPU, sizeof(contextoEjecucion->tiempoDeUsoCPU));
-    log_info(logger, "Rafaga de CPU agregada al paquete");
+    //log_info(logger, "Rafaga de CPU agregada al paquete");
 
     enviarPaquete(paquete, socket);
-    log_info(logger, "Procede a eliminar paquete");
+    //log_info(logger, "Procede a eliminar paquete");
 	eliminarPaquete(paquete);
 }
 
@@ -108,14 +108,13 @@ void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU){
 
 
 void recibirContextoActualizado (int socket) {
-
+    log_info(logger, "------ Recibiendo contexto actualizado...");
     if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
 	int size, desplazamiento = 0;
 	void * buffer;
 
 	buffer = recibirBuffer(socket, &size);
-
     // Desplazamiento: Tamaño de PID, PID, y tamaño de programCounter.
     desplazamiento += sizeof(int);
     memcpy(&(contextoEjecucion->pid), buffer + desplazamiento, sizeof(uint32_t));
@@ -124,13 +123,14 @@ void recibirContextoActualizado (int socket) {
     // Desplazamiento: programCounter y tamaño de instruccionesLength.
     memcpy(&(contextoEjecucion->programCounter), buffer+desplazamiento, sizeof(uint32_t));
     desplazamiento += sizeof(contextoEjecucion->programCounter) + sizeof(int);
-
     deserializarInstrucciones (buffer, &desplazamiento);
+    
     deserializarRegistros (buffer, &desplazamiento);
 
     deserializarTablaDePaginas(buffer, &desplazamiento);
     
     deserializarMotivoDesalojo (buffer, &desplazamiento);
+    log_info(logger, "------ deserializarMotivoDesalojo");
 
     // Desplazamiento: Tamaño de la rafaga de CPU Ejecutada.
     desplazamiento += sizeof (int);
@@ -171,7 +171,7 @@ void deserializarRegistros (void * buffer, int * desplazamiento) {
     dictionary_clean_and_destroy_elements (contextoEjecucion->registrosCPU, free);
 
     char *temp, name [3] = "AX", longName [4] = "EAX";
-
+    
     for (int i = 0; i < 3; i++) {
         ssize_t tamanioActual = sizeof(char) * (4 * pow(2, i) + 1);
         for (int j = 0; j < 4; j++) {
@@ -187,6 +187,7 @@ void deserializarRegistros (void * buffer, int * desplazamiento) {
         }
         longName [1] = 'A', longName [0] = (i == 1) ? 'R' : 'E';
     }
+    
 }
 //Ver
 void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
@@ -194,20 +195,22 @@ void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
     // Desplazamiento: tamaño de la lista de paginas.
     memcpy(&(contextoEjecucion->tablaDePaginasSize), buffer + (* desplazamiento), sizeof(uint32_t));
     (* desplazamiento) += sizeof(uint32_t);
-    //log_info(logger, "Tamaño de la tabla de paginas: %d", contextoEjecucion->tablaDePaginasSize);
+log_info(logger, "Tamaño de la tabla de paginas: %d", contextoEjecucion->tablaDePaginasSize);
 
+contextoEjecucion->tablaDePaginasSize = 1; //TODO: VER QUE ONDA
     for (uint32_t i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) { // SE QUEDA TRABADO EN ESTE FOR
 
         t_pagina* pagina = deserializarPagina(buffer, desplazamiento);
         list_add (contextoEjecucion->tablaDePaginas, pagina);
     }
-
+log_info(logger, "*** salgo del for deserializarTablaDePaginas");
     (* desplazamiento) += sizeof(int);
 
 }
 
 //Ver
 t_pagina* deserializarPagina(void* buffer, int* desplazamiento){
+    log_info(logger, "Deserializando pagina...");
     t_pagina* pagina = malloc(sizeof(t_pagina));
     int tamanio;
     // id
@@ -231,7 +234,6 @@ t_pagina* deserializarPagina(void* buffer, int* desplazamiento){
 
 
 void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
-
     // Desplazamiento: Comando de desalojo y tamaño de parametrosLength.
     memcpy (&(contextoEjecucion->motivoDesalojo->motivo), buffer + (* desplazamiento), sizeof (t_comando));
     (* desplazamiento) += sizeof (t_comando) + sizeof (int);
@@ -239,7 +241,8 @@ void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
     // Desplazamiento: parametrosLength.
     memcpy (&(contextoEjecucion->motivoDesalojo->parametrosLength), buffer + (* desplazamiento), sizeof (uint32_t));
     (* desplazamiento) += sizeof (contextoEjecucion->motivoDesalojo->parametrosLength);
-
+log_info(logger, "---- antes del for, parametrosLength: %d", contextoEjecucion->motivoDesalojo->parametrosLength);
+contextoEjecucion->motivoDesalojo->parametrosLength = 3; //TODO: VER QUE ONDA
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
         int tamanioParametro;
 
@@ -253,6 +256,7 @@ void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
         contextoEjecucion->motivoDesalojo->parametros[i] = temp;
         (* desplazamiento) += tamanioParametro;
     }
+log_info(logger, "---- salgo del for");
 
 }
 

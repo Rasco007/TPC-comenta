@@ -30,6 +30,8 @@
     extern int cantParametros;
     extern int tiempoEspera;
     extern int conexionAMemoria;
+    extern int socketClienteDispatch;
+    extern int socketClienteInterrupt;
 
     extern t_contexto* contextoEjecucion;
 
@@ -46,11 +48,6 @@
     void destruirTemporizador (t_temporal * temporizador);
     void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5);
     int obtenerTamanioReg(char* registro);
-    
-
-    
-    
-    //
     
 
 #endif 

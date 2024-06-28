@@ -22,6 +22,7 @@ int ejecutarConsola () {
         }
         if (!strncmp(linea, "EXIT", 4)) {
             free(linea);
+            exit(EXIT_SUCCESS);
             break;
         }
         //Si escribo los comandos....

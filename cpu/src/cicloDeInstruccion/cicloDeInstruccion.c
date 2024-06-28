@@ -80,7 +80,7 @@ void check_interrupt(){
     if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
         destruirTemporizador(rafagaCPU);
         modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-        enviarContextoActualizado(socketCliente);
+        enviarContextoActualizado(socketClienteInterrupt);
     }
 }
 
@@ -88,43 +88,43 @@ void check_interrupt(){
 void io_fs_delete(char* interfaz,char* nombreArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void copy_string(char* tamanio){
@@ -133,9 +133,12 @@ void copy_string(char* tamanio){
 }
 
 void resize(char* tamanio){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (RESIZE, 1, tamanio, "", "", "", "");
-    enviarContextoActualizado(socketCliente);
+    t_paquete* paquete = crearPaquete();
+    paquete->codigo_operacion = RESIZE;
+    agregarAPaquete(paquete, tamanio, sizeof(tamanio));
+    agregarAPaquete(paquete, &contextoEjecucion->pid, sizeof(uint32_t));
+    enviarPaquete(paquete, conexionAMemoria);
+
 }
 
 void set_c(char* registro, char* valor){ 
@@ -176,26 +179,26 @@ void jnz(char* registro, char* instruccion){
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_GEN_SLEEP, 2, interfaz, unidades_trabajo, "", "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void wait_c(char* recurso){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void signal_c(char* recurso){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
 }
 
 void exit_c () {
     destruirTemporizador(rafagaCPU);
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
-    enviarContextoActualizado(socketCliente);
+    enviarContextoActualizado(socketClienteDispatch);
     free (terminado);
 }
 
