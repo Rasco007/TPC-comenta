@@ -21,16 +21,19 @@ extern t_list *recursos;
 extern t_list* pcbsEnMemoria;
 extern t_contexto* contextoEjecucion;
 
-void retornoContexto(t_pcb*, t_contexto*);
-void volverACPU(t_pcb*); 
+void retornoContexto(t_pcb *, t_contexto *);
+void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso);
+void volverACPU(t_pcb *);
 
-void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo);
+void *dormirIO(t_pcb *proceso, char *interfaz, char *tiempo);
+
+void recibirMsjIO(int socketClienteIO);
 
 void wait_s(t_pcb *proceso, char **parametros);
 void resize_s(t_pcb *proceso, char **parametros);
 void signal_s(t_pcb *proceso, char **parametros);
-void io_gen_sleep(t_pcb *proceso, char **parametros);
-void io_stdin_read(t_pcb *proceso, char **parametros);
+void ejecutar_io_gen_sleep(t_pcb *proceso, char **parametros);
+void ejecutar_io_stdin_read(t_pcb *proceso, char **parametros);
 void io_stdout_write(t_pcb *proceso, char **parametros);
 void io_fs_create(t_pcb *proceso, char **parametros);
 void io_fs_read(t_pcb *proceso, char **parametros);
@@ -46,7 +49,7 @@ void loggearSalidaDeProceso(t_pcb*,char* motivo);
 
 
 void *mandar_ejecutar_stdout(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio);
-void *mandar_ejecutar_stdin(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio);
+void *mandar_ejecutar_stdin(char *interfaz,char *registroDireccion, char* registroTamanio);
 void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero);
 void enviarMensajeSTDIN(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio);
 void enviarMensajeSTDOUT(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio);

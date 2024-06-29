@@ -1,6 +1,7 @@
 #include <conexionKernel/conexionKernel.h>
 #include "conexionKernel.h"
 void envioNombreInterfaz(char *nombreInterfaz, int fd_kernel);
+void envioTipoInterfaz(char *tipoInterfaz, int fd_kernel);
 void conexionKernel(char **argv) {
    char *nombreInterfaz = argv[1];
     while(1){
@@ -30,12 +31,23 @@ void conexionKernel(char **argv) {
     {
         log_info(logger, "Handshake OK");
         envioNombreInterfaz(nombreInterfaz, fd_kernel);
+        envioTipoInterfaz(TIPO_INTERFAZ,fd_kernel);
     }
     else
     {
         log_error(logger, "Handshake ERROR");
     }
 }
+
+void envioTipoInterfaz(char *tipoInterfaz, int fd_kernel)
+{
+    log_info(logger, "tipo de interfaz es: %s", tipoInterfaz);
+
+    // Enviar mensaje al servidor
+    send(fd_kernel, tipoInterfaz, strlen(tipoInterfaz), 0);
+    
+}
+
 void envioNombreInterfaz(char *nombreInterfaz, int fd_kernel)
 {
     log_info(logger, "nombre de interfaz es: %s", nombreInterfaz);

@@ -1,7 +1,7 @@
 #include <escuchaIO/servidorIO.h>
 #include <global.h>
 #define BUFFER_SIZE 1024
-
+int instruccionActual;
 
 int ejecutarServidorKernel();
 void hacerHandshake(int socketClienteIO);
@@ -9,41 +9,50 @@ void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel);
 
 void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], int socketClienteIO);
 
+
 void escucharAlIO() {
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
 
     while (1) {
         log_info(logger,"Esperando conexiones con IO...");
-     pthread_t thread;
-    
-    int *socketClienteIO = malloc(sizeof(int));
-     *socketClienteIO = esperarCliente(socketKernel);
-    log_info(logger, "IO conectado, en socket: %d",socketClienteIO);
+        pthread_t thread;
+        
+        int *socketClienteIO = malloc(sizeof(int));
+        *socketClienteIO = esperarCliente(socketKernel);
+        log_info(logger, "IO conectado, en socket: %d",socketClienteIO);
 
-    hacerHandshake(*socketClienteIO);
-    recibirNombreInterfaz(*socketClienteIO, &kernel);
+        hacerHandshake(*socketClienteIO);
+        recibirNombreInterfaz(*socketClienteIO, &kernel);
 
-     pthread_create(&thread,
-                    NULL,
-                    (void*) ejecutarServidorKernel,
-                    socketClienteIO);
-     pthread_detach(thread);
- }
+        pthread_create(&thread,
+                        NULL,
+                        (void*) ejecutarServidorKernel,
+                        socketClienteIO);
+        pthread_detach(thread);
+    }
     
 }
 
 void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
 
  char nombreInterfaz[BUFFER_SIZE] = {0};    
+ char tipoInterfaz[BUFFER_SIZE] = {0};  
 
    int valread = recv(socketClienteIO, nombreInterfaz, BUFFER_SIZE, 0);
     if (valread < 0) {
-        log_error(loggerError,"recv");
+        log_error(loggerError,"se recibio mal el nombre");
     } else {
-        log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
+        int valreadTipo = recv(socketClienteIO, tipoInterfaz, BUFFER_SIZE, 0);
 
-        guardarNombreYSocketEnStruct(kernel, nombreInterfaz, socketClienteIO);
+        if (valreadTipo < 0) {
+            log_error(loggerError,"se recibio mal el tipo");
+        }else{
+            log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
+            log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
+            guardarNombreYSocketEnStruct(kernel, nombreInterfaz, socketClienteIO);
+        }
+        
     }
 }
 
@@ -59,7 +68,7 @@ void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], 
     kernel->interfaces[kernel->cantidad].nombre_interfaz[sizeof(kernel->interfaces[kernel->cantidad].nombre_interfaz) - 1] = '\0';
     kernel->interfaces[kernel->cantidad].socket_interfaz = socketClienteIO;
     kernel->cantidad++;
-    log_info(logger,"Se llegó la informacion de la Interfaz %s conectada con socket %d\n", nombreInterfaz, socketClienteIO);
+    log_info(logger,"Se han guardado los datos necesarios en la estructura Kernel_io");
 
     
 }
@@ -118,9 +127,103 @@ void desconectar_interfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     log_info(logger,"Interfaz %s no encontrada\n", nombre_interfaz);
 }
 
+int existeLaInterfaz(char *nombreInterfaz, const Kernel_io *kernel){
+    //verifico que exista en la estructura
+    int socket = obtener_socket(kernel, nombreInterfaz);
+    if(socket == -1){
+        return -1;
+        
+    }else{
+        int estaConectado = verificarConexionInterfaz(kernel, nombreInterfaz);
+        
+        return estaConectado;
+    }
+}
+int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
+ for (size_t i = 0; i < kernel->cantidad; i++) {
+        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombreInterfaz) == 0) {
+            if( kernel->interfaces[i].tipo_interfaz == tipoRequerido){
+                return 1;
+            }
+        }
+    }
+    return -1;
+}
+int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
+    fd_set readfds;
+    struct timeval timeout;
 
-int ejecutarServidorKernel(){
-     return  0;
+    FD_ZERO(&readfds);
+    int max_sd = 0;
+    int interfaz_socket = -1;
+
+    for (size_t i = 0; i < kernel->cantidad; i++) {
+        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombre_interfaz) == 0) {
+            interfaz_socket = kernel->interfaces[i].socket_interfaz;
+            break;
+        }
+    }
+
+    if (interfaz_socket == -1) {
+        log_info(logger, "Interfaz %s no encontrada", nombre_interfaz);
+        return -1;
+    }
+
+    FD_SET(interfaz_socket, &readfds);
+    if (interfaz_socket > max_sd) {
+        max_sd = interfaz_socket;
+    }
+
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 500000; // 500ms
+
+    int activity = select(max_sd + 1, &readfds, NULL, NULL, &timeout);
+
+    if (activity < 0) {
+        perror("select error");
+        return -1;
+    }
+
+    if (FD_ISSET(interfaz_socket, &readfds)) {
+        char buffer[1];
+        int valread = recv(interfaz_socket, buffer, sizeof(buffer), MSG_PEEK);
+
+        if (valread == 0) {
+            log_info(logger, "Interfaz %s desconectada", nombre_interfaz);
+            close(interfaz_socket);
+            desconectar_interfaz(kernel, nombre_interfaz);
+            return -1;
+        }
+    }
+
+    return 1;
+}
+
+
+int ejecutarServidorKernel(int socketClienteIO){
+     char * tamaño_max = "1024";
+     char * direc_memoria = "1234";
+    //dormirIO("IntX", 1);
+    mandar_ejecutar_stdin("IntX",direc_memoria, tamaño_max);
+    return 0;
+     /*while (1) {//ver de solamente poner un recv en vez de while 1 aunque en realidad recibe la operacion en syscalls
+        instruccionActual = -1; //habria que importar el ciclo de instrucciones para que la reconozca
+		int codOP = recibirOperacion(socketClienteIO);
+		switch (codOP) {
+			case -1:
+				log_info(logger, "El Kernel se desconecto.");
+				if (contextoEjecucion != NULL)
+					destroyContexto ();
+				return EXIT_FAILURE;
+
+			case CONTEXTOEJECUCION:
+				return 0;
+				break;
+			default:
+				log_warning(loggerError,"Operacion desconocida. No quieras meter la pata");
+				break;
+		}
+	}*/
 
 }
 
