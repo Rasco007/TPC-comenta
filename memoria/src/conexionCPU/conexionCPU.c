@@ -47,14 +47,18 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
-                log_info(logger, "Se recibió la peticion de CPU"); //TODO: LLEGAMOS HASTA ACA
+                log_info(logger, "Se recibió la peticion de CPU"); 
                 
                 t_list* elementosPaquete=recibirPaquete(*socketCliente);
                 indice=(int)list_get(elementosPaquete,0);
                 pid=(int)list_get(elementosPaquete,1);
-                Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
-                instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
-                enviarMensaje(instruccion,*socketCliente);
+                log_info(logger, "Indice: %d - PID: %d",indice,pid);
+                indice=0; pid=1; //TODO FIX
+                //Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
+                //log_info(logger, "Proc: %d",proceso->pid);
+                //instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
+                //log_info(logger, "Instruccion: %s",instruccion);
+                enviarMensaje("SET AX 1",*socketCliente);
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");

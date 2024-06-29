@@ -42,6 +42,7 @@ void cicloDeInstruccion(){
 
 // ------- Funciones del ciclo ------- //
 void fetch() { 
+    log_info(logger, "inicio fetch");
     //Mando la linea que voy a leer de la lista de instrucciones de memoria
     int pid=contextoEjecucion->pid;
     int numInstruccionABuscar = contextoEjecucion->programCounter;
@@ -56,9 +57,14 @@ void fetch() {
 }
 
 void decode(){
+    log_info(logger, "inicio decode");
     elementosInstruccion = string_n_split(instruccionAEjecutar, 4, " ");
-    cantParametros = string_array_size(elementosInstruccion) - 1;
-    instruccionActual = buscar(elementosInstruccion[0], listaComandos);
+    //log_info(logger, "elementosInstruccion[0]: %s", elementosInstruccion[0]); //TODO: Loguea cualquier cosa: �WI1�U
+    cantParametros = string_array_size(elementosInstruccion) - 1; //TODO: Loguea 0
+    //log_info(logger, "cantParametros: %d", cantParametros);
+    instruccionActual = buscar(/*elementosInstruccion[0]*/"SET", listaComandos); //TODO elementosInstruccion[0]
+    log_info(logger, "instruccion Actual (ahora clavada): %d", instruccionActual);
+    
 }
 
 int buscar(char *elemento, char **lista) {
@@ -74,9 +80,11 @@ int buscar(char *elemento, char **lista) {
 }
  
 void check_interrupt(){
+    log_info(logger, "inicio check_interrupt");
     int64_t quantum=contextoEjecucion->quantum;
     t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
     //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
+    log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
     if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
         destruirTemporizador(rafagaCPU);
         modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
@@ -142,10 +150,13 @@ void resize(char* tamanio){
 }
 
 void set_c(char* registro, char* valor){ 
-    tiempoEspera = obtenerTiempoEspera();
-    usleep(tiempoEspera * 1000); 
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor));
+    log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
+    //tiempoEspera = obtenerTiempoEspera();
+    //log_info(logger, "tiempoEspera: %d", tiempoEspera);
+    //usleep(10 * 1000); 
+    //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
+    dictionary_put(contextoEjecucion->registrosCPU, /*registro, string_duplicate(valor)*/"AX",string_duplicate("1")); //TODO: FIX
+    log_info(logger, "fin set_c");
 }
 
 void sum_c(char* registro_destino, char* registro_origen){ 
@@ -306,24 +317,26 @@ int obtenerTamanioReg(char* registro){
 }
 
 void execute() {
+    log_info(logger, "inicio execute");
 
     switch(cantParametros) {
         case 0:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
+            log_info(logger, "case 0 PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
             break;
         case 1:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
+            log_info(logger, "case 1 PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
             break;
         case 2:   
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
+            log_info(logger, "case 2 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case 3:
-            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
+            log_info(logger, "case 3 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
             break; 
     }
-
+    log_info(logger, "instruccionActual: %d", instruccionActual);
     switch(instruccionActual){//TODO: Completar con instrucciones restantes
-        case SET:
+        case /*SET*/0: //TODO, cambiar a SET. con 0 entro
+            log_info(logger, "entre aca al SET con elementosInstruccion[1]: %s y elementosInstruccion[2]: %s", elementosInstruccion[1], elementosInstruccion[2]);
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case SUM:

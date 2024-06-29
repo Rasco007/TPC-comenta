@@ -197,7 +197,7 @@ void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
     (* desplazamiento) += sizeof(uint32_t);
 log_info(logger, "Tamaño de la tabla de paginas: %d", contextoEjecucion->tablaDePaginasSize);
 
-contextoEjecucion->tablaDePaginasSize = 1; //TODO: VER QUE ONDA
+contextoEjecucion->tablaDePaginasSize = 1; //TODO: FIX
     for (uint32_t i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) { // SE QUEDA TRABADO EN ESTE FOR
 
         t_pagina* pagina = deserializarPagina(buffer, desplazamiento);
@@ -242,7 +242,7 @@ void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
     memcpy (&(contextoEjecucion->motivoDesalojo->parametrosLength), buffer + (* desplazamiento), sizeof (uint32_t));
     (* desplazamiento) += sizeof (contextoEjecucion->motivoDesalojo->parametrosLength);
 log_info(logger, "---- antes del for, parametrosLength: %d", contextoEjecucion->motivoDesalojo->parametrosLength);
-contextoEjecucion->motivoDesalojo->parametrosLength = 3; //TODO: VER QUE ONDA
+contextoEjecucion->motivoDesalojo->parametrosLength = 4; //TODO: FIX
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
         int tamanioParametro;
 

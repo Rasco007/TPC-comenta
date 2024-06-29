@@ -46,10 +46,10 @@ int ejecutarServidorCPU(int socketCliente){
 					contextoEjecucion->tiempoDeUsoCPU=temporal_create();
 					/*log_info(logger,"-*-*- Antes del while, programCounter: %d",contextoEjecucion->programCounter);
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);
-					while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength) {*/
+					while(contextoEjecucion->programCounter != (int) contextoEjecucion->instruccionesLength) {*/ 
 						log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 						cicloDeInstruccion();
-					//}
+					//} NOTA: esto lo sacamos porque es del otro tp, no tiene que ser asi aca.
 					temporal_destroy (rafagaCPU);
 					break;
 				default:
