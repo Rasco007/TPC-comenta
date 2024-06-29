@@ -14,6 +14,18 @@ void limpiarBuffer(int socketCliente){
     void* buffer = recibirBuffer(socketCliente, &size);
     free(buffer);
 }
+void recibirEnteros2(int socket, int *pid, int *indice) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    memcpy(pid ,buffer+sizeof(op_code), sizeof(int));
+    memcpy(indice, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+}
 
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
@@ -49,16 +61,17 @@ int ejecutarServidorCPU(int *socketCliente) {
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
                 log_info(logger, "Se recibió la peticion de CPU"); 
                 
-                t_list* elementosPaquete=recibirPaquete(*socketCliente);
+                /*t_list* elementosPaquete=recibirPaquete(*socketCliente);
                 indice=(int)list_get(elementosPaquete,0);
-                pid=(int)list_get(elementosPaquete,1);
+                pid=(int)list_get(elementosPaquete,1);*/
+                recibirEnteros2(*socketCliente,&pid,&indice);
                 log_info(logger, "Indice: %d - PID: %d",indice,pid);
-                indice=0; pid=1; //TODO FIX
-                //Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
+                //indice=0; pid=1; //TODO FIX
+               // Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
                 //log_info(logger, "Proc: %d",proceso->pid);
                 //instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
-                //log_info(logger, "Instruccion: %s",instruccion);
-                enviarMensaje("SET AX 1",*socketCliente);
+               // log_info(logger, "Instruccion: %s",instruccion);
+              //  enviarMensaje("SET AX 1",*socketCliente); ACA TIRA SEGMENTATION FAULT
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");

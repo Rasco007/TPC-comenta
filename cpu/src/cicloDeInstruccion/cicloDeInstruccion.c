@@ -39,6 +39,29 @@ void cicloDeInstruccion(){
     check_interrupt(); //control de quantum
     liberarMemoria();
 }
+void solicitarInstruccion(int pid, int indice, int socket){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = PAQUETE;
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->buffer->size = 2*sizeof(int);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	
+	memcpy(paquete->buffer->stream, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &indice, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+	
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+	free(a_enviar);
+	free(paquete);
+}
 
 // ------- Funciones del ciclo ------- //
 void fetch() { 
@@ -46,13 +69,29 @@ void fetch() {
     //Mando la linea que voy a leer de la lista de instrucciones de memoria
     int pid=contextoEjecucion->pid;
     int numInstruccionABuscar = contextoEjecucion->programCounter;
-    t_paquete* paquete = crearPaquete();
+    /*t_paquete* paquete = crearPaquete();
     agregarAPaquete(paquete, &numInstruccionABuscar, sizeof(int)); //PC
     agregarAPaquete(paquete, &pid, sizeof(int));//PID
-    enviarPaquete(paquete, conexionAMemoria);
+    enviarPaquete(paquete, conexionAMemoria);*/
+    solicitarInstruccion(pid, numInstruccionABuscar, conexionAMemoria);
     //Recibo la instruccion
+    //int codOP = recibirOperacion(conexionAMemoria);
+   // int x=1;
+   // while(x==1){
+		/*switch (codOP) {
+				case MENSAJE:
+					log_info(logger, "Mensaje recibido.");
+					instruccionAEjecutar=recibirMensaje(conexionAMemoria);
+                   // 
+                    x=0;
+					break;
+				default:
+					log_warning(loggerError,"Operacion desconocida.");
+                    
+					break;
+			}*/
+	//}
     instruccionAEjecutar=recibirMensaje(conexionAMemoria);
-
     contextoEjecucion->programCounter += 1;
 }
 
