@@ -26,7 +26,7 @@ t_list * recibirPaquete(int socketCliente);
 char * recibirMensaje(int socketCliente);
 int alistarServidor(char * puerto);
 void elementDestroyer(void * palabra);
-
+t_list* recibirPaqueteBeta(int socket) ;
 
 
 #endif /* UTILS_SERVIDOR_H */ 

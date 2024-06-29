@@ -86,6 +86,38 @@ t_list* recibirPaquete(int socket){
 	return valores;
 }
 
+t_list* recibirPaqueteBeta(int socket) {
+    int size;
+    int desplazamiento = 0;
+    void *buffer;
+    t_list* valores = list_create();
+    int tamanio;
+
+    buffer = recibirBuffer(socket, &size);
+    if (buffer == NULL) {
+        log_error(logger, "Error al recibir el buffer");
+        list_destroy(valores);
+        return NULL;
+    }
+
+    while (desplazamiento < size) {
+        memcpy(&tamanio, buffer + desplazamiento, sizeof(int));
+        desplazamiento += sizeof(int);
+        log_info(logger, "Tamaño del siguiente valor: %d", tamanio);
+        char* valor = malloc(tamanio);
+        if (valor == NULL) {
+            log_error(logger, "Error al asignar memoria para el valor");
+            free(buffer);
+            list_destroy_and_destroy_elements(valores, free);
+            return NULL;
+        }
+        memcpy(valor, buffer + desplazamiento, tamanio);
+        desplazamiento += tamanio;
+        list_add(valores, valor);
+    }
+    free(buffer);
+    return valores;
+}
 
 int alistarServidor(char *puerto){
 

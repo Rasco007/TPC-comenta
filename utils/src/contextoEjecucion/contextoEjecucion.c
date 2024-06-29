@@ -3,7 +3,7 @@ t_contexto * contextoEjecucion = NULL;
 t_dictionary *crearDiccionarioDeRegistros2();
 
 // MANEJO DE CONTEXTO
-void enviarContextoActualizado(int socket){ 
+void enviarContextoActualizadoUtils(int socket,t_contexto * contextoEjecucion ){ 
     t_paquete * paquete = crearPaquete();
     
     paquete->codigo_operacion = CONTEXTOEJECUCION;
@@ -30,16 +30,16 @@ void enviarContextoActualizado(int socket){
     agregarAPaquete (paquete,(void *)&contextoEjecucion->pid, sizeof(contextoEjecucion->pid));
     agregarAPaquete (paquete,(void *)&contextoEjecucion->programCounter, sizeof(contextoEjecucion->programCounter));
     
-    agregarInstruccionesAPaquete (paquete, contextoEjecucion->instrucciones);
-    //log_info(logger, "Instrucciones agregadas al paquete");
+    // agregarInstruccionesAPaquete (paquete, contextoEjecucion->instrucciones);
+    // //log_info(logger, "Instrucciones agregadas al paquete");
 
-    agregarRegistrosAPaquete(paquete, contextoEjecucion->registrosCPU);
-    //log_info(logger, "Registros agregados al paquete");
+    // agregarRegistrosAPaquete(paquete, contextoEjecucion->registrosCPU);
+    // //log_info(logger, "Registros agregados al paquete");
     
-    agregarTablaDePaginasAPaquete(paquete);
-    //log_info(logger, "Tabla de paginas agregada al paquete");
+    // agregarTablaDePaginasAPaquete(paquete);
+    // //log_info(logger, "Tabla de paginas agregada al paquete");
 
-    agregarMotivoAPaquete(paquete, contextoEjecucion->motivoDesalojo);
+    // agregarMotivoAPaquete(paquete, contextoEjecucion->motivoDesalojo);
     //log_info(logger, "Motivo de desalojo agregado al paquete");
 
     agregarAPaquete(paquete, (void *)&contextoEjecucion->tiempoDeUsoCPU, sizeof(contextoEjecucion->tiempoDeUsoCPU));
@@ -48,6 +48,10 @@ void enviarContextoActualizado(int socket){
     enviarPaquete(paquete, socket);
     //log_info(logger, "Procede a eliminar paquete");
 	eliminarPaquete(paquete);
+}
+
+void enviarContextoActualizado(int socket ){ 
+    return 0;
 }
 
 //Ver
@@ -60,6 +64,7 @@ void agregarTablaDePaginasAPaquete(t_paquete* paquete){
         agregarPaginaAPaquete(paquete,list_get(contextoEjecucion->tablaDePaginas, i));
     }
 }
+
 
 //Ver
 void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* pagina){
@@ -107,12 +112,14 @@ void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU){
 
 
 
-void recibirContextoActualizado (int socket) {
+/*void recibirContextoActualizado (int socket) {
     log_info(logger, "------ Recibiendo contexto actualizado...");
     if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
 	int size, desplazamiento = 0;
 	void * buffer;
+
+    log_info(logger, "pid: %d",contextoEjecucion->pid);
 
 	buffer = recibirBuffer(socket, &size);
     // Desplazamiento: Tamaño de PID, PID, y tamaño de programCounter.
@@ -138,6 +145,79 @@ void recibirContextoActualizado (int socket) {
 		
 	free(buffer);
 
+}*/
+void recibirContextoActualizado(int socket, t_contexto *contextoEjecucion) {
+    log_info(logger, "Recibiendo paquete de contexto");
+
+    t_list *paquete = recibirPaqueteBeta(socket);
+    if (paquete == NULL) {
+        log_info(logger, "Error al recibir el paquete");
+        return;
+    }
+
+    int list_size_paquete = list_size(paquete);
+    log_info(logger, "Tamaño del paquete recibido: %d", list_size_paquete);
+    if (list_size_paquete == 0) {
+        log_error(logger, "El paquete recibido está vacío");
+        list_destroy(paquete);
+        return;
+    }
+    
+    int offset = 0;
+    void *elemento;
+
+    
+
+    // Obtener PID
+    
+    elemento = list_get(paquete, offset);
+
+    if (elemento != NULL) {
+        log_info(logger, "Elemento PID no es NULL");
+        log_info(logger, "Tamaño del elemento PID: %zu", sizeof(contextoEjecucion->pid));
+        log_info(logger, "Contenido del elemento PID: %u", *(uint32_t*)elemento);
+        if (sizeof(contextoEjecucion->pid) == sizeof(uint32_t)) {
+            memcpy(&contextoEjecucion->pid, elemento, sizeof(uint32_t));
+            log_info(logger, "PID recibido: %u", contextoEjecucion->pid);
+        } else {
+            log_error(logger, "Tamaño de PID no coincide con el tamaño esperado");
+        }
+        offset++;
+    } else {
+        log_error(logger, "Error al obtener el PID del paquete");
+        list_destroy_and_destroy_elements(paquete, free);
+        return;
+    }
+
+    // Obtener Program Counter
+    log_info(logger, "Obteniendo Program Counter");
+    elemento = list_get(paquete, offset);
+    if (elemento != NULL) {
+        log_info(logger, "Elemento Program Counter no es NULL, tamaño: %zu", sizeof(contextoEjecucion->programCounter));
+        memcpy(&contextoEjecucion->programCounter, elemento, sizeof(contextoEjecucion->programCounter));
+        log_info(logger, "Program Counter recibido: %d", contextoEjecucion->programCounter);
+        offset++;
+    } else {
+        log_error(logger, "Error al obtener el Program Counter del paquete");
+        list_destroy_and_destroy_elements(paquete, free);
+        return;
+    }
+
+    // Obtener Tiempo de Uso de CPU
+    log_info(logger, "Obteniendo Tiempo de Uso de CPU");
+    elemento = list_get(paquete, offset);
+    if (elemento != NULL) {
+        log_info(logger, "Elemento Tiempo de Uso de CPU no es NULL, tamaño: %zu", sizeof(contextoEjecucion->tiempoDeUsoCPU));
+        memcpy(&contextoEjecucion->tiempoDeUsoCPU, elemento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
+       // log_info(logger, "Tiempo de uso de CPU recibido: %d", contextoEjecucion->tiempoDeUsoCPU);
+        offset++;
+    } else {
+        log_error(logger, "Error al obtener el Tiempo de Uso de CPU del paquete");
+        list_destroy_and_destroy_elements(paquete, free);
+        return;
+    }
+
+    list_destroy_and_destroy_elements(paquete, free);
 }
 
 void deserializarInstrucciones (void * buffer, int * desplazamiento) {

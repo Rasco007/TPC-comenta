@@ -61,12 +61,14 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     bufferContexto = malloc(sizeof(t_buffer));
 
     asignarPCBAContexto(procesoEnEjecucion);
+    log_info(logger, "tamaño tabla paginas: %d",contextoEjecucion->tablaDePaginasSize);
+    log_info(logger, "parametrosLenght: %d",contextoEjecucion->motivoDesalojo->parametrosLength);
     
-    enviarContextoActualizado(conexionACPU);
+    enviarContextoActualizadoUtils(conexionACPU, contextoEjecucion);
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
-    recibirContextoActualizado(conexionACPU); 
+    recibirContextoActualizado(conexionACPU, contextoEjecucion); 
 
     actualizarPCB(procesoEnEjecucion);
 

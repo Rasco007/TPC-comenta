@@ -57,10 +57,11 @@ void agregarTablaDePaginasAPaquete(t_paquete* paquete);
 void agregarPaginaAPaquete(t_paquete* paquete, t_pagina* pagina);
 
 // FUNCIONES PARA ENVIO DE CONTEXTO DE EJECUCION
+void enviarContextoActualizadoUtils(int socket,t_contexto * contextoEjecucion );
 void enviarContextoActualizado(int socket);
 
 //FUNCIONES PARA RECIBIR CONTEXTO DE EJECUCION
-void recibirContextoActualizado(int socket);
+void recibirContextoActualizado(int socket, t_contexto *contextoEjecucion); 
 void deserializarInstrucciones (void * buffer, int * desplazamiento);
 void deserializarRegistros (void * buffer, int * desplazamiento);
 void deserializarMotivoDesalojo (void * buffer, int * desplazamiento);
