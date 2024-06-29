@@ -1,9 +1,10 @@
-#include "fileSystem/include/fileSystem.h"
+#include "fileSystem/mainFS/fileSystem.h"
 
 int socketCliente, socketMemoria, fdBitmap, fdBloques;
 int cantBloques, tamanioBitmap, tamanioBloques;
-t_log * logger, * loggerError; 
-t_config * config, * superbloque;
+//t_log * logger, * loggerError; 
+//t_config * config, * superbloque;
+t_config* superbloque;
 t_bitarray * bitmap;
 char * ptrBloques, * ptrBitMap, ** bloques;
 char * pathSuperBloque, * pathBloques, * pathBitmap, * pathFCBs;
@@ -70,7 +71,7 @@ int fileSystem() {
         error ("No se pudo crear o verificar que exista el directorio de FCBs, error: %s", strerror (errno));
     
 
-    escucharAlKernel();
+    io_atender_kernel();
     exit(0);
 }
 

@@ -14,7 +14,7 @@
 #include <commons/string.h>
 #include <commons/bitarray.h>
 
-#include <fileSystem/include/bloques.h>
+#include <fileSystem/bloques/bloques.h>
 
 extern int cantBloques;
 extern int tamanioBitmap;

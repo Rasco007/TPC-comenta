@@ -1,4 +1,4 @@
-#include <fileSystem/include/operaciones.h>
+#include <fileSystem/operaciones/operaciones.h>
 
 int crearArchivo (char * nombre) {
     char * pathArchivo = string_from_format ("%s/%s.fcb", pathFCBs, nombre);

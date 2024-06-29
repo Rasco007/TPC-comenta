@@ -18,7 +18,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "fileSystem/include/conexionMemoria.h"
+#include "conexionMemoria/conexionMemoria.h"
 
 #include <commons/log.h>
 #include <commons/config.h>
@@ -27,7 +27,7 @@
 #include <utilsCliente/utilsCliente.h>
 #include <configuraciones/configuraciones.h>
 
-#include "fileSystem/include/operaciones.h"
+#include "fileSystem/operaciones/operaciones.h"
 
 extern int socketCliente;
 extern int socketMemoria;
