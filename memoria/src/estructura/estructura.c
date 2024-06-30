@@ -134,6 +134,7 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
             mf->marcos[i].libre = false;
             mf->marcos[i].numero_pagina = numero_pagina;
             mf->marcos[i].pid = proceso->pid;
+            mf->marcos[i].proceso = proceso; //va?
             proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
             proceso->tabla_paginas->entradas[numero_pagina].numero_marco = i;
             proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas

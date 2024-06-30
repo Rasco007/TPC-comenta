@@ -35,7 +35,6 @@ int ejecutarServidorCPU(int *socketCliente) {
         log_info(logger, "Se recibió petición %d del CPU", peticion);
 
         switch (peticion) {
-
             case READ:
             log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
@@ -60,18 +59,17 @@ int ejecutarServidorCPU(int *socketCliente) {
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
                 log_info(logger, "Se recibió la peticion de CPU"); 
-                
                 /*t_list* elementosPaquete=recibirPaquete(*socketCliente);
                 indice=(int)list_get(elementosPaquete,0);
                 pid=(int)list_get(elementosPaquete,1);*/
-                recibirEnteros2(*socketCliente,&pid,&indice);
+                recibirEnteros2(*socketCliente, &pid, &indice);
                 log_info(logger, "Indice: %d - PID: %d",indice,pid);
-                //indice=0; pid=1; //TODO FIX
-               // Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
-                //log_info(logger, "Proc: %d",proceso->pid);
-                //instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
-               // log_info(logger, "Instruccion: %s",instruccion);
-              //  enviarMensaje("SET AX 1",*socketCliente); ACA TIRA SEGMENTATION FAULT
+                Proceso *proceso = buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
+                log_info(logger, "Proc: %d",proceso->pid);
+                instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
+                log_info(logger, "Instruccion: %s",instruccion);
+                enviarMensaje(instruccion,*socketCliente); 
+                // limpiarBuffer(*socketCliente);
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");

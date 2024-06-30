@@ -75,23 +75,19 @@ void fetch() {
     enviarPaquete(paquete, conexionAMemoria);*/
     solicitarInstruccion(pid, numInstruccionABuscar, conexionAMemoria);
     //Recibo la instruccion
-    //int codOP = recibirOperacion(conexionAMemoria);
-   // int x=1;
-   // while(x==1){
-		/*switch (codOP) {
-				case MENSAJE:
-					log_info(logger, "Mensaje recibido.");
-					instruccionAEjecutar=recibirMensaje(conexionAMemoria);
-                   // 
-                    x=0;
-					break;
-				default:
-					log_warning(loggerError,"Operacion desconocida.");
-                    
-					break;
-			}*/
+    int peticion = recibirOperacion(conexionAMemoria);
+    //int x=1;
+    //while(x==1){
+	switch (peticion) {
+		case MENSAJE:
+			instruccionAEjecutar=recibirMensaje(conexionAMemoria);
+            log_info(logger, "Instruccion recibida: %s", instruccionAEjecutar);
+			break;
+		default:
+            log_warning(logger,"Operacion desconocida.");
+			break;
+	}
 	//}
-    instruccionAEjecutar=recibirMensaje(conexionAMemoria);
     contextoEjecucion->programCounter += 1;
 }
 
@@ -125,7 +121,7 @@ void check_interrupt(){
     //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
     log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
     if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
-        destruirTemporizador(rafagaCPU);
+        destruirTemporizador(rafagaCPU); // ACA TIRA SEGMENTATION FAULT
         modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
         enviarContextoActualizado(socketClienteInterrupt);
     }
