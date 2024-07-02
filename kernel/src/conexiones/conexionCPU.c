@@ -60,8 +60,8 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 
     bufferContexto = malloc(sizeof(t_buffer));
 
-    asignarPCBAContextoBeta(procesoEnEjecucion);
-    log_info(logger, "pid %u", contextoEjecucion->pid);
+    asignarPCBAContexto/*Beta*/(procesoEnEjecucion);
+    /*log_info(logger, "pid %u", contextoEjecucion->pid);
    log_info(logger, "program counter %d", contextoEjecucion->programCounter);
    log_info(logger, "instr lenth %d", contextoEjecucion->instruccionesLength);
     char* primeraInstruccion = list_get(contextoEjecucion->instrucciones, 0);
@@ -73,7 +73,7 @@ log_info(logger, "Primera instrucción: %s", primeraInstruccion);
     for (int i = 0; i < num_registros; i++) {
         char* valor = (char*) dictionary_get(contextoEjecucion->registrosCPU, registros[i]);
         log_info(logger, "Registro %s: %s", registros[i], valor);
-    }
+    }*/
 
     enviarContextoBeta(conexionACPU, contextoEjecucion);
 

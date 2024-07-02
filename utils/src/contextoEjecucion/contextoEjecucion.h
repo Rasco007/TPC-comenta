@@ -14,7 +14,7 @@ typedef struct {
 
         t_comando motivo; 
         int parametrosLength;
-        char* parametros[3]; 
+        char* parametros[5]; 
 
 }t_motivoDeDesalojo; 
 

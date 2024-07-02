@@ -92,13 +92,13 @@ void fetch() {
 }
 
 void decode(){
-    log_info(logger, "inicio decode");
+    log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
     elementosInstruccion = string_n_split(instruccionAEjecutar, 4, " ");
     //log_info(logger, "elementosInstruccion[0]: %s", elementosInstruccion[0]); //TODO: Loguea cualquier cosa: �WI1�U
     cantParametros = string_array_size(elementosInstruccion) - 1; //TODO: Loguea 0
     //log_info(logger, "cantParametros: %d", cantParametros);
-    instruccionActual = buscar(/*elementosInstruccion[0]*/"SET", listaComandos); //TODO elementosInstruccion[0]
-    log_info(logger, "instruccion Actual (ahora clavada): %d", instruccionActual);
+    instruccionActual = buscar(elementosInstruccion[0], listaComandos); 
+    log_info(logger, "instruccion Actual: %d", instruccionActual);
     
 }
 
@@ -115,15 +115,17 @@ int buscar(char *elemento, char **lista) {
 }
  
 void check_interrupt(){
-    log_info(logger, "inicio check_interrupt");
-    int64_t quantum=contextoEjecucion->quantum;
-    t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
-    //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
-    log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
-    if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
-        destruirTemporizador(rafagaCPU); // ACA TIRA SEGMENTATION FAULT
-        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-        enviarContextoActualizado(socketClienteInterrupt);
+    if(contextoEjecucion->algoritmo != FIFO){
+        log_info(logger, "inicio check_interrupt");
+        int64_t quantum=contextoEjecucion->quantum;
+        t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+        //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
+        log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
+        if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
+            destruirTemporizador(rafagaCPU); // ACA TIRA SEGMENTATION FAULT
+            modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+            enviarContextoActualizado(socketClienteInterrupt);
+        }
     }
 }
 
@@ -190,7 +192,7 @@ void set_c(char* registro, char* valor){
     //log_info(logger, "tiempoEspera: %d", tiempoEspera);
     //usleep(10 * 1000); 
     //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, /*registro, string_duplicate(valor)*/"AX",string_duplicate("1")); //TODO: FIX
+    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
     log_info(logger, "fin set_c");
 }
 
@@ -241,11 +243,15 @@ void signal_c(char* recurso){
 }
 
 void exit_c () {
-    destruirTemporizador(rafagaCPU);
+    //log_info(logger, "Antes destruirTemporizador rafagaCPU: %p", rafagaCPU);
+    //destruirTemporizador(rafagaCPU); TODO: DESTRUIR
+    //log_info(logger, "Pasa destruirTemporizador");
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    log_info(logger, "Pasa modificarMotivoDesalojo");
+    enviarContextoActualizado(socketClienteDispatch); 
     free (terminado);
+    log_info(logger, "fin exit_c");
 }
 
 
@@ -324,6 +330,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
+    log_info(logger,"Memoria liberada!");
 }
 
 char* recibirValor(int socket) {
@@ -367,10 +374,16 @@ void execute() {
         case 3:
             log_info(logger, "case 3 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
             break; 
+        case 4:
+            log_info(logger, "case 4 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4]);
+            break;
+        case 5:
+            log_info(logger, "case 5 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
+            break;
     }
     log_info(logger, "instruccionActual: %d", instruccionActual);
     switch(instruccionActual){//TODO: Completar con instrucciones restantes
-        case /*SET*/0: //TODO, cambiar a SET. con 0 entro
+        case SET: 
             log_info(logger, "entre aca al SET con elementosInstruccion[1]: %s y elementosInstruccion[2]: %s", elementosInstruccion[1], elementosInstruccion[2]);
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
