@@ -71,6 +71,8 @@ void iniciarContexto();
 void destroyContexto();
 void destroyContextoUnico();
 
-
-
+void enviarContextoBeta(int socket, t_contexto* contexto);
+void recibirContextoBeta(int socket);
+void deserializarInstruccionesBeta (void * buffer, int * desplazamiento, t_contexto * contextoEjecucionBeta);
+void agregarInstruccionesAPaqueteBeta(t_paquete* paquete, t_list* instrucciones, t_contexto * contexto);
 #endif

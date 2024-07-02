@@ -36,15 +36,16 @@ int ejecutarConsola () {
                 log_error(logger, "No se proporcionó un path para EJECUTAR_SCRIPT");
             }
         }
-        if(!strncmp(linea, "INICIAR_PROCESO",15)){
-            char *token = strtok(linea, " ");
+        if(!strncmp(linea, "I",1)){
+            iniciarProceso("src/scripts_memoria/PLANI_1");
+            /*char *token = strtok(linea, " ");
             token = strtok(NULL, " ");
             if (token != NULL) {
                 char* path = token;
                 iniciarProceso(path);
             } else {
                 log_error(logger, "No se proporcionó un path para INICIAR_PROCESO");
-            }
+            }*/
         }
         if(!strncmp(linea, "FINALIZAR_PROCESO",17)){
             char *token = strtok(linea, " ");

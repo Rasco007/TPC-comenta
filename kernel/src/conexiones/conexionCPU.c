@@ -61,12 +61,25 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     bufferContexto = malloc(sizeof(t_buffer));
 
     asignarPCBAContexto(procesoEnEjecucion);
-    
-    enviarContextoActualizado(conexionACPU);
+    log_info(logger, "pid %u", contextoEjecucion->pid);
+   log_info(logger, "program counter %d", contextoEjecucion->programCounter);
+   log_info(logger, "instr lenth %d", contextoEjecucion->instruccionesLength);
+    char* primeraInstruccion = list_get(contextoEjecucion->instrucciones, 0);
+log_info(logger, "Primera instrucción: %s", primeraInstruccion);
+
+ char* registros[] = {"AX", "BX", "CX", "DX", "EAX", "EBX", "ECX", "EDX"};
+    int num_registros = sizeof(registros) / sizeof(registros[0]);
+
+    for (int i = 0; i < num_registros; i++) {
+        char* valor = (char*) dictionary_get(contextoEjecucion->registrosCPU, registros[i]);
+        log_info(logger, "Registro %s: %s", registros[i], valor);
+    }
+
+    enviarContextoBeta(conexionACPU, contextoEjecucion);
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
-    recibirContextoActualizado(conexionACPU); 
+    recibirContextoBeta(conexionACPU); 
 
     actualizarPCB(procesoEnEjecucion);
 
@@ -86,8 +99,12 @@ void actualizarPCB(t_pcb* proceso){
 void asignarPCBAContexto(t_pcb* proceso){
 
     list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    contextoEjecucion->instruccionesLength = list_size(contextoEjecucion->instrucciones);
+    //contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
+    	contextoEjecucion->instrucciones = list_create();
+list_add(contextoEjecucion->instrucciones, strdup("instr1"));
+list_add(contextoEjecucion->instrucciones, strdup("instr2"));
+list_add(contextoEjecucion->instrucciones, strdup("instr3"));
+    contextoEjecucion->instruccionesLength = 3;
     contextoEjecucion->pid = proceso->pid;
     contextoEjecucion->programCounter = proceso->programCounter;
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);

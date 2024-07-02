@@ -3,28 +3,165 @@ t_contexto * contextoEjecucion = NULL;
 t_dictionary *crearDiccionarioDeRegistros2();
 
 // MANEJO DE CONTEXTO
+void enviarContextoBeta(int socket, t_contexto* contexto) {
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = CONTEXTOEJECUCION;
+    paquete->buffer = malloc(sizeof(t_buffer));
+
+    // Calcular el tamaño del buffer necesario para la estructura
+    paquete->buffer->size = sizeof(contexto->pid) + sizeof(contexto->programCounter) + sizeof(contexto->instruccionesLength) ;
+
+    for (uint32_t i = 0; i < list_size(contexto->instrucciones); i++) {
+        char* instruccion = list_get(contexto->instrucciones, i);
+        paquete->buffer->size += sizeof(uint32_t) + strlen(instruccion) + 1; // Tamaño de la instrucción + la instrucción
+    }
+
+     // Calcular el tamaño de los registros
+    paquete->buffer->size  += 4 * (4 + 8); // AX, BX, CX, DX (4 bytes cada uno) + EAX, EBX, ECX, EDX (8 bytes cada uno)
+    
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+
+    // Serializar los datos en el buffer
+    int desplazamiento = 0;
+    //agregar a paquete
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->pid), sizeof(contexto->pid));
+    desplazamiento += sizeof(contexto->pid);
+
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->programCounter), sizeof(contexto->programCounter));
+    desplazamiento += sizeof(contexto->programCounter);
+ 
+   
+    log_info(logger, "length %d",contexto->instruccionesLength);
+   memcpy(paquete->buffer->stream + desplazamiento, &(contexto->instruccionesLength), sizeof(contexto->instruccionesLength));
+    desplazamiento += sizeof(contexto->instruccionesLength);
+
+    // Serializar las instrucciones
+    for (uint32_t i = 0; i < contexto->instruccionesLength; i++) {
+        char* instruccion = list_get(contexto->instrucciones, i);
+        uint32_t instruccion_length = strlen(instruccion) + 1;
+
+        memcpy(paquete->buffer->stream + desplazamiento, &instruccion_length, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+        log_info(logger,"instruccion %s", instruccion);
+        memcpy(paquete->buffer->stream + desplazamiento, instruccion, instruccion_length);
+        desplazamiento += instruccion_length;
+    }
+
+    // Serializar los registros
+    char* registros[] = {"AX", "BX", "CX", "DX", "EAX", "EBX", "ECX", "EDX"};
+    for (int i = 0; i < 8; i++) {
+        char* registro = dictionary_get(contextoEjecucion->registrosCPU, registros[i]);
+        int registro_length = (i < 4) ? 4 : 8;
+        memcpy(paquete->buffer->stream  + desplazamiento, registro, registro_length);
+        desplazamiento += registro_length;
+         log_info(logger, "Serializando registro %s: %s", registros[i], registro);
+    }
+
+
+    // Calcular el tamaño total del paquete a enviar
+    int bytes = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
+    
+    // Serializar el paquete
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    // Enviar el paquete a través del socket
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE);
+    }
+
+    // Liberar memoria
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
+}
+
+
+
+
+void recibirContextoBeta(int socket) {
+       char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+
+    t_contexto *contextoEjecucionBeta = malloc(sizeof(t_contexto));
+    contextoEjecucionBeta->instrucciones = list_create();
+     contextoEjecucionBeta->registrosCPU = dictionary_create();
+
+    int desplazamiento = sizeof(op_code);
+
+    memcpy(&(contextoEjecucionBeta->pid), buffer + desplazamiento, sizeof(contextoEjecucionBeta->pid));
+    desplazamiento += sizeof(contextoEjecucionBeta->pid);
+
+    memcpy(&(contextoEjecucionBeta->programCounter), buffer + desplazamiento, sizeof(contextoEjecucionBeta->programCounter));
+    desplazamiento += sizeof(contextoEjecucionBeta->programCounter);
+
+    log_info(logger, "llega hasta aqui");
+
+    memcpy(&(contextoEjecucionBeta->instruccionesLength), buffer + desplazamiento, sizeof(contextoEjecucionBeta->instruccionesLength));
+    desplazamiento += sizeof(contextoEjecucionBeta->instruccionesLength);
+
+    //deserealizo las instrucciones
+    for (uint32_t i = 0; i < contextoEjecucionBeta->instruccionesLength; i++) {
+        uint32_t instruccion_length;
+        memcpy(&instruccion_length, buffer + desplazamiento, sizeof(uint32_t));
+        desplazamiento += sizeof(uint32_t);
+ log_info(logger,"instruccion Length %u", instruccion_length);
+        char* instruccion = malloc(instruccion_length);
+        memcpy(instruccion, buffer + desplazamiento, instruccion_length);
+        desplazamiento += instruccion_length;
+
+        // Asegúrate de terminar la cadena con '\0'
+        instruccion[instruccion_length - 1] = '\0';
+
+        list_add(contextoEjecucionBeta->instrucciones, instruccion);
+        log_info(logger, "instruccion: %s", instruccion);
+    }
+
+    printf("Recibido PID: %u PC: %d \n", contextoEjecucionBeta->pid, contextoEjecucionBeta->programCounter);
+    
+
+    //deserealizo los registros 
+    char* registro;
+    char nombreRegistro[4];
+
+    // AX, BX, CX, DX (4 bytes cada uno)
+    for (char nombre = 'A'; nombre <= 'D'; nombre++) {
+        registro = malloc(5); // 4 bytes + terminador nulo
+        memcpy(registro, buffer + desplazamiento, 4);
+        registro[4] = '\0';
+        desplazamiento += 4;
+
+        snprintf(nombreRegistro, 3, "%cX", nombre);
+        dictionary_put(contextoEjecucionBeta->registrosCPU, nombreRegistro, registro);
+        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+    }
+
+    // EAX, EBX, ECX, EDX (8 bytes cada uno)
+    for (char nombre = 'A'; nombre <= 'D'; nombre++) {
+        registro = malloc(9); // 8 bytes + terminador nulo
+        memcpy(registro, buffer + desplazamiento, 8);
+        registro[8] = '\0';
+        desplazamiento += 8;
+
+        snprintf(nombreRegistro, 4, "E%cX", nombre);
+        dictionary_put(contextoEjecucionBeta->registrosCPU, nombreRegistro, registro);
+        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+    }
+
+    free(contextoEjecucionBeta);
+    
+}
+
 void enviarContextoActualizado(int socket){ 
     t_paquete * paquete = crearPaquete();
     
     paquete->codigo_operacion = CONTEXTOEJECUCION;
-
-    /*log_info(logger, "Hardcodeo");
-
-    contextoEjecucion->instrucciones = list_create();
-	contextoEjecucion->instruccionesLength = 0;
-	contextoEjecucion->pid = 1;
-	contextoEjecucion->programCounter = 0;
-	contextoEjecucion->registrosCPU = crearDiccionarioDeRegistros2();
-	contextoEjecucion->tablaDePaginas = list_create();
-	contextoEjecucion->tablaDePaginasSize = 0;
-    //contextoEjecucion->rafagaCPUEjecutada = 0;
-    contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
-    contextoEjecucion->motivoDesalojo->parametros[0] = "";
-    contextoEjecucion->motivoDesalojo->parametros[1] = "";
-    contextoEjecucion->motivoDesalojo->parametros[2] = "";
-    contextoEjecucion->motivoDesalojo->parametrosLength = 0;
-    contextoEjecucion->motivoDesalojo->motivo = 0;*/
-
     
    
     agregarAPaquete (paquete,(void *)&contextoEjecucion->pid, sizeof(contextoEjecucion->pid));
@@ -75,6 +212,25 @@ void agregarMotivoAPaquete (t_paquete* paquete, t_motivoDeDesalojo* motivoDesalo
     for (int i = 0; i < motivoDesalojo->parametrosLength; i++) 
         agregarAPaquete (paquete, (void *)motivoDesalojo->parametros[i], (strlen (motivoDesalojo->parametros[i]) + 1) * sizeof(char));
 
+}
+
+void agregarInstruccionesAPaqueteBeta(t_paquete* paquete, t_list* instrucciones, t_contexto *contexto) {
+    contexto->instruccionesLength = list_size(instrucciones);
+
+    // Primero enviamos la cantidad de elementos
+    agregarAPaquete(paquete, &contexto->instruccionesLength, sizeof(uint32_t));
+    
+
+    for (uint32_t i = 0; i < contexto->instruccionesLength; i++) {
+        char *instruccion = list_get(instrucciones, i);
+        uint32_t instruccion_length = strlen(instruccion) + 1;
+
+        // Enviar el tamaño de la instrucción
+        agregarAPaquete(paquete, &instruccion_length, sizeof(uint32_t));
+        log_info(logger,"instruccion %s", instruccion);
+        // Enviar la instrucción
+        agregarAPaquete(paquete, instruccion, instruccion_length);
+    }
 }
 
 void agregarInstruccionesAPaquete(t_paquete* paquete, t_list* instrucciones){
@@ -138,6 +294,25 @@ void recibirContextoActualizado (int socket) {
 		
 	free(buffer);
 
+}
+void deserializarInstruccionesBeta(void *buffer, int *desplazamiento, t_contexto *contextoEjecucionBeta) {
+    uint32_t instruccionesLength;
+    memcpy(&instruccionesLength, buffer + (*desplazamiento), sizeof(uint32_t));
+    (*desplazamiento) += sizeof(uint32_t);
+
+    list_clean_and_destroy_elements(contextoEjecucionBeta->instrucciones, free);
+
+    for (uint32_t i = 0; i < instruccionesLength; i++) {
+        uint32_t instruccion_length;
+        memcpy(&instruccion_length, buffer + (*desplazamiento), sizeof(uint32_t));
+        (*desplazamiento) += sizeof(uint32_t);
+
+        char *instruccion = malloc(instruccion_length);
+        memcpy(instruccion, buffer + (*desplazamiento), instruccion_length);
+        (*desplazamiento) += instruccion_length;
+
+        list_add(contextoEjecucionBeta->instrucciones, instruccion);
+    }
 }
 
 void deserializarInstrucciones (void * buffer, int * desplazamiento) {

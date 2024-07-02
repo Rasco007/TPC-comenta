@@ -41,8 +41,9 @@ int ejecutarServidorCPU(int socketCliente){
 					if (contextoEjecucion != NULL){
 						list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
 					}
-					recibirContextoActualizado(socketCliente);
+					recibirContextoBeta(socketCliente);
 					//Inicio el cronometro del tiempo de uso de CPU
+					log_info(logger,"llego hasta cax2");
 					contextoEjecucion->tiempoDeUsoCPU=temporal_create();
 					/*log_info(logger,"-*-*- Antes del while, programCounter: %d",contextoEjecucion->programCounter);
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);
