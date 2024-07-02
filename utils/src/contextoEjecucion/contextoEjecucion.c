@@ -19,6 +19,24 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
      // Calcular el tamaño de los registros
     paquete->buffer->size  += 4 * (4 + 8); // AX, BX, CX, DX (4 bytes cada uno) + EAX, EBX, ECX, EDX (8 bytes cada uno)
     
+    //calcula tamaño del motivo
+    paquete->buffer->size  += sizeof(contextoEjecucion->motivoDesalojo->motivo) +
+                   sizeof(contextoEjecucion->motivoDesalojo->parametrosLength);
+    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
+        paquete->buffer->size  += strlen(contextoEjecucion->motivoDesalojo->parametros[i]) + 1; // +1 para el terminador nulo
+    }
+
+    //calculo tamaño de tabla de paginas
+     
+    paquete->buffer->size += sizeof(uint32_t); // Tamaño de tablaDePaginasSize
+    for (int i = 0; i < list_size(contexto->tablaDePaginas); i++) {
+        paquete->buffer->size += sizeof(t_pagina);
+    }
+
+    //calculo tamaño de tiempo de cpu
+    //paquete->buffer->size  += sizeof(contextoEjecucion->tiempoDeUsoCPU);
+
+
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
     // Serializar los datos en el buffer
@@ -50,12 +68,41 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     // Serializar los registros
     char* registros[] = {"AX", "BX", "CX", "DX", "EAX", "EBX", "ECX", "EDX"};
     for (int i = 0; i < 8; i++) {
-        char* registro = dictionary_get(contextoEjecucion->registrosCPU, registros[i]);
-        int registro_length = (i < 4) ? 4 : 8;
-        memcpy(paquete->buffer->stream  + desplazamiento, registro, registro_length);
+        char* registro = dictionary_get(contexto->registrosCPU, registros[i]);
+        int registro_length = (i < 4) ? 1 : 4;
+        memcpy(paquete->buffer->stream + desplazamiento, registro, registro_length);
         desplazamiento += registro_length;
-         log_info(logger, "Serializando registro %s: %s", registros[i], registro);
     }
+
+     // Serializar el motivo
+    memcpy(paquete->buffer->stream + desplazamiento, &(contextoEjecucion->motivoDesalojo->motivo), sizeof(contextoEjecucion->motivoDesalojo->motivo));
+    desplazamiento += sizeof(contextoEjecucion->motivoDesalojo->motivo);
+
+    
+    memcpy(paquete->buffer->stream + desplazamiento, &(contextoEjecucion->motivoDesalojo->parametrosLength), sizeof(contextoEjecucion->motivoDesalojo->parametrosLength));
+    desplazamiento += sizeof(contextoEjecucion->motivoDesalojo->parametrosLength);
+
+    
+    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
+        int parametro_length = strlen(contextoEjecucion->motivoDesalojo->parametros[i]) + 1; // +1 para el terminador nulo
+        memcpy(paquete->buffer->stream + desplazamiento, contextoEjecucion->motivoDesalojo->parametros[i], parametro_length);
+        desplazamiento += parametro_length;
+    }
+
+ // Serializar la tabla de páginas
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tablaDePaginasSize), sizeof(contexto->tablaDePaginasSize));
+    desplazamiento += sizeof(contexto->tablaDePaginasSize);
+log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
+    for (int i = 0; i < list_size(contexto->tablaDePaginas); i++) {
+        t_pagina* pagina = list_get(contexto->tablaDePaginas, i);
+        memcpy(paquete->buffer->stream + desplazamiento, pagina, sizeof(t_pagina));
+        desplazamiento += sizeof(t_pagina);
+         log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
+    }
+
+    //serializo el tiempo de cpu
+    /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
+    desplazamiento += sizeof(contexto->tiempoDeUsoCPU);*/
 
 
     // Calcular el tamaño total del paquete a enviar
@@ -82,6 +129,9 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
 
 void recibirContextoBeta(int socket) {
        char buffer[2048];
+        if (contextoEjecucion != NULL) destroyContextoUnico ();
+	iniciarContexto ();
+
     // Recibir el mensaje del servidor
     int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
     if (bytes_recibidos < 0) {
@@ -89,25 +139,23 @@ void recibirContextoBeta(int socket) {
         return;
     }
 
-    t_contexto *contextoEjecucionBeta = malloc(sizeof(t_contexto));
-    contextoEjecucionBeta->instrucciones = list_create();
-     contextoEjecucionBeta->registrosCPU = dictionary_create();
+    
 
     int desplazamiento = sizeof(op_code);
 
-    memcpy(&(contextoEjecucionBeta->pid), buffer + desplazamiento, sizeof(contextoEjecucionBeta->pid));
-    desplazamiento += sizeof(contextoEjecucionBeta->pid);
+    memcpy(&(contextoEjecucion->pid), buffer + desplazamiento, sizeof(contextoEjecucion->pid));
+    desplazamiento += sizeof(contextoEjecucion->pid);
 
-    memcpy(&(contextoEjecucionBeta->programCounter), buffer + desplazamiento, sizeof(contextoEjecucionBeta->programCounter));
-    desplazamiento += sizeof(contextoEjecucionBeta->programCounter);
+    memcpy(&(contextoEjecucion->programCounter), buffer + desplazamiento, sizeof(contextoEjecucion->programCounter));
+    desplazamiento += sizeof(contextoEjecucion->programCounter);
 
-    log_info(logger, "llega hasta aqui");
+    
 
-    memcpy(&(contextoEjecucionBeta->instruccionesLength), buffer + desplazamiento, sizeof(contextoEjecucionBeta->instruccionesLength));
-    desplazamiento += sizeof(contextoEjecucionBeta->instruccionesLength);
+    memcpy(&(contextoEjecucion->instruccionesLength), buffer + desplazamiento, sizeof(contextoEjecucion->instruccionesLength));
+    desplazamiento += sizeof(contextoEjecucion->instruccionesLength);
 
     //deserealizo las instrucciones
-    for (uint32_t i = 0; i < contextoEjecucionBeta->instruccionesLength; i++) {
+    for (uint32_t i = 0; i < contextoEjecucion->instruccionesLength; i++) {
         uint32_t instruccion_length;
         memcpy(&instruccion_length, buffer + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
@@ -119,44 +167,158 @@ void recibirContextoBeta(int socket) {
         // Asegúrate de terminar la cadena con '\0'
         instruccion[instruccion_length - 1] = '\0';
 
-        list_add(contextoEjecucionBeta->instrucciones, instruccion);
+        list_add(contextoEjecucion->instrucciones, instruccion);
         log_info(logger, "instruccion: %s", instruccion);
     }
 
-    printf("Recibido PID: %u PC: %d \n", contextoEjecucionBeta->pid, contextoEjecucionBeta->programCounter);
+    printf("Recibido PID: %u PC: %d \n", contextoEjecucion->pid, contextoEjecucion->programCounter);
     
 
-    //deserealizo los registros 
-    char* registro;
+        //deserealizo los registros
+     char* registro;
     char nombreRegistro[4];
 
-    // AX, BX, CX, DX (4 bytes cada uno)
+    // AX, BX, CX, DX (1 byte cada uno)
+    for (char nombre = 'A'; nombre <= 'D'; nombre++) {
+        registro = malloc(2); // 1 byte + terminador nulo
+        memcpy(registro, buffer + desplazamiento, 1);
+        registro[1] = '\0';
+        desplazamiento += 1;
+
+        snprintf(nombreRegistro, 3, "%cX", nombre);
+        dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
+         log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+    }
+
+    // EAX, EBX, ECX, EDX (4 bytes cada uno)
     for (char nombre = 'A'; nombre <= 'D'; nombre++) {
         registro = malloc(5); // 4 bytes + terminador nulo
         memcpy(registro, buffer + desplazamiento, 4);
         registro[4] = '\0';
         desplazamiento += 4;
 
-        snprintf(nombreRegistro, 3, "%cX", nombre);
-        dictionary_put(contextoEjecucionBeta->registrosCPU, nombreRegistro, registro);
-        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
-    }
-
-    // EAX, EBX, ECX, EDX (8 bytes cada uno)
-    for (char nombre = 'A'; nombre <= 'D'; nombre++) {
-        registro = malloc(9); // 8 bytes + terminador nulo
-        memcpy(registro, buffer + desplazamiento, 8);
-        registro[8] = '\0';
-        desplazamiento += 8;
-
         snprintf(nombreRegistro, 4, "E%cX", nombre);
-        dictionary_put(contextoEjecucionBeta->registrosCPU, nombreRegistro, registro);
-        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
+         log_info(logger, "Registro %s: %s", nombreRegistro, registro);
     }
 
-    free(contextoEjecucionBeta);
+
+      // Deserializar el motivo
+    memcpy(&(contextoEjecucion->motivoDesalojo->motivo), buffer + desplazamiento, sizeof(contextoEjecucion->motivoDesalojo->motivo));
+    desplazamiento += sizeof(contextoEjecucion->motivoDesalojo->motivo);
+
+    // Deserializar la longitud de los parámetros
+    memcpy(&(contextoEjecucion->motivoDesalojo->parametrosLength), buffer + desplazamiento, sizeof(contextoEjecucion->motivoDesalojo->parametrosLength));
+    desplazamiento += sizeof(contextoEjecucion->motivoDesalojo->parametrosLength);
+
+    // Deserializar los parámetros
+    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
+        int parametro_length = strlen(buffer + desplazamiento) + 1; // +1 para el terminador nulo
+        contextoEjecucion->motivoDesalojo->parametros[i] = malloc(parametro_length);
+        memcpy(contextoEjecucion->motivoDesalojo->parametros[i], buffer + desplazamiento, parametro_length);
+        desplazamiento += parametro_length;
+        log_info(logger, "param %s",contextoEjecucion->motivoDesalojo->parametros[i]);
+    }
+
+
+     // Deserializar la tabla de páginas
+    memcpy(&(contextoEjecucion->tablaDePaginasSize), buffer + desplazamiento, sizeof(contextoEjecucion->tablaDePaginasSize));
+    desplazamiento += sizeof(contextoEjecucion->tablaDePaginasSize);
+log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
+    for (int i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) {
+        log_info(logger, "llega hasta aqui x2");
+        t_pagina* pagina = malloc(sizeof(t_pagina));
+        memcpy(pagina, buffer + desplazamiento, sizeof(t_pagina));
+        desplazamiento += sizeof(t_pagina);
+        list_add(contextoEjecucion->tablaDePaginas, pagina);
+
+        // Loguear detalles de la página
+        log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
+    }
+
+    
     
 }
+
+
+void iniciarContextoBeta(){
+
+    contextoEjecucion = malloc(sizeof(t_contexto));
+	contextoEjecucion->instrucciones = list_create();
+	contextoEjecucion->instruccionesLength = 0;
+	contextoEjecucion->pid = 0;
+	contextoEjecucion->programCounter = 0;
+	contextoEjecucion->registrosCPU = dictionary_create();
+	contextoEjecucion->tablaDePaginas = list_create();
+	contextoEjecucion->tablaDePaginasSize = 0;
+    contextoEjecucion->tiempoDeUsoCPU = 0;
+    contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
+    contextoEjecucion->motivoDesalojo->parametros[0] = "param1";
+    contextoEjecucion->motivoDesalojo->parametros[1] = "param2";
+    contextoEjecucion->motivoDesalojo->parametros[2] = "param3";
+    contextoEjecucion->motivoDesalojo->parametrosLength = 3;
+    contextoEjecucion->motivoDesalojo->motivo = IO_GEN_SLEEP;
+	
+}
+
+void destroyContexto() {
+    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
+    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
+    list_destroy_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
+    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
+        if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
+    free(contextoEjecucion->motivoDesalojo);
+    free(contextoEjecucion);
+    contextoEjecucion = NULL;
+}
+
+void destroyContextoUnico () {
+    list_destroy(contextoEjecucion->instrucciones);
+    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
+    list_destroy(contextoEjecucion->tablaDePaginas);
+    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
+        if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
+    free(contextoEjecucion->motivoDesalojo);
+    free(contextoEjecucion);
+    contextoEjecucion = NULL;
+}
+
+t_dictionary *crearDiccionarioDeRegistros2(){
+
+    t_dictionary *registros = dictionary_create();
+
+    char name[3] = "AX", longName[4] = "EAX";
+    for (int i = 0; i < 4; i++) {
+        dictionary_put(registros, name, string_repeat('0', 4));
+        longName[0] = 'E';
+        dictionary_put(registros, longName, string_repeat('0', 8));
+        name[0]++, longName[1]++;
+    }
+
+    return registros;
+}
+
+void iniciarContexto(){
+
+    contextoEjecucion = malloc(sizeof(t_contexto));
+	contextoEjecucion->instrucciones = list_create();
+	contextoEjecucion->instruccionesLength = 0;
+	contextoEjecucion->pid = 0;
+	contextoEjecucion->programCounter = 0;
+	contextoEjecucion->registrosCPU = dictionary_create();
+	contextoEjecucion->tablaDePaginas = list_create();
+	contextoEjecucion->tablaDePaginasSize = 0;
+    contextoEjecucion->tiempoDeUsoCPU = 0;
+    contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
+    contextoEjecucion->motivoDesalojo->parametros[0] = "";
+    contextoEjecucion->motivoDesalojo->parametros[1] = "";
+    contextoEjecucion->motivoDesalojo->parametros[2] = "";
+    contextoEjecucion->motivoDesalojo->parametrosLength = 0;
+    contextoEjecucion->motivoDesalojo->motivo = 0;
+	
+}
+
+
 
 void enviarContextoActualizado(int socket){ 
     t_paquete * paquete = crearPaquete();
@@ -260,110 +422,6 @@ void agregarRegistrosAPaquete(t_paquete* paquete, t_dictionary* registrosCPU){
     }
 
 }
-
-
-
-void recibirContextoActualizado (int socket) {
-    log_info(logger, "------ Recibiendo contexto actualizado...");
-    if (contextoEjecucion != NULL) destroyContextoUnico ();
-	iniciarContexto ();
-	int size, desplazamiento = 0;
-	void * buffer;
-
-	buffer = recibirBuffer(socket, &size);
-    // Desplazamiento: Tamaño de PID, PID, y tamaño de programCounter.
-    desplazamiento += sizeof(int);
-    memcpy(&(contextoEjecucion->pid), buffer + desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(contextoEjecucion->pid) + sizeof(int);
-
-    // Desplazamiento: programCounter y tamaño de instruccionesLength.
-    memcpy(&(contextoEjecucion->programCounter), buffer+desplazamiento, sizeof(uint32_t));
-    desplazamiento += sizeof(contextoEjecucion->programCounter) + sizeof(int);
-    deserializarInstrucciones (buffer, &desplazamiento);
-    
-    deserializarRegistros (buffer, &desplazamiento);
-
-    deserializarTablaDePaginas(buffer, &desplazamiento);
-    
-    deserializarMotivoDesalojo (buffer, &desplazamiento);
-    log_info(logger, "------ deserializarMotivoDesalojo");
-
-    // Desplazamiento: Tamaño de la rafaga de CPU Ejecutada.
-    desplazamiento += sizeof (int);
-    memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof (uint64_t));
-		
-	free(buffer);
-
-}
-void deserializarInstruccionesBeta(void *buffer, int *desplazamiento, t_contexto *contextoEjecucionBeta) {
-    uint32_t instruccionesLength;
-    memcpy(&instruccionesLength, buffer + (*desplazamiento), sizeof(uint32_t));
-    (*desplazamiento) += sizeof(uint32_t);
-
-    list_clean_and_destroy_elements(contextoEjecucionBeta->instrucciones, free);
-
-    for (uint32_t i = 0; i < instruccionesLength; i++) {
-        uint32_t instruccion_length;
-        memcpy(&instruccion_length, buffer + (*desplazamiento), sizeof(uint32_t));
-        (*desplazamiento) += sizeof(uint32_t);
-
-        char *instruccion = malloc(instruccion_length);
-        memcpy(instruccion, buffer + (*desplazamiento), instruccion_length);
-        (*desplazamiento) += instruccion_length;
-
-        list_add(contextoEjecucionBeta->instrucciones, instruccion);
-    }
-}
-
-void deserializarInstrucciones (void * buffer, int * desplazamiento) {
-
-    int tamanio;
-    list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
-    // Desplazamiento: instruccionesLength.
-    memcpy(&(contextoEjecucion->instruccionesLength), buffer + (* desplazamiento), sizeof(uint32_t));
-    (* desplazamiento) += sizeof(uint32_t);
-    
-    for (uint32_t i = 0; i < contextoEjecucion->instruccionesLength; i++) {
-
-        // Desplazamiento: Tamaño de la linea de instruccion.
-        memcpy (&tamanio, buffer + (* desplazamiento), sizeof (int));
-        (* desplazamiento) += sizeof (int);
-        char * valor = malloc (tamanio);
-
-        //Desplazamiento: Linea de instruccion.
-        memcpy(valor, buffer + (* desplazamiento), tamanio);
-        //debug ("%s", valor);
-        (* desplazamiento) += tamanio;
-        list_add (contextoEjecucion->instrucciones, string_duplicate (valor));
-        free (valor);
-    }
-
-    (* desplazamiento) += sizeof(int);
-
-}
-
-void deserializarRegistros (void * buffer, int * desplazamiento) {
-    dictionary_clean_and_destroy_elements (contextoEjecucion->registrosCPU, free);
-
-    char *temp, name [3] = "AX", longName [4] = "EAX";
-    
-    for (int i = 0; i < 3; i++) {
-        ssize_t tamanioActual = sizeof(char) * (4 * pow(2, i) + 1);
-        for (int j = 0; j < 4; j++) {
-            temp = malloc (tamanioActual);
-
-            // Desplazamiento: Registro actual y tamaño del proximo registro. 
-            // (Para el ultimo registro pasa a ser el tamaño del comando de desalojo)
-            memcpy (temp, buffer + (* desplazamiento), tamanioActual);
-            (* desplazamiento) += tamanioActual + sizeof (int);
-
-            dictionary_put (contextoEjecucion->registrosCPU, (i) ? longName : name, temp);
-            name [0]++, longName [1]++;
-        }
-        longName [1] = 'A', longName [0] = (i == 1) ? 'R' : 'E';
-    }
-    
-}
 //Ver
 void deserializarTablaDePaginas (void * buffer, int * desplazamiento) {
     list_clean_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
@@ -405,89 +463,4 @@ t_pagina* deserializarPagina(void* buffer, int* desplazamiento){
     (* desplazamiento) += sizeof (uint32_t);
 
     return pagina;
-}
-
-
-void deserializarMotivoDesalojo (void * buffer, int * desplazamiento) {
-    // Desplazamiento: Comando de desalojo y tamaño de parametrosLength.
-    memcpy (&(contextoEjecucion->motivoDesalojo->motivo), buffer + (* desplazamiento), sizeof (t_comando));
-    (* desplazamiento) += sizeof (t_comando) + sizeof (int);
-
-    // Desplazamiento: parametrosLength.
-    memcpy (&(contextoEjecucion->motivoDesalojo->parametrosLength), buffer + (* desplazamiento), sizeof (uint32_t));
-    (* desplazamiento) += sizeof (contextoEjecucion->motivoDesalojo->parametrosLength);
-log_info(logger, "---- antes del for, parametrosLength: %d", contextoEjecucion->motivoDesalojo->parametrosLength);
-contextoEjecucion->motivoDesalojo->parametrosLength = 4; //TODO: FIX
-    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
-        int tamanioParametro;
-
-        // Desplazamiento: Tamaño de Parametro.
-        memcpy (&tamanioParametro, buffer + (* desplazamiento), sizeof (int));
-        (* desplazamiento) += sizeof(int);
-
-        // Desplazamiento: Parametro.
-        char *temp = malloc (sizeof(char) * tamanioParametro);
-        memcpy(temp, buffer + (* desplazamiento), sizeof (char) * tamanioParametro);
-        contextoEjecucion->motivoDesalojo->parametros[i] = temp;
-        (* desplazamiento) += tamanioParametro;
-    }
-log_info(logger, "---- salgo del for");
-
-}
-
-void iniciarContexto(){
-
-    contextoEjecucion = malloc(sizeof(t_contexto));
-	contextoEjecucion->instrucciones = list_create();
-	contextoEjecucion->instruccionesLength = 0;
-	contextoEjecucion->pid = 0;
-	contextoEjecucion->programCounter = 0;
-	contextoEjecucion->registrosCPU = dictionary_create();
-	contextoEjecucion->tablaDePaginas = list_create();
-	contextoEjecucion->tablaDePaginasSize = 0;
-    contextoEjecucion->tiempoDeUsoCPU = 0;
-    contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
-    contextoEjecucion->motivoDesalojo->parametros[0] = "";
-    contextoEjecucion->motivoDesalojo->parametros[1] = "";
-    contextoEjecucion->motivoDesalojo->parametros[2] = "";
-    contextoEjecucion->motivoDesalojo->parametrosLength = 0;
-    contextoEjecucion->motivoDesalojo->motivo = 0;
-	
-}
-
-void destroyContexto() {
-    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    list_destroy_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
-    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
-        if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
-    free(contextoEjecucion->motivoDesalojo);
-    free(contextoEjecucion);
-    contextoEjecucion = NULL;
-}
-
-void destroyContextoUnico () {
-    list_destroy(contextoEjecucion->instrucciones);
-    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    list_destroy(contextoEjecucion->tablaDePaginas);
-    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
-        if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
-    free(contextoEjecucion->motivoDesalojo);
-    free(contextoEjecucion);
-    contextoEjecucion = NULL;
-}
-
-t_dictionary *crearDiccionarioDeRegistros2(){
-
-    t_dictionary *registros = dictionary_create();
-
-    char name[3] = "AX", longName[4] = "EAX";
-    for (int i = 0; i < 4; i++) {
-        dictionary_put(registros, name, string_repeat('0', 4));
-        longName[0] = 'E';
-        dictionary_put(registros, longName, string_repeat('0', 8));
-        name[0]++, longName[1]++;
-    }
-
-    return registros;
 }
