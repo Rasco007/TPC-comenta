@@ -92,6 +92,7 @@ int main() {
 
         if (instruccion1) {
             printf("Instrucción del proceso 1: %s", instruccion1);
+            escribir_memoria(mf, proceso, 1, instruccion1, strlen(instruccion1) + 1);
         }
 
     // Inicializa dos procesos con sus archivos de pseudocódigo

@@ -118,10 +118,50 @@ void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_lo
     }
 
     int numero_marco = proceso->tabla_paginas->entradas[numero_pagina].numero_marco;
+    //return (char*)mf->memoria + numero_marco * tam_pagina + desplazamiento;
     return mf->memoria + numero_marco * tam_pagina + desplazamiento;
 }
 
+void *leer_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_virtual, size_t size) {
+    int tam_pagina = confGetInt("TAM_PAGINA");
+    void *buffer = malloc(size);
+    size_t bytes_leidos = 0;
+    
+    while (bytes_leidos < size) {
+        void *direccion_fisica = traducir_direccion(mf, proceso, (void *)(direccion_virtual + bytes_leidos));
+        if (direccion_fisica == NULL) {
+            free(buffer);
+            return NULL; // Página inválida
+        }
+        size_t bytes_por_leer = tam_pagina - ((direccion_virtual + bytes_leidos) % tam_pagina);
+        if (bytes_leidos + bytes_por_leer > size) {
+            bytes_por_leer = size - bytes_leidos;
+        }
+        memcpy((char *)buffer + bytes_leidos, (char *)direccion_fisica, bytes_por_leer);
+        bytes_leidos += bytes_por_leer;
+    }
+    return buffer;
+}
 
+void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_virtual, const void *data, size_t size) {
+    int tam_pagina = confGetInt("TAM_PAGINA");
+    size_t bytes_escritos = 0;
+
+    while (bytes_escritos < size) {
+        void *direccion_fisica = traducir_direccion(mf, proceso, (void *)(direccion_virtual + bytes_escritos));
+        if (direccion_fisica == NULL) {
+            log_error(loggerError, "Dirección virtual inválida");
+            return;
+        }
+        size_t bytes_por_escribir = tam_pagina - ((direccion_virtual + bytes_escritos) % tam_pagina);
+        if (bytes_escritos + bytes_por_escribir > size) {
+            bytes_por_escribir = size - bytes_escritos;
+        }
+        memcpy(direccion_fisica, (char *)data + bytes_escritos, bytes_por_escribir);
+        bytes_escritos += bytes_por_escribir;
+    }
+    log_info(logger, "Escritura en memoria EXITOSA");
+}
 
 bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
     if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
