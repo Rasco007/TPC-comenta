@@ -18,7 +18,7 @@ extern char* pathInstrucciones;
 
 // Funciones
 int ejecutarServidorKernel(int *socketCliente);
-Proceso *crearProcesoEnMemoria(int pid);
+Proceso *crearProcesoEnMemoria(int pid,char* path);
 void eliminarProcesoDeMemoria(int pid);
 Proceso *buscar_proceso_por_pid(int pid);
 #endif // MEMORIA_CONEXION_KERNEL_H

@@ -52,4 +52,6 @@ char *obtener_instruccion(Proceso *proceso, int program_counter);
 
 bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina);
 
+extern char* numeroDeInstrucciones;
+
 #endif // ESTRUCTURA_H

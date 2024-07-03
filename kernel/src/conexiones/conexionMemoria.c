@@ -22,7 +22,7 @@ void conexionMemoria() {
 
 //PETICIONES KERNEL-MEMORIA
 
-void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
+void recibirEstructurasInicialesMemoria(t_pcb* pcb, char* path) {
     char * nombreAnterior = duplicarNombre(logger);
     logger = cambiarNombre(logger,"Kernel-Memoria");
     
@@ -30,6 +30,7 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     peticion->codigo_operacion = NEWPCB; 
 
     agregarAPaquete(peticion,(void*)&pcb->pid, sizeof(uint32_t));
+    agregarAPaquete(peticion,(void*)&path, strlen(path)+1);
     enviarPaquete(peticion, conexionAMemoria); 
     eliminarPaquete (peticion);
 

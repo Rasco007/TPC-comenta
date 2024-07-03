@@ -4,6 +4,8 @@
 //extern t_log* logger;
 //extern t_log* loggerError;
 
+char* numeroDeInstrucciones;
+
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina) {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
@@ -61,6 +63,8 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     }
     fclose(archivo);
     //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
+    //Guardo el numero de instrucciones del proceso como un char* para mandarlo a kernel
+    sprintf(numeroDeInstrucciones, "%d", proceso->numero_instrucciones); 
     return proceso;
 }
 

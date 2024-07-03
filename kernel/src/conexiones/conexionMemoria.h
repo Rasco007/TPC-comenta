@@ -10,7 +10,7 @@
 #include "../peticiones/pcb.h"
 
 void conexionMemoria();
-void recibirEstructurasInicialesMemoria(t_pcb* pcb); 
+void recibirEstructurasInicialesMemoria(t_pcb* pcb, char* path); 
 void liberarMemoriaPCB(t_pcb* proceso);
 
 extern t_log* loggerError; 

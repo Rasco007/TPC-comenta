@@ -1,7 +1,7 @@
 #include <conexionCPU/conexionCPU.h>
 
 int tiempo;
-//MemoriaFisica *mf;
+MemoriaFisica *mf;
 //t_log *logger;
 //t_config *config;
 char* valorLeido;
@@ -71,6 +71,17 @@ int ejecutarServidorCPU(int *socketCliente) {
                 enviarMensaje(instruccion,*socketCliente); 
                 // limpiarBuffer(*socketCliente);
                 break;
+            case RESIZE: //No tengo idea si esta bien...
+                char buffer[2048];
+                int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+                if (bytes_recibidos < 0) {
+                    perror("Error al recibir el mensaje");
+                    return;
+                }
+                int nuevo_tamano;
+                memcpy(pid, buffer + sizeof(op_code), sizeof(int));
+                memcpy(nuevo_tamano, buffer + sizeof(int) + sizeof(op_code), sizeof(int));
+                ajustar_tamano_proceso(mf, buscar_proceso_por_pid(pid), indice);
             default:
                 log_warning(logger, "Operación desconocida del CPU.");
                 break;

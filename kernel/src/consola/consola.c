@@ -156,9 +156,9 @@ void ejecutarScript(const char* path) {
 
 //INICIAR_PROCESO[PATH]
 void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de new
-    t_pcb* pcb = crearPCB();
+    t_pcb* pcb = crearPCB(path);
     ingresarANew(pcb);
-    enviarPathDeInstrucciones(path);
+    //enviarPathDeInstrucciones(path);
 } 
 
 //FINALIZAR_PROCESO

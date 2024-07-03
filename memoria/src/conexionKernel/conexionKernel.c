@@ -7,7 +7,7 @@ uint32_t direccionBasePagina;
 uint32_t tamanioPagina;
 char* pathInstrucciones;
 sem_t path;
-//serializar tabla de Segmentos
+
 
 
 uint32_t recibirPID(int socketCliente) {
@@ -18,7 +18,7 @@ uint32_t recibirPID(int socketCliente) {
 	void* buffer = recibirBuffer(socketCliente, &size);
 	desplazamiento += sizeof(int);
 	memcpy(&(pid), buffer + desplazamiento, sizeof(uint32_t));
-
+    memcpy(pathInstrucciones,buffer+sizeof(int),sizeof(pathInstrucciones));
 	free (buffer);
 	return pid; 
 
@@ -30,7 +30,7 @@ int ejecutarServidorKernel(int *socketCliente) {
         switch (peticionRealizada) {
             case NEWPCB: {
                 int pid = recibirPID(*socketCliente);
-                Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
+                Proceso *procesoNuevo = crearProcesoEnMemoria(pid,pathInstrucciones);
                 //enviarTablaPaginas(procesoNuevo);
                 log_info(logger,"Creacion de Proceso PID: <%d>", pid);
                 break;
@@ -59,12 +59,30 @@ int ejecutarServidorKernel(int *socketCliente) {
     return EXIT_SUCCESS;
 }
 
-Proceso *crearProcesoEnMemoria(int pid) {
+Proceso *crearProcesoEnMemoria(int pid, char* pathInstrucciones) {
     Proceso *procesoNuevo = malloc(sizeof(Proceso));
     procesoNuevo->pid = pid;
     procesoNuevo->tabla_paginas = inicializar_tabla_paginas();
     // list_add(procesos, (void *)procesoNuevo); // Implementar si es necesario
-
+    FILE *archivo = fopen(pathInstrucciones, "r");
+    if (!archivo) {
+        perror("Error al abrir el archivo de pseudocódigo");
+        free(procesoNuevo);
+        return NULL;
+    }
+    
+    procesoNuevo->numero_instrucciones = 0;
+    procesoNuevo->instrucciones = NULL;
+    char linea[256];
+    while (fgets(linea, sizeof(linea), archivo)) {
+        procesoNuevo->numero_instrucciones++;
+        procesoNuevo->instrucciones = realloc(procesoNuevo->instrucciones, procesoNuevo->numero_instrucciones * sizeof(char *));
+        procesoNuevo->instrucciones[procesoNuevo->numero_instrucciones - 1] = string_duplicate(linea);
+    }
+    fclose(archivo);
+    //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
+    //Guardo el numero de instrucciones del proceso como un char* para mandarlo a kernel
+    sprintf(numeroDeInstrucciones, "%d", procesoNuevo->numero_instrucciones); 
     return procesoNuevo;
 }
 

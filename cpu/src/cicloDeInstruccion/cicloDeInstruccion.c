@@ -63,6 +63,30 @@ void solicitarInstruccion(int pid, int indice, int socket){
 	free(paquete);
 }
 
+void solicitudResize(int pid, int tamanio, int socket){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = RESIZE;
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->buffer->size = 2*sizeof(int);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+
+	memcpy(paquete->buffer->stream, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(tamanio), &tamanio, sizeof(tamanio));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE);
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+	free(a_enviar);
+	free(paquete);
+}
+
 // ------- Funciones del ciclo ------- //
 void fetch() { 
     log_info(logger, "inicio fetch");
@@ -173,17 +197,11 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
 }
 
 void copy_string(char* tamanio){
-    //Copiar contenido de SI a DI
-    contextoEjecucion->DI=contextoEjecucion->DI; //Ver
+    memcpy(contextoEjecucion->DI, contextoEjecucion->SI, atoi(tamanio));
 }
 
 void resize(char* tamanio){
-    t_paquete* paquete = crearPaquete();
-    paquete->codigo_operacion = RESIZE;
-    agregarAPaquete(paquete, tamanio, sizeof(tamanio));
-    agregarAPaquete(paquete, &contextoEjecucion->pid, sizeof(uint32_t));
-    enviarPaquete(paquete, conexionAMemoria);
-
+    solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
 }
 
 void set_c(char* registro, char* valor){ 
@@ -279,7 +297,7 @@ void mov_in(char* registro, char* direccionLogica){
         dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
         
-        log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
+        log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", dirFisica, valorAInsertar);
         free (valorAInsertar);
     }else {
         log_info(logger, "Error: Dirección física inválida\n");
@@ -309,7 +327,7 @@ void mov_out(char* direccionLogica, char* registro){
     char * respuesta = recibirMensaje(conexionAMemoria);
     free (respuesta);
 
-    log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", nroSegmento, dirFisica, (char *)valor);
+    log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", dirFisica, (char *)valor);
     }
 };
 
