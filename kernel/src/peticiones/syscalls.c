@@ -16,7 +16,7 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case RESIZE:
-            resize_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
+            //resize_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case SIGNAL:
             signal_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
