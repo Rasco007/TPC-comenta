@@ -49,7 +49,9 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     desplazamiento += sizeof(contexto->programCounter);
  
    
-    log_info(logger, "length %d",contexto->instruccionesLength);
+    contexto->instruccionesLength = list_size(contexto->instrucciones);
+
+    log_info(logger, "cantidad de instrucciones mandadas %d",contexto->instruccionesLength);
    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->instruccionesLength), sizeof(contexto->instruccionesLength));
     desplazamiento += sizeof(contexto->instruccionesLength);
 
@@ -104,7 +106,7 @@ log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
     /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
     desplazamiento += sizeof(contexto->tiempoDeUsoCPU);*/
 
-
+log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
     int bytes = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
     
@@ -153,13 +155,13 @@ void recibirContextoBeta(int socket) {
 
     memcpy(&(contextoEjecucion->instruccionesLength), buffer + desplazamiento, sizeof(contextoEjecucion->instruccionesLength));
     desplazamiento += sizeof(contextoEjecucion->instruccionesLength);
-
+    log_info(logger,"cantidad de instrucciones RECIBIDAS %u", contextoEjecucion->instruccionesLength);
     //deserealizo las instrucciones
     for (uint32_t i = 0; i < contextoEjecucion->instruccionesLength; i++) {
         uint32_t instruccion_length;
         memcpy(&instruccion_length, buffer + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
- log_info(logger,"instruccion Length %u", instruccion_length);
+ 
         char* instruccion = malloc(instruccion_length);
         memcpy(instruccion, buffer + desplazamiento, instruccion_length);
         desplazamiento += instruccion_length;
@@ -236,7 +238,7 @@ log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
         log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
     }
 
-    
+    log_info(logger, "termino de recibir todo");
     
 }
 
@@ -313,6 +315,8 @@ void iniciarContexto(){
     contextoEjecucion->motivoDesalojo->parametros[0] = "";
     contextoEjecucion->motivoDesalojo->parametros[1] = "";
     contextoEjecucion->motivoDesalojo->parametros[2] = "";
+    contextoEjecucion->motivoDesalojo->parametros[3] = "";
+    contextoEjecucion->motivoDesalojo->parametros[4] = "";
     contextoEjecucion->motivoDesalojo->parametrosLength = 0;
     contextoEjecucion->motivoDesalojo->motivo = 0;
 	
@@ -398,7 +402,7 @@ void agregarInstruccionesAPaqueteBeta(t_paquete* paquete, t_list* instrucciones,
 void agregarInstruccionesAPaquete(t_paquete* paquete, t_list* instrucciones){
 
     contextoEjecucion->instruccionesLength = list_size(instrucciones);
-
+    log_info(logger, "ACA LLEGO PAPITOOOOOOOOOOOOOOOOOOOOO");
     agregarAPaquete(paquete, &contextoEjecucion->instruccionesLength, sizeof(uint32_t)); //primero envio la cantidad de elementos
     uint32_t i;
     for(i=0;i<contextoEjecucion->instruccionesLength;i++)

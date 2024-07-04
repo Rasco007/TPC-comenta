@@ -206,17 +206,19 @@ void io_fs_read(t_pcb *proceso,char **parametros){
 void exit_s(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
     proceso->estado = EXIT;
-
-    encolar(pcbsParaExit,proceso);
-
+    
+    //encolar(pcbsParaExit,proceso); PARA QUE ES ESTO???
+    log_info(logger, "llego al exit");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
-
+    
     if(!list_is_empty(proceso->recursosAsignados)){
         liberarRecursosAsignados(proceso);
     }
 
     liberarMemoriaPCB(proceso);
+    list_remove_element(pcbsEnMemoria, proceso);
+    destruirPCB(proceso); 
     destroyContextoUnico();
     sem_post(&semGradoMultiprogramacion);
 }

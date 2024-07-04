@@ -57,11 +57,13 @@ int recibirOperacionDeCPU(){
 t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
-
+    
     bufferContexto = malloc(sizeof(t_buffer));
 
     asignarPCBAContexto(procesoEnEjecucion);
+    // Loguear registros CPU
    
+    dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
 
     enviarContextoBeta(conexionACPU, contextoEjecucion);
 
@@ -75,6 +77,10 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     return contextoEjecucion;
 }
 
+ void log_registro(char *key, void *value) {
+        log_info(logger, "Registro %s: %s", key, (char*)value);
+    }
+
 void actualizarPCB(t_pcb* proceso){
 	list_destroy_and_destroy_elements(proceso->instrucciones, free);
     proceso->instrucciones = list_duplicate(contextoEjecucion->instrucciones);
@@ -82,14 +88,16 @@ void actualizarPCB(t_pcb* proceso){
     proceso->programCounter = contextoEjecucion->programCounter;
 	dictionary_destroy_and_destroy_elements(proceso->registrosCPU, free);
     proceso->registrosCPU = registrosDelCPU(contextoEjecucion->registrosCPU);
+     list_destroy_and_destroy_elements (proceso->tablaDePaginas, free);
+    proceso->tablaDePaginas = list_duplicate(contextoEjecucion->tablaDePaginas);
+
 }
 
 void asignarPCBAContexto(t_pcb* proceso){
 
     list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
     contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    //contextoEjecucion->instrucciones = list_create();
-    contextoEjecucion->instruccionesLength = 0;
+    contextoEjecucion->instruccionesLength = list_size(contextoEjecucion->instrucciones);
     contextoEjecucion->pid = proceso->pid;
     contextoEjecucion->programCounter = proceso->programCounter;
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
@@ -97,8 +105,47 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
     contextoEjecucion->DI=proceso->DI;
     contextoEjecucion->SI=proceso->SI;
-    contextoEjecucion->quantum=proceso->quantum;
+    if(contextoEjecucion->algoritmo != FIFO){
+        contextoEjecucion->quantum=proceso->quantum;
+ log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
+    }
     
+    list_destroy_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
+    contextoEjecucion->tablaDePaginas = list_duplicate(proceso->tablaDePaginas);
+    contextoEjecucion->tablaDePaginasSize = list_size(contextoEjecucion->tablaDePaginas);
+
+ 
+  log_info(logger, "PID: %u", contextoEjecucion->pid);
+    log_info(logger, "Program Counter: %d", contextoEjecucion->programCounter);
+    log_info(logger, "SI: %u", contextoEjecucion->SI);
+    log_info(logger, "DI: %u", contextoEjecucion->DI);
+    log_info(logger, "Instrucciones Length: %u", contextoEjecucion->instruccionesLength);
+   
+    log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
+
+    // Loguear instrucciones
+    for (int i = 0; i < list_size(contextoEjecucion->instrucciones); i++) {
+        char *instruccion = list_get(contextoEjecucion->instrucciones, i);
+        log_info(logger, "Instrucción %d: %s", i, instruccion);
+    }
+
+   
+
+    // Loguear tabla de páginas
+    log_info(logger, "Tabla de Páginas Size: %u", contextoEjecucion->tablaDePaginasSize);
+    for (int i = 0; i < list_size(contextoEjecucion->tablaDePaginas); i++) {
+        t_pagina *pagina = list_get(contextoEjecucion->tablaDePaginas, i);
+        log_info(logger, "Página %d: IdPagina: %d, idFrame: %d, Bit de validez: %d",
+                 i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
+    }
+
+    // Loguear motivo de desalojo
+    log_info(logger, "Motivo de Desalojo: %d", contextoEjecucion->motivoDesalojo->motivo);
+    log_info(logger, "Motivo de Desalojo Parámetros Length: %u", contextoEjecucion->motivoDesalojo->parametrosLength);
+    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
+        log_info(logger, "Motivo de Desalojo Parámetro %d: %s", i, contextoEjecucion->motivoDesalojo->parametros[i]);
+    }
+   log_info(logger, "--------------------------------" );
 }
 
 void asignarPCBAContextoBeta(t_pcb* proceso){
@@ -115,8 +162,8 @@ nuevaPagina2->bitDeValidez = 0;
 
 
     list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    //contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    	contextoEjecucion->instrucciones = list_create();
+    contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
+    //contextoEjecucion->instrucciones = list_create();
 list_add(contextoEjecucion->instrucciones, strdup("instr1"));
 list_add(contextoEjecucion->instrucciones, strdup("instr2"));
 list_add(contextoEjecucion->instrucciones, strdup("instr3"));

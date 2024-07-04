@@ -60,7 +60,7 @@ int main() {
     //sem_t path;
     sem_init(&path, 0, 0);
     sem_wait(&path);
-    Proceso *proceso = inicializar_proceso(1, pathInstrucciones);
+    Proceso *proceso = inicializar_proceso(1, pathInstrucciones); //TODO: esto debería estar en el NEWPCB
     
     if (!proceso) {
         printf("Error al inicializar el procesos.\n");
@@ -85,64 +85,7 @@ int main() {
     if (proceso == NULL) 
         log_error(loggerError, "Error: No se pudo ajustar el tamaño del proceso.");
 
-    // TODO: el program counter deberia venir del CPU
-    int program_counter = 0;
-    while (1) {
-        char *instruccion1 = obtener_instruccion(proceso, program_counter);
 
-        if (instruccion1) {
-            printf("Instrucción del proceso 1: %s", instruccion1);
-        }
-
-    // Inicializa dos procesos con sus archivos de pseudocódigo
-    //Proceso *proceso1 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
-    //Proceso *proceso2 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
-
-    /*if (!proceso1 || !proceso2) {
-        printf("Error al inicializar los procesos.\n");
-        liberar_memoria_fisica(mf);
-        return 1;
-    }
-
-    // Asigna algunas páginas a los procesos
-    if (!asignar_pagina(mf, proceso1, 0)) {
-        printf("Error al asignar la página 0 al proceso 1.\n");
-    }
-    if (!asignar_pagina(mf, proceso1, 1)) {
-        printf("Error al asignar la página 1 al proceso 1.\n");
-    }
-    if (!asignar_pagina(mf, proceso2, 0)) {
-        printf("Error al asignar la página 0 al proceso 2.\n");
-    }
-
-    // TODO: el program counter deberia venir del CPU
-    int program_counter = 0;
-    while (1) {
-        char *instruccion1 = obtener_instruccion(proceso1, program_counter);
-        char *instruccion2 = obtener_instruccion(proceso2, program_counter);
-
-        if (instruccion1) {
-            printf("Instrucción del proceso 1 en el PC %d: %s", program_counter, instruccion1);
-        }
-        if (instruccion2) {
-            printf("Instrucción del proceso 2 en el PC %d: %s", program_counter, instruccion2);
-        }*/
-
-        if (!instruccion1) { //if (!instruccion1 && !instruccion2) {
-            break; // Termina si no hay más instrucciones en ambos procesos
-        }
-
-        // Simula un retardo en la obtención de la instrucción
-        sleep(5);
-
-        program_counter++;
-    }
-
-    // Libera memoria
-    /*liberar_proceso(proceso1);
-    liberar_proceso(proceso2);*/
-    liberar_proceso(proceso);
-    liberar_memoria_fisica(mf);
 
     // Espera a que los hilos terminen
     pthread_join(threadCPU, NULL);

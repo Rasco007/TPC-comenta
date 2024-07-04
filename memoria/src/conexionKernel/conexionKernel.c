@@ -27,6 +27,7 @@ int ejecutarServidorKernel(int *socketCliente) {
     cantidadMaximaPaginas = confGetInt("TAM_PAGINA");
     while (1) {
         int peticionRealizada = recibirOperacion(*socketCliente);
+        log_info(logger, "entro while");
         switch (peticionRealizada) {
             case NEWPCB: {
                 int pid = recibirPID(*socketCliente);
@@ -69,12 +70,24 @@ Proceso *crearProcesoEnMemoria(int pid) {
 }
 
 void eliminarProcesoDeMemoria(int pid) {
-    Proceso *proceso = buscar_proceso_por_pid(pid);
+   Proceso *proceso = buscar_proceso_por_pid(pid);
     if (proceso != NULL) {
         // Elimina todas las páginas del proceso
         liberar_tabla_paginas(proceso->tabla_paginas);
+
+        // Elimina todas las instrucciones del proceso
+        for (int i = 0; i < proceso->numero_instrucciones; i++) {
+            free(proceso->instrucciones[i]);
+        }
+        free(proceso->instrucciones);
+
+        // Elimina el proceso de la lista (si es necesario)
         // list_remove_element(procesos, (void *)proceso); // Implementar si es necesario
+
+        // Libera la memoria del proceso
         free(proceso);
+
+        log_info(logger, "Proceso PID: <%d> eliminado correctamente", pid);
     } else {
         log_warning(logger, "Proceso PID: <%d> no encontrado para eliminación", pid);
     }

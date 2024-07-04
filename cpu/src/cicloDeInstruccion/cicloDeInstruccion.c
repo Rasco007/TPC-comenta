@@ -94,9 +94,9 @@ void fetch() {
 void decode(){
     log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
     elementosInstruccion = string_n_split(instruccionAEjecutar, 4, " ");
-    //log_info(logger, "elementosInstruccion[0]: %s", elementosInstruccion[0]); //TODO: Loguea cualquier cosa: �WI1�U
+    log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); //TODO: Loguea cualquier cosa: �WI1�U
     cantParametros = string_array_size(elementosInstruccion) - 1; //TODO: Loguea 0
-    //log_info(logger, "cantParametros: %d", cantParametros);
+    log_info(logger, "cantParametros: %d", cantParametros);
     instruccionActual = buscar(elementosInstruccion[0], listaComandos); 
     log_info(logger, "instruccion Actual: %d", instruccionActual);
     
@@ -124,7 +124,7 @@ void check_interrupt(){
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
             destruirTemporizador(rafagaCPU); // ACA TIRA SEGMENTATION FAULT
             modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-            enviarContextoActualizado(socketClienteInterrupt);
+            enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         }
     }
 }
@@ -133,43 +133,43 @@ void check_interrupt(){
 void io_fs_delete(char* interfaz,char* nombreArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void copy_string(char* tamanio){
@@ -227,19 +227,19 @@ void jnz(char* registro, char* instruccion){
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (IO_GEN_SLEEP, 2, interfaz, unidades_trabajo, "", "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void wait_c(char* recurso){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void signal_c(char* recurso){
     destruirTemporizador(rafagaCPU);
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
-    enviarContextoActualizado(socketClienteDispatch);
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
 }
 
 void exit_c () {
@@ -249,7 +249,7 @@ void exit_c () {
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     log_info(logger, "Pasa modificarMotivoDesalojo");
-    enviarContextoActualizado(socketClienteDispatch); 
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); 
     free (terminado);
     log_info(logger, "fin exit_c");
 }
@@ -322,9 +322,14 @@ void destruirTemporizador (t_temporal * temporizador) {
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
     contextoEjecucion->motivoDesalojo->motivo = comando;
-    for (int i = 0; i < numParametros; i++)
-        contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
+    log_info(logger, "numero de parametros en motivo de EXIT %d", numParametros);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
+    for (int i = 0; i < numParametros; i++){
+     
+        contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
+    
+    log_info(logger, "parametro EXIT %s" , contextoEjecucion->motivoDesalojo->parametros[i] );
+    }
 }
 
 void liberarMemoria() {
