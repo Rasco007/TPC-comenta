@@ -2,6 +2,7 @@
 #include <conexiones/conexionMemoria.h>
 
 int conexionAMemoria;
+int numeroInstrucciones;
 
 void conexionMemoria() {
     logger = cambiarNombre (logger,"Kernel-Memoria");
@@ -32,6 +33,18 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     agregarAPaquete(peticion,(void*)&pcb->pid, sizeof(uint32_t));
     enviarPaquete(peticion, conexionAMemoria); 
     eliminarPaquete (peticion);
+
+    //Recibo respuesta memoria
+    char buffer[2048];
+    int bytes_recibidos = recv(conexionAMemoria, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+
+    memcpy(&numeroInstrucciones ,buffer+sizeof(op_code), sizeof(int));
+    log_info(logger, "SE RECIBIERON %d", numeroInstrucciones); //No se por que recibe otro valor
 
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
     //recibirOperacion (conexionAMemoria);

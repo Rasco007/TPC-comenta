@@ -1,7 +1,7 @@
 #include <conexionKernel/conexionKernel.h>
 #include "conexionKernel.h"
 
-
+int PID;
 int cantidadMaximaPaginas;
 uint32_t direccionBasePagina;
 uint32_t tamanioPagina;
@@ -30,23 +30,30 @@ int ejecutarServidorKernel(int *socketCliente) {
         log_info(logger, "entro while");
         switch (peticionRealizada) {
             case NEWPCB: {
-                int pid = recibirPID(*socketCliente);
-                Proceso *procesoNuevo = crearProcesoEnMemoria(pid);
+                PID = recibirPID(*socketCliente);
                 //enviarTablaPaginas(procesoNuevo);
-                log_info(logger,"Creacion de Proceso PID: <%d>", pid);
+                Proceso *proceso = inicializar_proceso(PID, pathInstrucciones);
+                mf->marcos[PID].proceso=proceso;
+                mf->marcos[PID].pid=PID;
+
+                //Mando el numero de instrucciones a kernel
+                int n=mf->marcos[PID].proceso->numero_instrucciones;
+                log_info(logger,"Cantidad de instrucciones: %d",n);
+                mandarNumInstrucciones(n,*socketCliente);
+                log_info(logger,"Creacion de Proceso PID: <%d>", PID);
                 break;
             }
             case ENDPCB: {
-                int pid = recibirPID(*socketCliente);
+                PID = recibirPID(*socketCliente);
                 // liberarTodosLasPaginas(pid); // Implementar si es necesario
-                eliminarProcesoDeMemoria(pid);
-                log_info(logger, "Eliminación de Proceso PID: <%d>", pid);
+                eliminarProcesoDeMemoria(PID);
+                log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
                 break;
             }
             case MENSAJE:{
                 pathInstrucciones=recibirMensaje(*socketCliente); //Recibo el path
                 log_info(logger,"Path de instrucciones recibido: %s",pathInstrucciones);
-                sem_post(&path);
+                //sem_post(&path);
                 break;
             }
             case -1:
@@ -102,4 +109,27 @@ Proceso *buscar_proceso_por_pid(int pid) { //ver si pasar por referencia
         }
     }
     return proceso;
+}
+
+void mandarNumInstrucciones(int numero, int socket){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = PAQUETE;
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->buffer->size = 2*sizeof(int);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+	
+	memcpy(paquete->buffer->stream, &numero, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+	
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar dato");
+        exit(EXIT_FAILURE);
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+	free(a_enviar);
+	free(paquete);
 }

@@ -97,7 +97,7 @@ void asignarPCBAContexto(t_pcb* proceso){
 
     list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
     contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    contextoEjecucion->instruccionesLength = list_size(contextoEjecucion->instrucciones);
+    contextoEjecucion->instruccionesLength = numeroInstrucciones;//list_size(contextoEjecucion->instrucciones);
     contextoEjecucion->pid = proceso->pid;
     contextoEjecucion->programCounter = proceso->programCounter;
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);

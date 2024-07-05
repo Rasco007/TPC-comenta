@@ -8,6 +8,7 @@
 #include <utilsServidor/utilsServidor.h>
 #include <global.h>
 #include "../src/peticiones/pcb.h"
+#include <conexiones/conexionMemoria.h>
 
 extern int conexionACPU;
 extern t_log* loggerError; 
