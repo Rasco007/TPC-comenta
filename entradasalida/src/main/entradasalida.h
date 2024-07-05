@@ -22,12 +22,12 @@
 //FS
 #include <commons/bitarray.h>
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <errno.h>
+//#include <unistd.h>
+//#include <sys/stat.h>
+//#include <sys/types.h>
+//#include <errno.h>
 #include <sys/mman.h>
-#include <string.h>
+//#include <string.h>
 extern t_log* loggerError;
 
 extern int fd_kernel;
@@ -50,4 +50,5 @@ void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo);
 int obtenerPrimeraPosicionLibre(t_bitarray *bitmap);
 void create_bitmap_file(const char *filename, size_t size);
 void truncarArchivo2(char* nombre, int tamanio);
+void create_bloques_file(const char *filename, size_t size);
 #endif
