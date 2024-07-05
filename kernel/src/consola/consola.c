@@ -113,7 +113,10 @@ void ejecutarScript(const char* path) {
             char *token = strtok(line, " ");
             token = strtok(NULL, " "); 
             if (token != NULL) {
-                iniciarProceso(token);
+                char* tokenModificado = malloc(strlen("src") + strlen(token) + 1); // Allocate memory for the modified token
+                strcpy(tokenModificado, "src"); // Copy "src" to the modified token
+                strcat(tokenModificado, token); // Concatenate the original token to the modified token
+                iniciarProceso(tokenModificado);
             } else {
                 log_error(logger, "No se proporcionó un argumento para INICIAR_PROCESO");
             }
@@ -152,6 +155,10 @@ void ejecutarScript(const char* path) {
         }
     }
     fclose(file);
+
+    //src/c-comenta-pruebas/PRUEBA_PLANI
+    // /scripts_memoria/PLANI_1
+    // src/scripts_memoria/PLANI_1
 }
 
 //INICIAR_PROCESO[PATH]
