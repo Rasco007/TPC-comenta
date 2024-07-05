@@ -48,6 +48,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
     while (1)
     {
         sem_wait(&hayProcesosReady);
+        log_info(logger, "hay proceso en ready");
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
         
@@ -61,9 +62,10 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         contextoEjecucion = procesarPCB(aEjecutar); 
 
         rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
-
+       
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
+         log_info(logger, "APAREZCO KERNEL");
     }
 }
 

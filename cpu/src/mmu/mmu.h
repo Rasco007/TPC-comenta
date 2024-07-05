@@ -34,4 +34,5 @@
     void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number);
 
     void solicitarDireccion(int pid, int pagina, int socket);
+    void limpiarBuffer(int socketCliente);
 #endif

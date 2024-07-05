@@ -14,5 +14,6 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb);
 void liberarMemoriaPCB(t_pcb* proceso);
 
 extern t_log* loggerError; 
+extern int numeroInstrucciones;
 
 #endif /* CONEXION_MEMORIA_H */

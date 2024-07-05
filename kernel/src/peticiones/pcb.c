@@ -20,7 +20,6 @@ t_pcb *crearPCB(){
     nuevoPCB->tablaDePaginas = list_create();
     log_info(logger, "antes de ingresar a NEW");
     recibirEstructurasInicialesMemoria(nuevoPCB); //Mando señal a memoria para que reserve espacio para el PCB
-
     log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
     return nuevoPCB;
@@ -29,9 +28,9 @@ t_pcb *crearPCB(){
 void destruirPCB(t_pcb *pcb){
     list_destroy_and_destroy_elements(pcb->instrucciones, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
-    liberarMemoriaPCB(pcb); //Mando señal a memoria para que libere espacio para el PCB
+log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
     free(pcb);
-    log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
+    
 }
 
 t_dictionary *crearDiccionarioDeRegistros(){

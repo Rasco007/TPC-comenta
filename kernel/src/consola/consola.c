@@ -22,6 +22,7 @@ int ejecutarConsola () {
         }
         if (!strncmp(linea, "EXIT", 4)) {
             free(linea);
+            exit(EXIT_SUCCESS);
             break;
         }
         //Si escribo los comandos....
@@ -35,15 +36,16 @@ int ejecutarConsola () {
                 log_error(logger, "No se proporcionó un path para EJECUTAR_SCRIPT");
             }
         }
-        if(!strncmp(linea, "INICIAR_PROCESO",15)){
-            char *token = strtok(linea, " ");
+        if(!strncmp(linea, "I",1)){
+            iniciarProceso("src/scripts_memoria/PLANI_1");
+            /*char *token = strtok(linea, " ");
             token = strtok(NULL, " ");
             if (token != NULL) {
                 char* path = token;
                 iniciarProceso(path);
             } else {
                 log_error(logger, "No se proporcionó un path para INICIAR_PROCESO");
-            }
+            }*/
         }
         if(!strncmp(linea, "FINALIZAR_PROCESO",17)){
             char *token = strtok(linea, " ");
@@ -111,7 +113,10 @@ void ejecutarScript(const char* path) {
             char *token = strtok(line, " ");
             token = strtok(NULL, " "); 
             if (token != NULL) {
-                iniciarProceso(token);
+                char* tokenModificado = malloc(strlen("src") + strlen(token) + 1); // Allocate memory for the modified token
+                strcpy(tokenModificado, "src"); // Copy "src" to the modified token
+                strcat(tokenModificado, token); // Concatenate the original token to the modified token
+                iniciarProceso(tokenModificado);
             } else {
                 log_error(logger, "No se proporcionó un argumento para INICIAR_PROCESO");
             }
@@ -150,13 +155,17 @@ void ejecutarScript(const char* path) {
         }
     }
     fclose(file);
+
+    //src/c-comenta-pruebas/PRUEBA_PLANI
+    // /scripts_memoria/PLANI_1
+    // src/scripts_memoria/PLANI_1
 }
 
 //INICIAR_PROCESO[PATH]
 void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de new
+    enviarPathDeInstrucciones(path);
     t_pcb* pcb = crearPCB();
     ingresarANew(pcb);
-    enviarPathDeInstrucciones(path);
 } 
 
 //FINALIZAR_PROCESO
