@@ -92,14 +92,25 @@ void fetch() {
 }
 
 void decode(){
+    // Eliminar el salto de línea al final de instruccionAEjecutar
+    remove_newline(instruccionAEjecutar);
+
     log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
     elementosInstruccion = string_n_split(instruccionAEjecutar, 4, " ");
-    log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); //TODO: Loguea cualquier cosa: �WI1�U
-    cantParametros = string_array_size(elementosInstruccion) - 1; //TODO: Loguea 0
+    log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); 
+    cantParametros = string_array_size(elementosInstruccion) - 1; 
     log_info(logger, "cantParametros: %d", cantParametros);
     instruccionActual = buscar(elementosInstruccion[0], listaComandos); 
     log_info(logger, "instruccion Actual: %d", instruccionActual);
     
+}
+
+// Función para eliminar el salto de línea al final de la cadena
+void remove_newline(char* str) {
+    size_t len = strlen(str);
+    if (len > 0 && str[len - 1] == '\n') {
+        str[len - 1] = '\0';
+    }
 }
 
 int buscar(char *elemento, char **lista) {
@@ -193,17 +204,28 @@ void set_c(char* registro, char* valor){
     //usleep(10 * 1000); 
     //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
     dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
-    log_info(logger, "fin set_c");
+     // Log the first value of registrosCPU
+    //char* puse = dictionary_get(contextoEjecucion->registrosCPU, registro);
+    //log_info(logger, "te lo muestro en fin set_c: %s", puse);
 }
 
 void sum_c(char* registro_destino, char* registro_origen){ 
-    int valorDestino = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_destino));
-    int valorOrigen = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_origen));
-    int resultado = valorDestino + valorOrigen;
+    log_info(logger, "inicio sum_c con registro_destino: %s y registro_origen: %s", registro_destino, registro_origen);
+    // Verificar que los registros existen en el diccionario
+    char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
+    char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
+    if (!valorDestino || !valorOrigen) {
+        log_error(logger, "Registro no encontrado: %s o %s", registro_destino, registro_origen);
+        return;
+    }
+    int primerValor = atoi(valorDestino);
+    int segundoValor = atoi(valorOrigen);
+    int resultado = primerValor + segundoValor;
     char* resultadoStr = malloc(sizeof(char) * 10);
-    sprintf(resultadoStr, "%d", resultado);
+    sprintf(resultadoStr,"%d", resultado);
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
     dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
+    log_info(logger, "fin sum_c");
 }
 
 void sub_c(char* registro_destino, char* registro_origen){ 
@@ -393,6 +415,7 @@ void execute() {
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case SUM:
+            log_info(logger, "entre aca al SUM con elementosInstruccion[1]: %s y elementosInstruccion[2]: %s", elementosInstruccion[1], elementosInstruccion[2]);
             sum_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case SUB:
