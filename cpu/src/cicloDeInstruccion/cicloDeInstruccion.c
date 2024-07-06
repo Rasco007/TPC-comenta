@@ -210,7 +210,6 @@ void set_c(char* registro, char* valor){
 }
 
 void sum_c(char* registro_destino, char* registro_origen){ 
-    log_info(logger, "inicio sum_c con registro_destino: %s y registro_origen: %s", registro_destino, registro_origen);
     // Verificar que los registros existen en el diccionario
     char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
     char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
@@ -229,9 +228,16 @@ void sum_c(char* registro_destino, char* registro_origen){
 }
 
 void sub_c(char* registro_destino, char* registro_origen){ 
-    int valorDestino = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_destino));
-    int valorOrigen = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_origen));
-    int resultado = valorDestino - valorOrigen;
+    // Verificar que los registros existen en el diccionario
+    char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
+    char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
+    if (!valorDestino || !valorOrigen) {
+        log_error(logger, "Registro no encontrado: %s o %s", registro_destino, registro_origen);
+        return;
+    }
+    int primerValor = atoi(valorDestino);
+    int segundoValor = atoi(valorOrigen);
+    int resultado = primerValor - segundoValor;
     char* resultadoStr = malloc(sizeof(char) * 10);
     sprintf(resultadoStr, "%d", resultado);
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
@@ -240,8 +246,22 @@ void sub_c(char* registro_destino, char* registro_origen){
 
 
 void jnz(char* registro, char* instruccion){ 
-    int valorRegistro = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro));
-    if (valorRegistro != 0) {
+    log_info(logger,"En jnz con: %s y %s", registro, instruccion);
+    // Obtener el valor del registro desde el diccionario
+    char* valorRegistro = dictionary_get(contextoEjecucion->registrosCPU, registro);
+    if (!valorRegistro) {
+        log_error(logger, "Registro no encontrado: %s", registro);
+        return;
+    }
+
+    // Convertir el valor del registro a un entero
+    int valor = atoi(valorRegistro);
+    
+    // Si el valor no es 0, actualizar el contador de programa (programCounter)
+    if (valor != 0) {
+        log_info(logger, "contextoEjecucion->programCounter: %d", contextoEjecucion->programCounter);
+        log_info(logger, "Valor de registro: %d", atoi(instruccion));
+
         contextoEjecucion->programCounter = atoi(instruccion);
     }
 }
@@ -411,11 +431,9 @@ void execute() {
     log_info(logger, "instruccionActual: %d", instruccionActual);
     switch(instruccionActual){//TODO: Completar con instrucciones restantes
         case SET: 
-            log_info(logger, "entre aca al SET con elementosInstruccion[1]: %s y elementosInstruccion[2]: %s", elementosInstruccion[1], elementosInstruccion[2]);
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case SUM:
-            log_info(logger, "entre aca al SUM con elementosInstruccion[1]: %s y elementosInstruccion[2]: %s", elementosInstruccion[1], elementosInstruccion[2]);
             sum_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case SUB:
