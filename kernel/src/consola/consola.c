@@ -13,8 +13,8 @@ void str_to_upper(char *str) {
 int ejecutarConsola () {
     char *linea;
     pcbsParaExit = list_create();
-    logger=cambiarNombre(logger,"Consola-Kerel");
-    log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
+    logger=cambiarNombre(logger,"Consola-Kernel");
+    //log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
     while (1) {
         linea = readline(">");
         str_to_upper(linea);
@@ -35,19 +35,21 @@ int ejecutarConsola () {
                 char* path = token;
                 ejecutarScript(path);
             } else {
-                log_error(logger, "No se proporcionó un path para EJECUTAR_SCRIPT");
+                log_info(logger, "No se proporcionó un path para EJECUTAR_SCRIPT");
+                ejecutarConsola ();
             }
         }
-        if(!strncmp(linea, "I",1)){
-            iniciarProceso("src/scripts_memoria/PLANI_1");
-            /*char *token = strtok(linea, " ");
+        if(!strncmp(linea, "INICIAR_PROCESO",15)){ //if(!strncmp(linea, "I",1)){
+            //iniciarProceso("src/scripts_memoria/PLANI_1");
+            char *token = strtok(linea, " ");
             token = strtok(NULL, " ");
             if (token != NULL) {
                 char* path = token;
                 iniciarProceso(path);
             } else {
-                log_error(logger, "No se proporcionó un path para INICIAR_PROCESO");
-            }*/
+                log_info(logger, "No se proporcionó un path para INICIAR_PROCESO");
+                ejecutarConsola ();
+            }
         }
         if(!strncmp(linea, "FINALIZAR_PROCESO",17)){
             char *token = strtok(linea, " ");
@@ -56,7 +58,8 @@ int ejecutarConsola () {
                 int pid = atoi(token); // Convierte el token en un número entero
                 finalizarProceso(pid);
             } else {
-                log_error(logger, "No se proporcionó un PID para FINALIZAR_PROCESO");
+                log_info(logger, "No se proporcionó un PID para FINALIZAR_PROCESO");
+                ejecutarConsola ();
             }
         }
         if(!strncmp(linea, "DETENER_PLANIFICACION",21)){
@@ -72,7 +75,8 @@ int ejecutarConsola () {
                 int valor = atoi(token); // Convierte el token en un número entero
                 modificarGradoMultiprogramacion(valor);
             } else {
-                log_error(logger, "No se proporcionó un valor para MULTIPROGRAMACION");
+                log_info(logger, "No se proporcionó un valor para MULTIPROGRAMACION");
+                ejecutarConsola ();
             }
         }
         if(!strncmp(linea, "PROCESO_ESTADO", 14)) {
@@ -102,7 +106,7 @@ int ejecutarConsola () {
 void ejecutarScript(const char* path) {
     FILE* file = fopen(path, "r"); //Abro el archibo en modo lectura
     if (file == NULL) {
-        log_error(logger, "No se pudo abrir el archivo %s", path);
+        log_info(logger, "No se pudo abrir el archivo %s", path);
         return;
     }
 
@@ -120,7 +124,8 @@ void ejecutarScript(const char* path) {
                 strcat(tokenModificado, token); // Concatenate the original token to the modified token
                 iniciarProceso(tokenModificado);
             } else {
-                log_error(logger, "No se proporcionó un argumento para INICIAR_PROCESO");
+                log_info(logger, "No se proporcionó un argumento para INICIAR_PROCESO");
+                ejecutarConsola ();
             }
         } 
         else if(!strncmp(line, "FINALIZAR_PROCESO", strlen("FINALIZAR_PROCESO"))) {
@@ -130,7 +135,8 @@ void ejecutarScript(const char* path) {
                 int pid = atoi(token); // Convierte el token en un número entero
                 finalizarProceso(pid);
             } else {
-                log_error(logger, "No se proporcionó un argumento para FINALIZAR_PROCESO");
+                log_info(logger, "No se proporcionó un argumento para FINALIZAR_PROCESO");
+                ejecutarConsola ();
             }
         } 
         else if(!strncmp(line, "DETENER_PLANIFICACION", strlen("DETENER_PLANIFICACION"))) {
@@ -146,14 +152,15 @@ void ejecutarScript(const char* path) {
                 int valor = atoi(token); // Convierte el token en un número entero
                 modificarGradoMultiprogramacion(valor);
             } else {
-                log_error(logger, "No se proporcionó un argumento para MULTIPROGRAMACION");
+                log_info(logger, "No se proporcionó un argumento para MULTIPROGRAMACION");
+                ejecutarConsola ();
             }
         } 
         else if(!strncmp(line, "PROCESO_ESTADO", strlen("PROCESO_ESTADO"))) {
             procesoEstado();
         } 
         else {
-            log_error(logger, "Comando no reconocido: %s", line);
+            log_info(logger, "Comando no reconocido: %s", line);
         }
     }
     fclose(file);
@@ -213,7 +220,7 @@ void procesoEstado(){
 //MULTIPROGRAMACION [VALOR]
 void modificarGradoMultiprogramacion(int valor){
     if(valor<=0 || valor>=15){
-        log_error(logger, "Multiprogramacion no permitida. Ingrese un valor entre 1 y 14.");
+        log_info(logger, "Multiprogramacion no permitida. Ingrese un valor entre 1 y 14.");
         return;
     } else{
         gradoMultiprogramacion = valor;

@@ -20,13 +20,13 @@ char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"};
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
-    log_info(logger, "Planificador a largo plazo iniciado");
+    //log_info(logger, "Planificador a largo plazo iniciado");
     while (!pausaPlanificacion) //Mientras no este pausado...
     {
-        log_info(logger, "------comienza while");
+        //log_info(logger, "------comienza while");
         sem_wait(&hayProcesosNuevos);
         sem_wait(&semGradoMultiprogramacion);
-        log_info(logger, "------obtenerSiguienteAReady");
+        //log_info(logger, "------obtenerSiguienteAReady");
         t_pcb *pcb = obtenerSiguienteAReady(); //Agarro un pcb de la cola de new
 
         //recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
