@@ -12,6 +12,7 @@ void str_to_upper(char *str) {
 //Se reciben dos archivos:El script con las funciones de kernel y el archivo de instrucciones
 int ejecutarConsola () {
     char *linea;
+    pcbsParaExit = list_create();
     logger=cambiarNombre(logger,"Consola-Kerel");
     log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
     while (1) {
@@ -23,6 +24,7 @@ int ejecutarConsola () {
         if (!strncmp(linea, "EXIT", 4)) {
             free(linea);
             exit(EXIT_SUCCESS);
+            list_destroy_and_destroy_elements(pcbsParaExit, free);
             break;
         }
         //Si escribo los comandos....
@@ -202,10 +204,10 @@ void procesoEstado(){
     imprimirListaPCBs(pcbsREADY);
     log_info(logger, "Procesos en EXEC");
     imprimirListaPCBs(pcbsEnMemoria);
-    log_info(logger, "Procesos en BLOCKED");
-    listarPIDS(pcbsBloqueados);
+    log_info(logger, "Procesos en BLOCKED: HACER!");
+    //listarPIDS(pcbsBloqueados);
     log_info(logger, "Procesos en EXIT");
-    listarPIDS(pcbsParaExit);
+    imprimirListaExit(pcbsParaExit);
 }
 
 //MULTIPROGRAMACION [VALOR]

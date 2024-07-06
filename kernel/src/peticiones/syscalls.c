@@ -206,8 +206,6 @@ void io_fs_read(t_pcb *proceso,char **parametros){
 void exit_s(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
     proceso->estado = EXIT;
-    
-    //encolar(pcbsParaExit,proceso); PARA QUE ES ESTO???
     log_info(logger, "llego al exit");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
