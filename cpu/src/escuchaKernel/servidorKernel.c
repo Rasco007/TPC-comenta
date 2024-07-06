@@ -53,7 +53,7 @@ int ejecutarServidorCPU(int socketCliente){
 					log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					// 	cicloDeInstruccion();
 					// contextoEjecucion->instruccionesLength = 5; //TODO: Quitar nro magico
-					 while(contextoEjecucion->programCounter < 5 /*&& contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength*/) {
+					 while(contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength) {
 					 	log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
 					 } //NOTA: esto lo sacamos porque es del otro tp, no tiene que ser asi aca.

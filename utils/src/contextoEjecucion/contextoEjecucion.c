@@ -49,15 +49,16 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     desplazamiento += sizeof(contexto->programCounter);
  
    
-    contexto->instruccionesLength = list_size(contexto->instrucciones);
+    //contexto->instruccionesLength = list_size(contexto->instrucciones);
 
     log_info(logger, "cantidad de instrucciones mandadas %d",contexto->instruccionesLength);
    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->instruccionesLength), sizeof(contexto->instruccionesLength));
     desplazamiento += sizeof(contexto->instruccionesLength);
-
+    
     // Serializar las instrucciones
-    for (uint32_t i = 0; i < contexto->instruccionesLength; i++) {
+    /*for (uint32_t i = 0; i < contexto->instruccionesLength; i++) {
         char* instruccion = list_get(contexto->instrucciones, i);
+        log_info(logger,"LOG DE LA VERDAD");
         uint32_t instruccion_length = strlen(instruccion) + 1;
 
         memcpy(paquete->buffer->stream + desplazamiento, &instruccion_length, sizeof(uint32_t));
@@ -65,7 +66,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
         log_info(logger,"instruccion %s", instruccion);
         memcpy(paquete->buffer->stream + desplazamiento, instruccion, instruccion_length);
         desplazamiento += instruccion_length;
-    }
+    }*/
 
     // Serializar los registros
     char* registros[] = {"AX", "BX", "CX", "DX", "EAX", "EBX", "ECX", "EDX"};
@@ -157,7 +158,7 @@ void recibirContextoBeta(int socket) {
     desplazamiento += sizeof(contextoEjecucion->instruccionesLength);
     log_info(logger,"cantidad de instrucciones RECIBIDAS %u", contextoEjecucion->instruccionesLength);
     //deserealizo las instrucciones
-    for (uint32_t i = 0; i < contextoEjecucion->instruccionesLength; i++) {
+    /*for (uint32_t i = 0; i < contextoEjecucion->instruccionesLength; i++) {
         uint32_t instruccion_length;
         memcpy(&instruccion_length, buffer + desplazamiento, sizeof(uint32_t));
         desplazamiento += sizeof(uint32_t);
@@ -171,7 +172,7 @@ void recibirContextoBeta(int socket) {
 
         list_add(contextoEjecucion->instrucciones, instruccion);
         log_info(logger, "instruccion: %s", instruccion);
-    }
+    }*/
 
     printf("Recibido PID: %u PC: %d \n", contextoEjecucion->pid, contextoEjecucion->programCounter);
     

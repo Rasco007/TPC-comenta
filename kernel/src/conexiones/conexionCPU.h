@@ -9,11 +9,12 @@
 #include <global.h>
 #include "../src/peticiones/pcb.h"
 #include <conexiones/conexionMemoria.h>
+#include <semaphore.h>
 
 extern int conexionACPU;
 extern t_log* loggerError; 
 extern t_contexto* contextoEjecucion;
-
+extern sem_t* memoriaOK;
 
 void conexionCPU();
 void asignarPCBAContexto(t_pcb* procesoEnEjecucion);

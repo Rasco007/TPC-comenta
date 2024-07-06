@@ -79,6 +79,7 @@ void inicializarSemaforos(){
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
+    sem_init(&memoriaOK,0,0);
 }
 
 void destruirSemaforos () {

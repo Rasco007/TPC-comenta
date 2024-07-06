@@ -5,6 +5,7 @@
 t_buffer* bufferContexto;
 int conexionACPU;
 int conexionACPUInterrupt;
+sem_t* memoriaOK;
 
 void conexionCPU() {
     //CONEXION CPU DISPATCH
@@ -59,7 +60,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 	iniciarContexto ();
     
     bufferContexto = malloc(sizeof(t_buffer));
-
+    sem_wait(&memoriaOK);
     asignarPCBAContexto(procesoEnEjecucion);
     // Loguear registros CPU
    
