@@ -46,14 +46,14 @@ int ejecutarServidorCPU(int socketCliente){
 					recibirContextoBeta(socketCliente);
 					//Inicio el cronometro del tiempo de uso de CPU
 					log_info(logger,"luego de recibir contexto de kernel");
-					contextoEjecucion->tiempoDeUsoCPU=temporal_create();
+					contextoEjecucion->tiempoDeUsoCPU=temporal_create(); //CREO EL CRONOMETRO
 					/*log_info(logger,"-*-*- Antes del while, programCounter: %d",contextoEjecucion->programCounter);
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);*/
 					log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
 					log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					// 	cicloDeInstruccion();
 					// contextoEjecucion->instruccionesLength = 5; //TODO: Quitar nro magico
-					 while(contextoEjecucion->programCounter < 4) { //TODO: Quitar nro magico por contextoEjecucion->instruccionesLength
+					 while(contextoEjecucion->programCounter < 5) { //TODO: Quitar nro magico por contextoEjecucion->instruccionesLength
 					 	log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
 					 } 

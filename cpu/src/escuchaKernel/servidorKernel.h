@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/temporal.h>
 
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
