@@ -44,42 +44,34 @@ int main(int argc, char** argv) {
     create_bloques_file("bloques.dat", BLOCK_COUNT*BLOCK_SIZE);
     sleep(1);
     crearArchivo2("hola");
-    truncarArchivo2("hola", 64*9-1);
+    crearArchivo2("medio");
+    crearArchivo2("chau");
+    crearArchivo2("otro");
+    truncarArchivo2("otro", 64*2);
+    sleep(1);
+    truncarArchivo2("medio", 64*2); // es necesario que el orden final sea por orden de creacion? osea hola->chau->otro->medio? porque queda hola->otro->chau->medio
+    //nota: con este ejemplo, despues de compactar, el archivo "chau.txt" se posiciona despues de "otro.txt", esto esta bien?
+    //delete_file("otro");
+    /*truncarArchivo2("hola", 64*9-1);
     truncarArchivo2("hola", 64*2);
     crearArchivo2("chau");
     truncarArchivo2("chau", 64*2);
     truncarArchivo2("chau", 64*8+1);
     crearArchivo2("otro");
     delete_file("hola");
-    delete_file("chau");
+    delete_file("chau");*/
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
     pthread_join(hilo_kernel, NULL);
     return EXIT_SUCCESS;
 }
-void create_bloques_file(const char *filename, size_t size) {
-    int fd = open(filename, O_RDWR);
-    if (fd == -1) {
-        // El archivo no existe, lo creamos
-        fd = open(filename, O_RDWR | O_CREAT, 0666);
-        if (fd == -1) {
-            perror("Error al crear el archivo bitmap.dat");
-            return;
-        }
-        // Establecer el tamaño del archivo
-        if (ftruncate(fd, size) == -1) {
-            perror("Error al establecer el tamaño del archivo bitmap.dat");
-            close(fd);
-            return;
-        }
-    }
-    
-}
+
 //una funcion que reciba un nombre de archivo y un tamanio y lo trunque
 void truncarArchivo2(char* nombre, int tamanio){
-    char nombretxt[256];
+    printf("TRUNCANDO ARCHIVO.....\n");
+    char nombretxt[256]="";
     int posicionBit=0;
-    sprintf(nombretxt, "%s.txt", nombre);
+    sprintf(nombretxt, "src/archivos/%s.txt", nombre);printf("nombre: %s\n", nombretxt);
     FILE *file = fopen(nombretxt, "r+"); // Abrir el archivo en modo lectura-escritura ('r+')
     if (file == NULL) {
         perror("Error al abrir el archivo");
@@ -95,8 +87,9 @@ void truncarArchivo2(char* nombre, int tamanio){
         cantidadBloques = 1;
     printf("nueva cantidadBloques: %d\n", cantidadBloques);
     // abrir su metadata para obtener bloque inicial y escribir el nuevo tamanio
-    char nombreMetadata[256];
-    sprintf(nombreMetadata, "%s.metadata", nombre);
+    char nombreMetadata[256]="";
+    sprintf(nombreMetadata, "src/archivos/%s.metadata", nombre);
+    printf("nombreMetadata: %s\n", nombreMetadata);
     FILE *fileMetadata = fopen(nombreMetadata, "rw");
     if (fileMetadata == NULL) {
         perror("Error al abrir el archivo de metadata");
@@ -118,6 +111,7 @@ void truncarArchivo2(char* nombre, int tamanio){
         bloquesarchivo++;
     if (tamanoArchivo==0)
         bloquesarchivo=1;   
+    int bloquefinal = bloqueInicial+bloquesarchivo-1;
     printf("bloquesarchivo: %d\n", bloquesarchivo); 
     // Abrir el archivo bitmap.dat
     const char *filename = "bitmap.dat";
@@ -155,23 +149,112 @@ void truncarArchivo2(char* nombre, int tamanio){
         }
         escribir_metadata(nombre, bloqueInicial, tamanio);//modificar metadata
     }
-    //si el nuevo tamanio es mayor al anterior, se buscan bloques libres y se los asigna
-    else if (tamanio>tamanoArchivo) {
-        printf("tamanio>tamanoArchivo\n");
-        // Calcular la cantidad de bloques ocupados por el archivo
-        int bloquefinal = bloqueInicial+bloquesarchivo;
-        int bloquefinalposta = bloqueInicial+cantidadBloques-1;
-        // Asignar los bloques libres al archivo
-        printf("bloquefinal: %d\n", bloquefinal);
-        for (int i = bloquefinal-1; i < bloquefinalposta; i++) {
-            posicionBit = i+1;
-            printf("posicionBit: %d\n", posicionBit);
-            bitarray_set_bit(my_bitmap2, posicionBit);
+    else if (tamanio>tamanoArchivo) {//si el nuevo tamanio es mayor al anterior, se buscan bloques libres y se los asigna
+        //contar la cantidad de bloques libres depues de que termina el archivo
+        int bloqueslibres=0;
+        for (int i = bloquefinal+1; !bitarray_test_bit(my_bitmap2, i); i++) {
+            if (!bitarray_test_bit(my_bitmap2, i)) 
+                bloqueslibres++;
         }
+        printf("tamanio>tamanoArchivo\n");
+        if(bloqueslibres>=cantidadBloques-1){
+            printf("Se encontraron suficientes bloques libres para agrandar el archivo.\n");
+            // Calcular la cantidad de bloques ocupados por el archivo
+            //int bloquefinal = bloqueInicial+bloquesarchivo; CREO QUE NO HACE FALTA PONERLO ACA
+            int bloquefinalposta = bloqueInicial+cantidadBloques-1;printf("bloquefinal: %d\n", bloquefinal);
+            // Asignar los bloques libres al archivo
+            for (int i = bloquefinal; i < bloquefinalposta; i++) {
+                posicionBit = i+1;//printf("posicionBit: %d\n", posicionBit);
+                bitarray_set_bit(my_bitmap2, posicionBit);
+            }
+        printf("bloqueslibres: %d\n", bloqueslibres); //cantidad de bloques libres que se encuentran despues del archivo que se quiere agrandar
         escribir_metadata(nombre, bloqueInicial, tamanio);//modificar metadata
+        } else {
+            printf("HAY QUE COMPACTAR.\n");
+            int bloqueinicialantesdecompactar=bloqueInicial;
+            int bloquefinalantesdecompactar=bloquefinal;
+            DIR *dir;
+            struct dirent *ent;
+            int nuevaposicioninicial;
+            int nuevaposicionfinal;
+            int iteracion=0;
+            if ((dir = opendir("src/archivos")) != NULL) {
+                // Lee cada entrada del directorio
+                while ((ent = readdir(dir)) != NULL) {
+                    // Verifica si el nombre del archivo termina con ".metadata"
+                    size_t len = strlen(ent->d_name);
+                    if (len >= 9 && strcmp(ent->d_name + len - 9, ".metadata") == 0) {
+                        char destino[512] = "";//printf("%s\n", ent->d_name);
+                        strcpy(destino,"src/archivos/");  // Copia la ruta base a destino
+                        strcat(destino, ent->d_name);  // Concatena el nombre del archivo
+                        printf("%s\n", destino);  // Imprime la ruta completa
+                        // leer el archivo metadata
+                        FILE *fileMetadata = fopen(destino, "rw");
+                        if (fileMetadata == NULL) {
+                            perror("Error al abrir el archivo de metadata");
+                            return ;
+                        }
+                        t_config *config2 = config_create(destino);
+                        if (config2 == NULL) {
+                            perror("Error al abrir el archivo de metadata");
+                            return ;
+                        }
+                        int bloqueInicialotroarchivo = config_get_int_value(config2, "bloqueInicial");
+                        int tamanoArchivootroarchivo = config_get_int_value(config2, "tamanoArchivo");
+                        //printf("bloqueInicial: %d\n", bloqueInicial);printf("tamanoArchivo: %d\n", tamanoArchivo)
+                        int bloquesarchivo = tamanoArchivootroarchivo/BLOCK_SIZE;
+                        if (tamanoArchivootroarchivo%BLOCK_SIZE!=0) 
+                            bloquesarchivo++;
+                        if (tamanoArchivootroarchivo==0)
+                            bloquesarchivo = 1;
+                        int bloqueFinal = bloqueInicialotroarchivo+bloquesarchivo-1;
+                        printf("bloqueFinal: %d\n", bloqueFinal);
+                        if (bloqueInicialotroarchivo>bloquefinalantesdecompactar && iteracion==0) {//el archivo accedido se encuentra despues del que se quiere agrandar
+                            bloqueInicialotroarchivo=bloqueinicialantesdecompactar;
+                            char valorBloqueInicial[20];
+                            sprintf(valorBloqueInicial, "%d", bloqueInicialotroarchivo);
+                            config_set_value(config2, "bloqueInicial", valorBloqueInicial);
+                            if (config_save(config2) == -1) 
+                                perror("Error al guardar el archivo de metadata");
+                            nuevaposicionfinal=bloqueInicialotroarchivo+bloquesarchivo-1;
+                            nuevaposicioninicial=nuevaposicionfinal+1;
+                            for (int i = bloqueinicialantesdecompactar; i < nuevaposicionfinal; i++) {
+                                posicionBit = i+1;//printf("posicionBit: %d\n", posicionBit);
+                                bitarray_set_bit(my_bitmap2, posicionBit);
+                            }
+                            iteracion++;
+                        }
+                        if (bloqueInicialotroarchivo>bloquefinalantesdecompactar && iteracion>0) {//el archivo accedido se encuentra despues del que se quiere agrandar
+                            bloqueInicialotroarchivo=nuevaposicioninicial;
+                            char valorBloqueInicial[20];
+                            sprintf(valorBloqueInicial, "%d", bloqueInicialotroarchivo);
+                            config_set_value(config2, "bloqueInicial", valorBloqueInicial);
+                            if (config_save(config2) == -1) 
+                                perror("Error al guardar el archivo de metadata");
+                            nuevaposicionfinal=bloqueInicialotroarchivo+bloquesarchivo-1;
+                            nuevaposicioninicial=nuevaposicionfinal+1;
+                            for (int i = bloqueinicialantesdecompactar; i < nuevaposicionfinal; i++) {
+                                posicionBit = i+1;//printf("posicionBit: %d\n", posicionBit);
+                                bitarray_set_bit(my_bitmap2, posicionBit);
+                            }
+                        }
+                    }
+                }
+                closedir(dir); // Cierra el directorio después de leer
+            } else {
+                perror("Error al abrir el directorio");
+                return ;
+            }
+            for (int i = nuevaposicioninicial; i < nuevaposicioninicial+cantidadBloques-1; i++) {
+                posicionBit = i+1;//printf("posicionBit: %d\n", posicionBit);
+                bitarray_set_bit(my_bitmap2, posicionBit);
+            }
+            escribir_metadata(nombre, nuevaposicioninicial, tamanio);//modificar metadata del archivo truncado
+        }
     }
     if (msync(bitmap, 1024/8, MS_SYNC) == -1) 
         perror("Error al sincronizar el archivo bitmap.dat");
+    printf("FIN TRUNCAR ARCHIVO.....\n");
     // Liberar recursos
     munmap(bitmap, 1024/8);
     close(fd);
@@ -179,7 +262,7 @@ void truncarArchivo2(char* nombre, int tamanio){
 
 void delete_file(const char *nombre) {
     char nombretxt[256];
-    sprintf(nombretxt, "%s.txt", nombre);
+    sprintf(nombretxt, "src/archivos/%s.txt", nombre);
     if (remove(nombretxt) != 0) {// Eliminar el archivo
         perror("Error al borrar el archivo");
         return;
@@ -201,7 +284,7 @@ void delete_file(const char *nombre) {
     t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, 1024/8 * CHAR_BIT, MSB_FIRST);
     // abrir su metadata como lectura para obtener bloque inicial y tamanio
     char nombreMetadata[256];
-    sprintf(nombreMetadata, "%s.metadata", nombre);
+    sprintf(nombreMetadata, "src/archivos/%s.metadata", nombre);
     FILE *fileMetadata = fopen(nombreMetadata, "r");
     if (fileMetadata == NULL) {
         perror("Error al abrir el archivo de metadata");
@@ -213,8 +296,7 @@ void delete_file(const char *nombre) {
         fclose(fileMetadata);
         return;
     }
-    int bloqueInicial = config_get_int_value(config, "bloqueInicial");
-    printf("bloqueInicial: %d\n", bloqueInicial);
+    int bloqueInicial = config_get_int_value(config, "bloqueInicial");//printf("bloqueInicial: %d\n", bloqueInicial);
     //tamanio del archivo en bytes
     int tamanoArchivo = config_get_int_value(config, "tamanoArchivo");
     // Calcular la cantidad de bloques ocupados por el archivo
@@ -223,7 +305,7 @@ void delete_file(const char *nombre) {
         bloquesOcupados++;
     if (tamanoArchivo==0)
         bloquesOcupados=1;
-    printf("bloquesOcupados: %d\n", bloquesOcupados);
+    //printf("bloquesOcupados: %d\n", bloquesOcupados);
     int bloquefinal= bloqueInicial+bloquesOcupados;
     // Liberar los bloques ocupados por el archivo
     for (int i = bloquesOcupados; i >0; i--) {
@@ -245,7 +327,7 @@ void delete_file(const char *nombre) {
 
 void crearArchivo2(char* nombre) {
     char nombretxt[256];
-    sprintf(nombretxt, "%s.txt", nombre);
+    sprintf(nombretxt, "src/archivos/%s.txt", nombre);
     FILE *file = fopen(nombretxt, "w"); // Abrir el archivo en modo escritura ('w')
     if (file == NULL) {
         perror("Error al crear el archivo");
@@ -276,19 +358,6 @@ void crearArchivo2(char* nombre) {
     printf("Archivo %s creado exitosamente con tamaño 0 bytes.\n", nombre);
     munmap(bitmap, 1024/8);
     close(fd);
-}
-
-// Estructura para almacenar la asociación entre archivo y bit en el bitarray
-int obtenerPrimeraPosicionLibre(t_bitarray *bitmap) {
-    int posicion;
-    int size = bitmap->size;
-    for (int i = 0; i < size; i++) {
-        if (!bitarray_test_bit(bitmap, i)) {
-            posicion = i;
-            break;  // Salir del bucle al encontrar el primer bit libre
-        }
-    }
-    return posicion;
 }
 
 void create_bitmap_file(const char *filename, size_t size) {
@@ -339,7 +408,7 @@ void create_bitmap_file(const char *filename, size_t size) {
 void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo) {
     // Construir el nombre del archivo de metadata
     char nombreMetadata[256];
-    sprintf(nombreMetadata, "%s.metadata", nombre);
+    sprintf(nombreMetadata, "src/archivos/%s.metadata", nombre);
     /*char * pathArchivo = string_from_format ("main/%s.fcb", nombreMetadata);
     if (access (pathArchivo, F_OK)) {
         free (pathArchivo); 
@@ -389,4 +458,35 @@ void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo) {
     // Liberar recursos
     config_destroy(config);
     printf("Metadata para %s creada exitosamente.\n", nombre);
+}
+
+void create_bloques_file(const char *filename, size_t size) {
+    int fd = open(filename, O_RDWR);
+    if (fd == -1) {
+        // El archivo no existe, lo creamos
+        fd = open(filename, O_RDWR | O_CREAT, 0666);
+        if (fd == -1) {
+            perror("Error al crear el archivo bitmap.dat");
+            return;
+        }
+        // Establecer el tamaño del archivo
+        if (ftruncate(fd, size) == -1) {
+            perror("Error al establecer el tamaño del archivo bitmap.dat");
+            close(fd);
+            return;
+        }
+    }
+    
+}
+
+int obtenerPrimeraPosicionLibre(t_bitarray *bitmap) {
+    int posicion;
+    int size = bitmap->size;
+    for (int i = 0; i < size; i++) {
+        if (!bitarray_test_bit(bitmap, i)) {
+            posicion = i;
+            break;  // Salir del bucle al encontrar el primer bit libre
+        }
+    }
+    return posicion;
 }

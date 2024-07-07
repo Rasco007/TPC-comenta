@@ -28,6 +28,8 @@
 //#include <errno.h>
 #include <sys/mman.h>
 //#include <string.h>
+#include <dirent.h>
+
 extern t_log* loggerError;
 
 extern int fd_kernel;
