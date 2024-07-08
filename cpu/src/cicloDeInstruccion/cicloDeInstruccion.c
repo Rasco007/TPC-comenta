@@ -186,7 +186,7 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
 
 void copy_string(char* tamanio){
     //Copiar contenido de SI a DI
-    contextoEjecucion->DI=contextoEjecucion->DI; //Ver
+    memcpy((void*)&contextoEjecucion->DI, (const void*)&contextoEjecucion->SI, sizeof(uint32_t));
 }
 
 void resize(char* tamanio){
@@ -200,14 +200,22 @@ void resize(char* tamanio){
 
 void set_c(char* registro, char* valor){ 
     log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
-    //tiempoEspera = obtenerTiempoEspera();
-    //log_info(logger, "tiempoEspera: %d", tiempoEspera);
-    //usleep(10 * 1000); 
-    //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
-     // Log the first value of registrosCPU
-    //char* puse = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    //log_info(logger, "te lo muestro en fin set_c: %s", puse);
+    if(strcmp(registro, "PC") == 0){
+        contextoEjecucion->programCounter = atoi(valor);
+        return;
+    }else if(strcmp(registro, "SI") == 0){
+        contextoEjecucion->SI = atoi(valor);
+        return;
+    }else if(strcmp(registro, "DI") == 0){
+        contextoEjecucion->DI = atoi(valor);
+        return;
+    }else{
+        //tiempoEspera = obtenerTiempoEspera();
+        //log_info(logger, "tiempoEspera: %d", tiempoEspera);
+        //usleep(10 * 1000); 
+        //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
+        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
+    }
 }
 
 void sum_c(char* registro_destino, char* registro_origen){ 
