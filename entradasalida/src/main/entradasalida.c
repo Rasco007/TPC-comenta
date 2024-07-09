@@ -42,36 +42,37 @@ int main(int argc, char** argv) {
     // pruebas hardcodeadas
     create_bitmap_file("bitmap.dat", BLOCK_COUNT/8);
     create_bloques_file("bloques.dat", BLOCK_COUNT*BLOCK_SIZE);
-    sleep(1);
     crearArchivo2("hola");
     crearArchivo2("medio");
     crearArchivo2("chau");
     crearArchivo2("otro");
-    truncarArchivo2("otro", 64*2);
-    sleep(1);
-    truncarArchivo2("medio", 64*2); // es necesario que el orden final sea por orden de creacion? osea hola->chau->otro->medio? porque queda hola->otro->chau->medio
+    truncarArchivo2("otro", BLOCK_SIZE*2);
+    truncarArchivo2("medio", BLOCK_SIZE*2); // es necesario que el orden final sea por orden de creacion? osea hola->chau->otro->medio? porque queda hola->otro->chau->medio
     //nota: con este ejemplo, despues de compactar, el archivo "chau.txt" se posiciona despues de "otro.txt", esto esta bien?
-    //delete_file("otro");
-    /*truncarArchivo2("hola", 64*9-1);
-    truncarArchivo2("hola", 64*2);
+    delete_file("otro");
+    crearArchivo2("nuevo");
+    /*truncarArchivo2("hola", BLOCK_SIZE*9-1);
+    truncarArchivo2("hola", BLOCK_SIZE*2);
     crearArchivo2("chau");
-    truncarArchivo2("chau", 64*2);
-    truncarArchivo2("chau", 64*8+1);
+    truncarArchivo2("chau", BLOCK_SIZE*2);
+    truncarArchivo2("chau", BLOCK_SIZE*8+1);
     crearArchivo2("otro");
     delete_file("hola");
     delete_file("chau");*/
-	pthread_t hilo_kernel;
+    pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
     pthread_join(hilo_kernel, NULL);
+    free(argv);
     return EXIT_SUCCESS;
 }
 
 //una funcion que reciba un nombre de archivo y un tamanio y lo trunque
 void truncarArchivo2(char* nombre, int tamanio){
     printf("TRUNCANDO ARCHIVO.....\n");
-    char nombretxt[256]="";
+    usleep(TIEMPO_UNIDAD_TRABAJO);
+    char nombretxt[128]="";
     int posicionBit=0;
-    sprintf(nombretxt, "src/archivos/%s.txt", nombre);printf("nombre: %s\n", nombretxt);
+    sprintf(nombretxt, "src/archivos/%s.txt", nombre);//printf("nombre: %s\n", nombretxt);
     FILE *file = fopen(nombretxt, "r+"); // Abrir el archivo en modo lectura-escritura ('r+')
     if (file == NULL) {
         perror("Error al abrir el archivo");
@@ -85,11 +86,11 @@ void truncarArchivo2(char* nombre, int tamanio){
     }
     else 
         cantidadBloques = 1;
-    printf("nueva cantidadBloques: %d\n", cantidadBloques);
+    //printf("nueva cantidadBloques: %d\n", cantidadBloques);
     // abrir su metadata para obtener bloque inicial y escribir el nuevo tamanio
-    char nombreMetadata[256]="";
+    char nombreMetadata[128]="";
     sprintf(nombreMetadata, "src/archivos/%s.metadata", nombre);
-    printf("nombreMetadata: %s\n", nombreMetadata);
+    //printf("nombreMetadata: %s\n", nombreMetadata);
     FILE *fileMetadata = fopen(nombreMetadata, "rw");
     if (fileMetadata == NULL) {
         perror("Error al abrir el archivo de metadata");
@@ -102,10 +103,10 @@ void truncarArchivo2(char* nombre, int tamanio){
         return;
     }
     int bloqueInicial = config_get_int_value(config, "bloqueInicial");
-    printf("bloqueInicial: %d\n", bloqueInicial);
+  //  printf("bloqueInicial: %d\n", bloqueInicial);
     //tamanio del archivo en bytes
     int tamanoArchivo = config_get_int_value(config, "tamanoArchivo");
-    printf("tamanoArchivo: %d\n", tamanoArchivo);
+  //  printf("tamanoArchivo: %d\n", tamanoArchivo);
     int bloquesarchivo= tamanoArchivo/BLOCK_SIZE;
     if (tamanoArchivo%BLOCK_SIZE!=0) 
         bloquesarchivo++;
@@ -114,23 +115,23 @@ void truncarArchivo2(char* nombre, int tamanio){
     int bloquefinal = bloqueInicial+bloquesarchivo-1;
     printf("bloquesarchivo: %d\n", bloquesarchivo); 
     // Abrir el archivo bitmap.dat
-    const char *filename = "bitmap.dat";
-    int fd = open(filename, O_RDWR);
+    //const char *filename = "bitmap.dat";
+    int fd = open("bitmap.dat", O_RDWR);
     if (fd == -1) {
         perror("Error al abrir el archivo bitmap.dat");
         return;
     } 
     // Mapear el archivo bitmap.dat en memoria
-    void *bitmap = mmap(NULL, 1024/8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *bitmap = mmap(NULL, BLOCK_COUNT/8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (bitmap == MAP_FAILED) {
         perror("Error al mapear el archivo bitmap.dat");
         close(fd);
         return;
     }
-    t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, 1024/8 * CHAR_BIT, MSB_FIRST);
-    if (msync(bitmap, 1024/8, MS_SYNC) == -1) {
+    t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, BLOCK_COUNT/8 * CHAR_BIT, MSB_FIRST);
+    if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) {
         perror("Error al sincronizar el archivo bitmap.dat");
-        munmap(bitmap, 1024/8);
+        munmap(bitmap, BLOCK_COUNT/8);
         close(fd);
         return ;
     }
@@ -140,8 +141,7 @@ void truncarArchivo2(char* nombre, int tamanio){
         // Calcular la cantidad de bloques ocupados por el archivo
         int bloquefinalprev = bloqueInicial+bloquesarchivo;
         int bloquefinalpost = bloqueInicial+cantidadBloques;
-        printf("bloquefinalprev: %d\n", bloquefinalprev);
-        printf("bloquefinalpost: %d\n", bloquefinalpost);
+        printf("bloquefinalprev: %d\n", bloquefinalprev);printf("bloquefinalpost: %d\n", bloquefinalpost);
         // Liberar los bloques ocupados por el archivo
         for (int i = bloquefinalprev; i >=bloquefinalpost; i--) {
             posicionBit = i;
@@ -151,11 +151,12 @@ void truncarArchivo2(char* nombre, int tamanio){
     }
     else if (tamanio>tamanoArchivo) {//si el nuevo tamanio es mayor al anterior, se buscan bloques libres y se los asigna
         //contar la cantidad de bloques libres depues de que termina el archivo
-        int bloqueslibres=0;
+       int bloqueslibres=0;
         for (int i = bloquefinal+1; !bitarray_test_bit(my_bitmap2, i); i++) {
             if (!bitarray_test_bit(my_bitmap2, i)) 
                 bloqueslibres++;
         }
+        printf("bloqueslibres: %d\n", bloqueslibres); //cantidad de bloques libres que se encuentran despues del archivo que se quiere agrandar
         printf("tamanio>tamanoArchivo\n");
         if(bloqueslibres>=cantidadBloques-1){
             printf("Se encontraron suficientes bloques libres para agrandar el archivo.\n");
@@ -167,9 +168,8 @@ void truncarArchivo2(char* nombre, int tamanio){
                 posicionBit = i+1;//printf("posicionBit: %d\n", posicionBit);
                 bitarray_set_bit(my_bitmap2, posicionBit);
             }
-        printf("bloqueslibres: %d\n", bloqueslibres); //cantidad de bloques libres que se encuentran despues del archivo que se quiere agrandar
-        escribir_metadata(nombre, bloqueInicial, tamanio);//modificar metadata
-        } else {
+            escribir_metadata(nombre, bloqueInicial, tamanio);//modificar metadata
+        } else { // para ver los memory leaks, olvidate de este else, por ahora
             printf("HAY QUE COMPACTAR.\n");
             int bloqueinicialantesdecompactar=bloqueInicial;
             int bloquefinalantesdecompactar=bloquefinal;
@@ -187,7 +187,7 @@ void truncarArchivo2(char* nombre, int tamanio){
                         char destino[512] = "";//printf("%s\n", ent->d_name);
                         strcpy(destino,"src/archivos/");  // Copia la ruta base a destino
                         strcat(destino, ent->d_name);  // Concatena el nombre del archivo
-                        printf("%s\n", destino);  // Imprime la ruta completa
+                        //printf("%s\n", destino);  // Imprime la ruta completa
                         // leer el archivo metadata
                         FILE *fileMetadata = fopen(destino, "rw");
                         if (fileMetadata == NULL) {
@@ -238,6 +238,7 @@ void truncarArchivo2(char* nombre, int tamanio){
                                 bitarray_set_bit(my_bitmap2, posicionBit);
                             }
                         }
+                        config_destroy(config2);
                     }
                 }
                 closedir(dir); // Cierra el directorio después de leer
@@ -252,15 +253,24 @@ void truncarArchivo2(char* nombre, int tamanio){
             escribir_metadata(nombre, nuevaposicioninicial, tamanio);//modificar metadata del archivo truncado
         }
     }
-    if (msync(bitmap, 1024/8, MS_SYNC) == -1) 
+    if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) 
         perror("Error al sincronizar el archivo bitmap.dat");
     printf("FIN TRUNCAR ARCHIVO.....\n");
     // Liberar recursos
-    munmap(bitmap, 1024/8);
+    munmap(bitmap, BLOCK_COUNT/8);
+    //munmap(my_bitmap2, BLOCK_COUNT/8);
+    //free(bitmap);
+    //free(my_bitmap2);
+    fclose(file);
+    fclose(fileMetadata);
+    bitarray_destroy(my_bitmap2);
+    bitarray_destroy(my_bitmap);
+    config_destroy(config);
     close(fd);
 }
 
 void delete_file(const char *nombre) {
+    usleep(TIEMPO_UNIDAD_TRABAJO);
     char nombretxt[256];
     sprintf(nombretxt, "src/archivos/%s.txt", nombre);
     if (remove(nombretxt) != 0) {// Eliminar el archivo
@@ -274,14 +284,14 @@ void delete_file(const char *nombre) {
         return;
     } 
     // Mapear el archivo bitmap.dat en memoria
-    void *bitmap = mmap(NULL, 1024/8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *bitmap = mmap(NULL, BLOCK_COUNT/8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (bitmap == MAP_FAILED) {
         perror("Error al mapear el archivo bitmap.dat");
         close(fd);
         return;
     }
     // Crear el bitarray a partir del bitmap mapeado
-    t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, 1024/8 * CHAR_BIT, MSB_FIRST);
+    t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, BLOCK_COUNT/8 * CHAR_BIT, MSB_FIRST);
     // abrir su metadata como lectura para obtener bloque inicial y tamanio
     char nombreMetadata[256];
     sprintf(nombreMetadata, "src/archivos/%s.metadata", nombre);
@@ -313,51 +323,57 @@ void delete_file(const char *nombre) {
         bitarray_clean_bit(my_bitmap2, posicionBit);
     }
     // Sincronizar los cambios en el archivo bitmap.dat
-    if (msync(bitmap, 1024/8, MS_SYNC) == -1) 
+    if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) 
         perror("Error al sincronizar el archivo bitmap.dat");
     if (remove(nombreMetadata) != 0) {
         perror("Error al borrar el archivo de metadata");
         return;
     }
     // Liberar recursos
-    munmap(bitmap, 1024/8);
+    config_destroy(config);
+    munmap(bitmap, BLOCK_COUNT/8);
+    fclose(fileMetadata);
+    bitarray_destroy(my_bitmap2);
+    bitarray_destroy(my_bitmap);
     close(fd);
     printf("Archivo %s borrado exitosamente y bit liberado en el bitmap.\n", nombre);
 }
 
 void crearArchivo2(char* nombre) {
-    char nombretxt[256];
+    usleep(TIEMPO_UNIDAD_TRABAJO);
+    char nombretxt[128];
     sprintf(nombretxt, "src/archivos/%s.txt", nombre);
     FILE *file = fopen(nombretxt, "w"); // Abrir el archivo en modo escritura ('w')
     if (file == NULL) {
         perror("Error al crear el archivo");
         return;
     }
-    const char *filename = "bitmap.dat";
-    int fd = open(filename, O_RDWR);
+    //const char *filename = "bitmap.dat";
+    int fd = open("bitmap.dat", O_RDWR);
     if (fd == -1) {
         perror("Error al abrir el archivo bitmap.dat");
         return ;
     } 
-    void *bitmap = mmap(NULL, 1024/8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    void *bitmap = mmap(NULL, BLOCK_COUNT/8, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (bitmap == MAP_FAILED) {
         perror("Error al mapear el archivo bitmap.dat");
         close(fd);
         return ;
     }
-    t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, 1024/8 * CHAR_BIT, MSB_FIRST);
+    t_bitarray *my_bitmap2 = bitarray_create_with_mode(bitmap, BLOCK_COUNT/8 * CHAR_BIT, MSB_FIRST);
     int primerBloqueLibre =obtenerPrimeraPosicionLibre(my_bitmap2);
     bitarray_set_bit(my_bitmap2, primerBloqueLibre);
-    if (msync(bitmap, 1024/8, MS_SYNC) == -1) {
+    if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) {
         perror("Error al sincronizar el archivo bitmap.dat");
-        munmap(bitmap, 1024/8);
+        munmap(bitmap, BLOCK_COUNT/8);
         close(fd);
         return ;
     }
     escribir_metadata(nombre, primerBloqueLibre, 0);
     printf("Archivo %s creado exitosamente con tamaño 0 bytes.\n", nombre);
-    munmap(bitmap, 1024/8);
+    munmap(bitmap, BLOCK_COUNT/8);
     close(fd);
+    bitarray_destroy(my_bitmap2);
 }
 
 void create_bitmap_file(const char *filename, size_t size) {
