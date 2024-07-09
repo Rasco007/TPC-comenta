@@ -61,7 +61,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         //Mando el contexto de ejecucion a la CPU por dispatch
         contextoEjecucion = procesarPCB(aEjecutar); 
 
-        rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
+        //rafagaCPU = temporal_gettime(contextoEjecucion->tiempoDeUsoCPU); 
        
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);

@@ -102,6 +102,9 @@ log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
          log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
     }
 
+    //Serializacion de quantum
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->quantum), sizeof(contexto->quantum));
+    desplazamiento += sizeof(contexto->quantum);
     //serializo el tiempo de cpu
     /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
     desplazamiento += sizeof(contexto->tiempoDeUsoCPU);*/
@@ -237,6 +240,9 @@ log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
         // Loguear detalles de la página
         log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
     }
+
+    memcpy(&(contextoEjecucion->quantum), buffer + desplazamiento, sizeof(contextoEjecucion->quantum));
+    desplazamiento += sizeof(contextoEjecucion->quantum);
 
     log_info(logger, "termino de recibir todo");
     

@@ -66,6 +66,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
 
     enviarContextoBeta(conexionACPU, contextoEjecucion);
+    send(conexionACPU,&(contextoEjecucion->quantum),sizeof(int64_t),0);
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
@@ -105,6 +106,7 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
     contextoEjecucion->DI=proceso->DI;
     contextoEjecucion->SI=proceso->SI;
+    contextoEjecucion->algoritmo=proceso->algoritmo;
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
  log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);

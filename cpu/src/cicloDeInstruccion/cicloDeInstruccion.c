@@ -131,9 +131,11 @@ void check_interrupt(){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
         t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+        log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU)*1000);
+        log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
-        log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
-        if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
+        if(temporal_gettime(tiempoDeUsoCPU)*1000>=quantum){
+            log_info(logger,"FIN DE QUANTUM");
             destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
             modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
             enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
@@ -294,8 +296,8 @@ void signal_c(char* recurso){
 }
 
 void exit_c () {
-    int64_t n=temporal_gettime(contextoEjecucion->tiempoDeUsoCPU);
-    log_info(logger,"Tiempo %ld" PRId64 ,n);
+    //int64_t n=temporal_gettime(contextoEjecucion->tiempoDeUsoCPU);
+    //log_info(logger,"Tiempo %" PRId64 ,n);
 
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     char * terminado = string_duplicate ("SUCCESS");
