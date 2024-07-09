@@ -23,7 +23,7 @@
 #include <commons/bitarray.h>
 #include <fcntl.h>
 //#include <unistd.h>
-//#include <sys/stat.h>
+#include <sys/stat.h>
 //#include <sys/types.h>
 //#include <errno.h>
 #include <sys/mman.h>
@@ -53,4 +53,5 @@ int obtenerPrimeraPosicionLibre(t_bitarray *bitmap);
 void create_bitmap_file(const char *filename, size_t size);
 void truncarArchivo2(char* nombre, int tamanio);
 void create_bloques_file(const char *filename, size_t size);
+void mostrar_tamano_archivo(const char *nombre);
 #endif
