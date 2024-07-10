@@ -54,4 +54,6 @@ void create_bitmap_file(const char *filename, size_t size);
 void truncarArchivo2(char* nombre, int tamanio);
 void create_bloques_file(const char *filename, size_t size);
 void mostrar_tamano_archivo(const char *nombre);
+char *obtenerNombreSinExtension(const char *nombreArchivo);
+void crearMetadata(char *nombre, int bloqueInicial);
 #endif
