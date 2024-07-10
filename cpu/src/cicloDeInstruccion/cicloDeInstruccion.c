@@ -127,6 +127,7 @@ int buscar(char *elemento, char **lista) {
 }
  
 void check_interrupt(){
+     contextoEjecucion->algoritmo = FIFO;
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
@@ -276,21 +277,26 @@ void jnz(char* registro, char* instruccion){
 }
 
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
-    modificarMotivoDesalojo (IO_GEN_SLEEP, 2, interfaz, unidades_trabajo, "", "", "");
+    //destruirTemporizador(rafagaCPU);
+    log_info(logger,"luego del temporizador del gen sleep");
+    modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
     enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    flag_bloqueante = 1;
+    //hacer flag
 }
 
 void wait_c(char* recurso){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
     enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+     flag_bloqueante = 1;
 }
 
 void signal_c(char* recurso){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
     enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+     flag_bloqueante = 1;
 }
 
 void exit_c () {
@@ -304,6 +310,7 @@ void exit_c () {
     enviarContextoBeta(socketClienteDispatch, contextoEjecucion); 
     free (terminado);
     log_info(logger, "fin exit_c");
+     flag_bloqueante = 1;
 }
 
 
@@ -374,13 +381,13 @@ void destruirTemporizador (t_temporal * temporizador) {
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
     contextoEjecucion->motivoDesalojo->motivo = comando;
-    log_info(logger, "numero de parametros en motivo de EXIT %d", numParametros);
+    log_info(logger, "numero de parametros en motivo de %d :%d",comando, numParametros);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
     for (int i = 0; i < numParametros; i++){
      
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     
-    log_info(logger, "parametro EXIT %s" , contextoEjecucion->motivoDesalojo->parametros[i] );
+    log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
     }
 }
 
