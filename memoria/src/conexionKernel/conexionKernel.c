@@ -39,7 +39,7 @@ int ejecutarServidorKernel(int *socketCliente) {
                 //Mando el numero de instrucciones a kernel
                 int n=mf->marcos[PID].proceso->numero_instrucciones;
                 log_info(logger,"Cantidad de instrucciones: %d",n);
-                mandarNumInstrucciones(n,*socketCliente);
+                send(*socketCliente, &n, sizeof(int), 0);
                 log_info(logger,"Creacion de Proceso PID: <%d>", PID);
                 break;
             }
@@ -109,27 +109,4 @@ Proceso *buscar_proceso_por_pid(int pid) { //ver si pasar por referencia
         }
     }
     return proceso;
-}
-
-void mandarNumInstrucciones(int numero, int socket){
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = PAQUETE;
-	paquete->buffer = malloc(sizeof(t_buffer));
-
-	paquete->buffer->size = 2*sizeof(int);
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	
-	memcpy(paquete->buffer->stream, &numero, sizeof(int));
-    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-	
-    void *a_enviar = serializarPaquete(paquete, bytes);
-
-    if (send(socket, a_enviar, bytes, 0) != bytes) {
-        perror("Error al enviar dato");
-        exit(EXIT_FAILURE);
-    }
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-	free(a_enviar);
-	free(paquete);
 }

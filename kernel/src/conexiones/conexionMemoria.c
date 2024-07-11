@@ -35,19 +35,11 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     eliminarPaquete (peticion);
 
     //Recibo respuesta memoria
-    char buffer[2048];
-    int bytes_recibidos = recv(conexionAMemoria, buffer, sizeof(buffer), 0);
-    
-    if (bytes_recibidos < 0) {
-        perror("Error al recibir el mensaje");
-        return;
-    }
-
-    memcpy(&numeroInstrucciones ,buffer+sizeof(op_code), sizeof(int));
-    log_info(logger, "SE RECIBIERON %d", numeroInstrucciones); //No se por que recibe otro valor
+    recv(conexionAMemoria,&numeroInstrucciones,sizeof(int),0);
+    log_info(logger, "SE RECIBIERON %d", numeroInstrucciones);
 
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
-    //recibirOperacion (conexionAMemoria);
+   
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }

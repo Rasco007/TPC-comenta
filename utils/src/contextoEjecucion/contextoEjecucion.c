@@ -11,11 +11,6 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     // Calcular el tamaño del buffer necesario para la estructura
     paquete->buffer->size = sizeof(contexto->pid) + sizeof(contexto->programCounter) + sizeof(contexto->instruccionesLength) ;
 
-    for (uint32_t i = 0; i < list_size(contexto->instrucciones); i++) {
-        char* instruccion = list_get(contexto->instrucciones, i);
-        paquete->buffer->size += sizeof(uint32_t) + strlen(instruccion) + 1; // Tamaño de la instrucción + la instrucción
-    }
-
      // Calcular el tamaño de los registros
     paquete->buffer->size  += 4 * (4 + 8); // AX, BX, CX, DX (4 bytes cada uno) + EAX, EBX, ECX, EDX (8 bytes cada uno)
     
@@ -34,7 +29,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     }
 
     //calculo tamaño de tiempo de cpu
-    //paquete->buffer->size  += sizeof(contextoEjecucion->tiempoDeUsoCPU);
+    paquete->buffer->size  += sizeof(contextoEjecucion->tiempoDeUsoCPU);
 
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
@@ -48,24 +43,9 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->programCounter), sizeof(contexto->programCounter));
     desplazamiento += sizeof(contexto->programCounter);
  
-   
-    contexto->instruccionesLength = list_size(contexto->instrucciones);
-
     log_info(logger, "cantidad de instrucciones mandadas %d",contexto->instruccionesLength);
    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->instruccionesLength), sizeof(contexto->instruccionesLength));
     desplazamiento += sizeof(contexto->instruccionesLength);
-
-    // Serializar las instrucciones
-    for (uint32_t i = 0; i < contexto->instruccionesLength; i++) {
-        char* instruccion = list_get(contexto->instrucciones, i);
-        uint32_t instruccion_length = strlen(instruccion) + 1;
-
-        memcpy(paquete->buffer->stream + desplazamiento, &instruccion_length, sizeof(uint32_t));
-        desplazamiento += sizeof(uint32_t);
-        log_info(logger,"instruccion %s", instruccion);
-        memcpy(paquete->buffer->stream + desplazamiento, instruccion, instruccion_length);
-        desplazamiento += instruccion_length;
-    }
 
     // Serializar los registros
     char* registros[] = {"AX", "BX", "CX", "DX", "EAX", "EBX", "ECX", "EDX"};
@@ -103,8 +83,8 @@ log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
     }
 
     //serializo el tiempo de cpu
-    /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
-    desplazamiento += sizeof(contexto->tiempoDeUsoCPU);*/
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
+    desplazamiento += sizeof(contexto->tiempoDeUsoCPU);
 
 log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
@@ -156,22 +136,6 @@ void recibirContextoBeta(int socket) {
     memcpy(&(contextoEjecucion->instruccionesLength), buffer + desplazamiento, sizeof(contextoEjecucion->instruccionesLength));
     desplazamiento += sizeof(contextoEjecucion->instruccionesLength);
     log_info(logger,"cantidad de instrucciones RECIBIDAS %u", contextoEjecucion->instruccionesLength);
-    //deserealizo las instrucciones
-    for (uint32_t i = 0; i < contextoEjecucion->instruccionesLength; i++) {
-        uint32_t instruccion_length;
-        memcpy(&instruccion_length, buffer + desplazamiento, sizeof(uint32_t));
-        desplazamiento += sizeof(uint32_t);
- 
-        char* instruccion = malloc(instruccion_length);
-        memcpy(instruccion, buffer + desplazamiento, instruccion_length);
-        desplazamiento += instruccion_length;
-
-        // Asegúrate de terminar la cadena con '\0'
-        instruccion[instruccion_length - 1] = '\0';
-
-        list_add(contextoEjecucion->instrucciones, instruccion);
-        log_info(logger, "instruccion: %s", instruccion);
-    }
 
     printf("Recibido PID: %u PC: %d \n", contextoEjecucion->pid, contextoEjecucion->programCounter);
     

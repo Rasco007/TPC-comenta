@@ -63,11 +63,9 @@ int ejecutarServidorCPU(int socketCliente){
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);*/
 					log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
 					log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
-					// 	cicloDeInstruccion();
-					// contextoEjecucion->instruccionesLength = 5; //TODO: Quitar nro magico
 					 
 					 flag_bloqueante = 0;
-					 while(contextoEjecucion->programCounter < 3 && flag_bloqueante == 0/*&& contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength*/) {
+					 while(contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength && flag_bloqueante == 0) {
 					 	
 						log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
