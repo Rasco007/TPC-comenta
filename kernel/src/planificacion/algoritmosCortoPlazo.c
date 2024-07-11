@@ -53,14 +53,14 @@ t_pcb *proximoAEjecutarRR(){
 //La llegada de los procesos a las colas se delega a syscalls
 t_pcb *proximoAEjecutarVRR(){
     int64_t quantumConfig = obtenerQuantum();
-    if(list_is_empty(pcbsREADYaux)){
+    if(list_is_empty(pcbsREADYaux)){ //Si esta vacia la auxiliar, desencolo de la principal
         t_pcb *pcbActual = desencolar(pcbsREADY);
         pcbActual->quantum = quantumConfig;
         return pcbActual;
     }
-    else{
+    else{ //Si no, desencolo de la cola auxiliar
         t_pcb *pcbActual = desencolar(pcbsREADYaux);
-        int64_t quantumConsumido=temporal_gettime(pcbActual->tiempoDeUsoCPU);
+        int64_t quantumConsumido=temporal_gettime(pcbActual->tiempoDeUsoCPU); //Esto lo obtendria del pcb actualizado
         pcbActual->quantum = quantumConfig-quantumConsumido;
         return pcbActual;
     }

@@ -200,6 +200,18 @@ void io_fs_write(t_pcb *proceso,char **parametros){
 
 void io_fs_read(t_pcb *proceso,char **parametros){
 
+    //Despues de hacer lo que tiene que hacer, encolo el proceso en READY o READYaux, segun el caso
+    t_algoritmo algoritmo = proceso->algoritmo;
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    
+    if(algoritmo=VRR){
+        encolar(pcbsREADYaux,proceso);
+    } else {
+        encolar(pcbsREADY,proceso);
+    }
+    //Esta logica se aplicaria al resto de las funciones de syscalls 
 }
 
 //EXIT
@@ -223,16 +235,11 @@ void exit_s(t_pcb *proceso,char **parametros){
 
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){
-    t_algoritmo algoritmo=contextoEjecucion->algoritmo;
-    
+    t_algoritmo algoritmo = proceso->algoritmo;
+
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-
-    if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
-        encolar(pcbsREADY,proceso);
-    } 
-    if(algoritmo==VRR){//Si es VRR, encolo el proceso en READYaux
-        encolar(pcbsREADYaux,proceso);
-    }
+    //Da igual si es RR o VRR, siempre va a pcbsREADY
+    encolar(pcbsREADY,proceso);
 }
