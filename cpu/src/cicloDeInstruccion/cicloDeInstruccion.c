@@ -191,12 +191,7 @@ void copy_string(char* tamanio){
 }
 
 void resize(char* tamanio){
-    t_paquete* paquete = crearPaquete();
-    paquete->codigo_operacion = RESIZE;
-    agregarAPaquete(paquete, tamanio, sizeof(tamanio));
-    agregarAPaquete(paquete, &contextoEjecucion->pid, sizeof(uint32_t));
-    enviarPaquete(paquete, conexionAMemoria);
-
+    solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
 }
 
 void set_c(char* registro, char* valor){ 
@@ -420,6 +415,30 @@ int obtenerTamanioReg(char* registro){
     if(string_starts_with(registro, "E")) return 8;
     else if(string_starts_with(registro, "R")) return 16;
     else return 4;
+}
+
+void solicitudResize(int pid, int tamanio, int socket){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = RESIZE;
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->buffer->size = 2*sizeof(int);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+
+	memcpy(paquete->buffer->stream, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(tamanio), &tamanio, sizeof(tamanio));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE);
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+	free(a_enviar);
+	free(paquete);
 }
 
 void execute() {
