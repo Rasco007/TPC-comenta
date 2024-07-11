@@ -151,17 +151,21 @@ int buscar(char *elemento, char **lista) {
 }
  
 void check_interrupt(){
-     contextoEjecucion->algoritmo = FIFO;
+    log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
         t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+
+        log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
+        log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
-        log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
+            log_info(logger,"FIN DE QUANTUM");
             destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
             modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-            enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+            enviarContextoBeta(socketClienteDispatch, contextoEjecucion); //TODO: HACER CON INTERRUPT
+            flag_bloqueante = 1;
         }
     }
 }
@@ -170,43 +174,43 @@ void check_interrupt(){
 void io_fs_delete(char* interfaz,char* nombreArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 /*Copio la cantidad de bytes indicada del string apuntado por SI a DI*/
@@ -304,7 +308,7 @@ void io_gen_sleep(char* interfaz, char* unidades_trabajo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     log_info(logger,"luego del temporizador del gen sleep");
     modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
     //hacer flag
 }
@@ -313,7 +317,7 @@ void io_gen_sleep(char* interfaz, char* unidades_trabajo){
 void wait_c(char* recurso){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
      flag_bloqueante = 1;
 }
 
@@ -321,20 +325,17 @@ void wait_c(char* recurso){
 void signal_c(char* recurso){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
      flag_bloqueante = 1;
 }
 
 /*Desalojo el proceso y kernel se encarga de mover el proceso a EXIT*/
 void exit_c () {
-    int64_t n=temporal_gettime(contextoEjecucion->tiempoDeUsoCPU);
-    log_info(logger,"Tiempo %ld" PRId64 ,n);
-
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     log_info(logger, "Pasa modificarMotivoDesalojo");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); 
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); //TODO: HACER CON INTERRUPT
     free (terminado);
     log_info(logger, "fin exit_c");
      flag_bloqueante = 1;

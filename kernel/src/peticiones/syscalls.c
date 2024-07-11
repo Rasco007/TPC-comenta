@@ -53,6 +53,7 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             exit_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case FIN_DE_QUANTUM:
+            log_info(logger,"LOGGER DE LA VERDAD");
             finDeQuantum(proceso);
         default:
             log_error(loggerError, "Comando incorrecto");
@@ -277,10 +278,10 @@ void finDeQuantum(t_pcb *proceso){
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
-        encolar(pcbsREADY,proceso);
+        ingresarAReady(proceso); //TODO: VER POR QUE TIRA LA OPERACION DESCONOCIDA
     } 
     if(algoritmo==VRR){//Si es VRR, encolo el proceso en READYaux
-        encolar(pcbsREADYaux,proceso);
+        //encolar(pcbsREADYaux,proceso); //TODO: Ingresar a auxiliar
     }
 }
 

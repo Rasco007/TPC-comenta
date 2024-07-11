@@ -70,7 +70,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
-    recibirContextoBeta(conexionACPU); 
+    recibirContextoBeta(conexionACPU); //TODO: Hacer con conexion interrupt
 
     actualizarPCB(procesoEnEjecucion);
 
@@ -106,7 +106,7 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
     contextoEjecucion->DI=proceso->DI;
     contextoEjecucion->SI=proceso->SI;
-    contextoEjecucion->algoritmo = FIFO; //TODO: CAMBIAR ESTO DPS
+    contextoEjecucion->algoritmo = proceso->algoritmo;
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
  log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);

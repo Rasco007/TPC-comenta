@@ -82,9 +82,19 @@ log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
          log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
     }
 
+    //Serializacion de quantum
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->quantum), sizeof(contexto->quantum));
+    desplazamiento += sizeof(contexto->quantum);
+
+    //Serializacion de algoritmo
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->algoritmo),sizeof(contexto->algoritmo));
+    desplazamiento +=sizeof(contexto->algoritmo);
+    log_info(logger,"ALGORITMO: %d", contexto->algoritmo);
+
     //serializo el tiempo de cpu
-    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
+    /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
     desplazamiento += sizeof(contexto->tiempoDeUsoCPU);
+    log_info(logger,"ALGORITMO: %d", contexto->tiempoDeUsoCPU);*/
 
 log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
@@ -201,6 +211,19 @@ log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
         // Loguear detalles de la página
         log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
     }
+    
+    //Deserializar quantum
+    memcpy(&(contextoEjecucion->quantum), buffer + desplazamiento, sizeof(contextoEjecucion->quantum));
+    desplazamiento += sizeof(contextoEjecucion->quantum);
+
+    //Deserializar algoritmo
+    memcpy(&(contextoEjecucion->algoritmo), buffer + desplazamiento, sizeof(contextoEjecucion->algoritmo));
+    desplazamiento += sizeof(contextoEjecucion->algoritmo);
+    log_info(logger,"ALGORITMO: %d", contextoEjecucion->algoritmo);
+
+    //Deserializar tiempoDeUsoCPU
+    /*memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
+    desplazamiento += sizeof(contextoEjecucion->tiempoDeUsoCPU);*/
 
     log_info(logger, "termino de recibir todo");
     
