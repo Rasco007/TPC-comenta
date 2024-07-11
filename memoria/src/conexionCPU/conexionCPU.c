@@ -68,8 +68,22 @@ int ejecutarServidorCPU(int *socketCliente) {
                 log_info(logger, "Proc: %d",proceso->pid);
                 instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
                 log_info(logger, "Instruccion: %s",instruccion);
+                sleep(config_get_int_value(config, "RETARDO_RESPUESTA")/1000); //Agrego retardo
                 enviarMensaje(instruccion,*socketCliente); 
                 // limpiarBuffer(*socketCliente);
+                break;
+            case RESIZE: //VER
+                log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
+                int nuevo_tamano;
+                recv(*socketCliente, &pid, sizeof(int), 0);
+                recv(*socketCliente, &nuevo_tamano, sizeof(int), 0);
+                log_info(logger, "Nuevo tamaño: %d", nuevo_tamano);
+                proceso = buscar_proceso_por_pid(pid);
+                if (proceso == NULL) {
+                    log_error(loggerError, "No se encontró el proceso con PID: %d", pid);
+                    break;
+                }
+                proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");
