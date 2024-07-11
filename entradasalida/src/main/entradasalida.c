@@ -24,7 +24,7 @@ int BLOCK_SIZE ;
 int BLOCK_COUNT;
 //t_bitarray *my_bitmap;
 #define RETRASO_COMPACTACION 50000
-#define PATH_BASE_DIALFS "/home/utnso/tp-2024-1c-Silver-Crime/entradasalida/src/archivos"
+#define PATH_BASE_DIALFS "/home/utnso/tp-2024-1c-Silver-Crime/entradasalida/src/archivosFS"
 // yo lo corro con: ./bin/entradasalida IntX entradasalida.config
 int main(int argc, char** argv) {
 
@@ -43,14 +43,24 @@ int main(int argc, char** argv) {
     create_bitmap_file("bitmap.dat", BLOCK_COUNT/8);
     create_bloques_file("bloques.dat", BLOCK_COUNT*BLOCK_SIZE);
     crearArchivo2("hola.txt");
-    crearArchivo2("medio.txt");
+    truncarArchivo2("hola.txt", BLOCK_SIZE*2);
+    escribirCadenaEnArchivo("hola.txt", "1ERooO", 0);
+    crearArchivo2("chau.txt");
+    truncarArchivo2("chau.txt", BLOCK_SIZE*2);
+    escribirCadenaEnArchivo("chau.txt", "2DO", 0);
+    crearArchivo2("otro.txt");
+    truncarArchivo2("otro.txt", BLOCK_SIZE*2);
+    escribirCadenaEnArchivo("otro.txt", "3ROoooo", 0);
+    truncarArchivo2("hola.txt", BLOCK_SIZE*3);
+   // truncarArchivo2("chau.txt", BLOCK_SIZE*3);
+    /*crearArchivo2("medio.txt");
     crearArchivo2("chau.txt");
     crearArchivo2("otro.txt");
     truncarArchivo2("otro.txt", BLOCK_SIZE*2);
-    truncarArchivo2("medio.txt", BLOCK_SIZE*2); // es necesario que el orden final sea por orden de creacion? osea hola->chau->otro->medio? porque queda hola->otro->chau->medio
+    truncarArchivo2("medio.txt", BLOCK_SIZE*2); */// es necesario que el orden final sea por orden de creacion? osea hola->chau->otro->medio? porque queda hola->otro->chau->medio
     //nota: con este ejemplo, despues de compactar, el archivo "chau.txt" se posiciona despues de "otro.txt", esto esta bien?
-    delete_file("otro.txt");
-    crearArchivo2("nuevo.txt");
+    //delete_file("otro.txt");
+    //crearArchivo2("nuevo.txt");
     pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
     pthread_join(hilo_kernel, NULL);
@@ -99,6 +109,7 @@ void truncarArchivo2(char* nombre, int tamanio){
         bloquesarchivo=1;   
     int bloquefinal = bloqueInicial+bloquesarchivo-1;
     //printf("bloquesarchivo: %d\n", bloquesarchivo); 
+    char* datos=leerDatosDesdeArchivo(nombre, 0, tamanoArchivo);
     // Abrir el archivo bitmap.dat
     char pathBitmap[256];
     sprintf(pathBitmap, "%s/bitmap.dat", PATH_BASE_DIALFS);
@@ -148,10 +159,9 @@ void truncarArchivo2(char* nombre, int tamanio){
             for (int i = bloquefinal; i < bloquefinalposta; i++) 
                 bitarray_set_bit(my_bitmap2, i+1);// posicionBit = i+1;printf("posicionBit: %d\n", posicionBit);
             escribir_metadata(nombreSinExtension, bloqueInicial, tamanio);//modificar metadata
-        } else { // para ver los memory leaks, olvidate de este else, por ahora
+        } else { 
             log_info(logger, "Inicio Compactación.");
-            int bloqueinicialantesdecompactar=bloqueInicial;
-            int bloquefinalantesdecompactar=bloquefinal;
+            borrarContenidoArchivo(nombre, 0, tamanoArchivo);
             DIR *dir;
             struct dirent *ent;
             int nuevaposicioninicial, nuevaposicionfinal;
@@ -169,6 +179,7 @@ void truncarArchivo2(char* nombre, int tamanio){
                             perror("Error al abrir el archivo de metadata");
                             return ;
                         }
+                        
                         int bloqueInicialotroarchivo = config_get_int_value(config2, "bloqueInicial");
                         int tamanoArchivootroarchivo = config_get_int_value(config2, "tamanoArchivo");
                         //printf("bloqueInicial: %d\n", bloqueInicial);printf("tamanoArchivo: %d\n", tamanoArchivo)
@@ -177,32 +188,39 @@ void truncarArchivo2(char* nombre, int tamanio){
                             bloquesarchivo++;
                         if (tamanoArchivootroarchivo==0)
                             bloquesarchivo = 1;
-                        //int bloqueFinal = bloqueInicialotroarchivo+bloquesarchivo-1;
-                        //printf("bloqueFinal: %d\n", bloqueFinal);
-                        char valorBloqueInicial[20];
-                        if (bloqueInicialotroarchivo>bloquefinalantesdecompactar && iteracion==0) {//el archivo accedido se encuentra despues del que se quiere agrandar
-                            bloqueInicialotroarchivo=bloqueinicialantesdecompactar;
+                        char valorBloqueInicial[20]; 
+                        char *datosDeOtroArchivo=leerDatosDesdeArchivo(ent->d_name, 0, tamanoArchivootroarchivo);
+                        if (bloqueInicialotroarchivo>bloquefinal && iteracion==0) {//el archivo accedido se encuentra despues del que se quiere agrandar
+                            bloqueInicialotroarchivo=bloqueInicial;borrarContenidoArchivo(ent->d_name, 0, tamanoArchivootroarchivo);
+                          //  char *datosDeOtroArchivo=leerDatosDesdeArchivo(ent->d_name, 0, tamanoArchivootroarchivo);
+                           // printf("datosDeOtroArchivo: %s\n", datosDeOtroArchivo);
                             sprintf(valorBloqueInicial, "%d", bloqueInicialotroarchivo);
                             config_set_value(config2, "bloqueInicial", valorBloqueInicial);
                             if (config_save(config2) == -1) 
                                 perror("Error al guardar el archivo de metadata");
                             nuevaposicionfinal=bloqueInicialotroarchivo+bloquesarchivo-1;
                             nuevaposicioninicial=nuevaposicionfinal+1;
-                            for (int i = bloqueinicialantesdecompactar; i < nuevaposicionfinal; i++) 
+                            for (int i = bloqueInicial; i < nuevaposicionfinal; i++) 
                                 bitarray_set_bit(my_bitmap2, i+1);// posicionBit = i+1;printf("posicionBit: %d\n", posicionBit);
+                           
                             iteracion++;
                         }
-                        if (bloqueInicialotroarchivo>bloquefinalantesdecompactar && iteracion>0) {//el archivo accedido se encuentra despues del que se quiere agrandar
-                            bloqueInicialotroarchivo=nuevaposicioninicial;
+                        if (bloqueInicialotroarchivo>bloquefinal && iteracion>0) {//el archivo accedido se encuentra despues del que se quiere agrandar
+                            bloqueInicialotroarchivo=nuevaposicioninicial;//borrarContenidoArchivo(ent->d_name, 0, tamanoArchivootroarchivo);
+                           // char *datosDeOtroArchivo=leerDatosDesdeArchivo(ent->d_name, 0, tamanoArchivootroarchivo);
                             sprintf(valorBloqueInicial, "%d", bloqueInicialotroarchivo);
                             config_set_value(config2, "bloqueInicial", valorBloqueInicial);
                             if (config_save(config2) == -1) 
                                 perror("Error al guardar el archivo de metadata");
                             nuevaposicionfinal=bloqueInicialotroarchivo+bloquesarchivo-1;
                             nuevaposicioninicial=nuevaposicionfinal+1;
-                            for (int i = bloqueinicialantesdecompactar; i < nuevaposicionfinal; i++) 
+                            for (int i = bloqueInicial; i < nuevaposicionfinal; i++) 
                                 bitarray_set_bit(my_bitmap2, i+1);// posicionBit = i+1;printf("posicionBit: %d\n", posicionBit);
+                          //  escribirCadenaEnArchivo(ent->d_name, datosDeOtroArchivo, 0);
+                           // free(datosDeOtroArchivo);
                         }
+                        escribirCadenaEnArchivo(ent->d_name, datosDeOtroArchivo, 0);
+                        free(datosDeOtroArchivo);
                         config_destroy(config2);
                     }
                 }
@@ -212,10 +230,11 @@ void truncarArchivo2(char* nombre, int tamanio){
                 return ;
             }
             log_info(logger, "Fin Compactación.");
-            usleep(RETRASO_COMPACTACION);
+            usleep(RETRASO_COMPACTACION*10);
             for (int i = nuevaposicioninicial; i < nuevaposicioninicial+cantidadBloques-1; i++) 
                 bitarray_set_bit(my_bitmap2, i+1);//posicionBit = i+1;printf("posicionBit: %d\n", posicionBit);
             escribir_metadata(nombreSinExtension, nuevaposicioninicial, tamanio);//modificar metadata del archivo truncado
+            escribirCadenaEnArchivo(nombre, datos, 0);
         }
     }
     if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) 
@@ -228,6 +247,7 @@ void truncarArchivo2(char* nombre, int tamanio){
     fclose(file);
     bitarray_destroy(my_bitmap2);
     config_destroy(config);
+    free(datos);
     close(fd);
 }
 
@@ -464,12 +484,181 @@ void mostrar_tamano_archivo(const char *nombre) {
     }
 }
 
-char *obtenerNombreSinExtension(const char *nombreArchivo) {
+char* obtenerNombreSinExtension(const char *nombreArchivo) {
     static char nombreSinExtension[256]; 
     strcpy(nombreSinExtension, nombreArchivo); // Copiar el nombre original al buffer
-    // Buscar la última aparición del punto ('.') que indica el inicio de la extensión
     char *punto = strrchr(nombreSinExtension, '.');
-    if (punto != NULL && strcmp(punto, ".txt") == 0) 
+    if (punto != NULL) 
         *punto = '\0'; // Colocar el terminador nulo para eliminar la extensión
-    return nombreSinExtension; 
+    return nombreSinExtension;
+}
+
+char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t offset, size_t cantidadBytes) {
+    char pathArchivo[256] = PATH_BASE_DIALFS;
+    sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
+    // Abrir el archivo
+    int fd = open(pathArchivo, O_RDONLY);
+    if (fd == -1) {
+        perror("Error al abrir el archivo");
+        return NULL;
+    }
+    char pathMetadata[128];
+    char *nombre = obtenerNombreSinExtension(nombreArchivo);
+    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
+    t_config *config = config_create(pathMetadata);
+    int bloqueInicial = config_get_int_value(config, "bloqueInicial");
+    int posicionInicial = bloqueInicial*BLOCK_SIZE+offset;
+    // Mapear el archivo en memoria
+    void *map = mmap(NULL, BLOCK_COUNT * BLOCK_SIZE, PROT_READ, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+        perror("Error al mapear el archivo");
+        close(fd);
+        return NULL;
+    }
+    // Verificar si el offset más la cantidad de bytes supera el tamaño del archivo mapeado
+    if (posicionInicial + cantidadBytes > BLOCK_COUNT * BLOCK_SIZE) {
+        fprintf(stderr, "Error: El offset y la cantidad de bytes exceden el tamaño del archivo.\n");
+        munmap(map, BLOCK_COUNT * BLOCK_SIZE);
+        close(fd);
+        return NULL;
+    }
+    // Reservar memoria para almacenar los datos leídos
+    char *datosLeidos = (char *)malloc(cantidadBytes + 1); // +1 para el terminador nulo
+    if (datosLeidos == NULL) {
+        perror("Error al reservar memoria para los datos leídos");
+        munmap(map, BLOCK_COUNT * BLOCK_SIZE);
+        close(fd);
+        return NULL;
+    }
+    // Copiar los datos desde el archivo mapeado al buffer de datos leídos
+    memcpy(datosLeidos, (char *)map + posicionInicial, cantidadBytes);
+    datosLeidos[cantidadBytes] = '\0'; // Asegurar que la cadena esté terminada en nulo
+    // Desmapear el archivo y cerrar el descriptor de archivo
+    if (munmap(map, BLOCK_COUNT * BLOCK_SIZE) == -1) {
+        perror("Error al desmapear el archivo");
+    }
+    close(fd);
+    config_destroy(config);
+    //free(datosLeidos);
+    return datosLeidos;
+}
+void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_t offset) {
+    char pathArchivo[256] = PATH_BASE_DIALFS;
+    sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
+    size_t tamanioCadena = strlen(cadena) + 1; // Longitud de la cadena más el caracter nulo '\0'
+    // Abrir el archivo
+    int fd = open(pathArchivo, O_RDWR);
+    if (fd == -1) {
+        perror("Error al abrir el archivo");
+        return;
+    }
+    char pathMetadata[128];
+    char *nombre = obtenerNombreSinExtension(nombreArchivo);
+    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
+    t_config *config = config_create(pathMetadata);
+    int bloqueInicial = config_get_int_value(config, "bloqueInicial");
+    printf("bloqueInicial: %d\n", bloqueInicial);
+    int posicionInicial = bloqueInicial*BLOCK_SIZE+offset;
+    // Mapear el archivo en memoria
+    void *map = mmap(NULL, BLOCK_COUNT * BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+        perror("Error al mapear el archivo");
+        close(fd);
+        return;
+    }
+    // Escribir la cadena en la memoria mapeada
+    memcpy((char *)map + posicionInicial, cadena, tamanioCadena);
+    // Sincronizar los cambios con el archivo en disco
+    if (msync(map, BLOCK_COUNT * BLOCK_SIZE, MS_SYNC) == -1) 
+        perror("Error al sincronizar los cambios con el archivo");
+    // Desmapear el archivo y cerrar el descriptor de archivo
+    if (munmap(map, BLOCK_COUNT * BLOCK_SIZE) == -1) 
+        perror("Error al desmapear el archivo");
+    config_destroy(config);
+    close(fd);
+}
+void escribirIntEnArchivo(const char *nombreArchivo, int dato, off_t offset) {
+    char pathArchivo[256] = PATH_BASE_DIALFS;
+    sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
+    size_t tamanioInt = sizeof(int); // Tamaño del entero
+    // Abrir el archivo
+    int fd = open(pathArchivo, O_RDWR);
+    if (fd == -1) {
+        perror("Error al abrir el archivo");
+        return;
+    }
+    char pathMetadata[128];
+    char *nombre = obtenerNombreSinExtension(nombreArchivo);
+    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
+    t_config *config = config_create(pathMetadata);
+    int bloqueInicial = config_get_int_value(config, "bloqueInicial");
+    int posicionInicial = bloqueInicial*BLOCK_SIZE+offset;
+    // Mapear el archivo en memoria
+    void *map = mmap(NULL, BLOCK_COUNT * BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+        perror("Error al mapear el archivo");
+        close(fd);
+        return;
+    }
+    // Escribir el entero en la memoria mapeada
+    memcpy((char *)map + posicionInicial, &dato, tamanioInt);
+    // Sincronizar los cambios con el archivo en disco
+    if (msync(map, BLOCK_COUNT * BLOCK_SIZE, MS_SYNC) == -1)
+        perror("Error al sincronizar los cambios con el archivo");
+    // Desmapear el archivo y cerrar el descriptor de archivo
+    if (munmap(map, BLOCK_COUNT * BLOCK_SIZE) == -1) 
+        perror("Error al desmapear el archivo");
+    close(fd);
+}
+void borrarContenidoArchivo(const char *nombreArchivo, off_t offset, size_t cantidadBytes) {
+    char pathArchivo[256];
+    sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
+    // Abrir el archivo
+    int fd = open(pathArchivo, O_RDWR);
+    if (fd == -1) {
+        perror("Error al abrir el archivo");
+        return;
+    }
+    char pathMetadata[128];
+    char *nombreSinExtension = obtenerNombreSinExtension(nombreArchivo);
+    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombreSinExtension);
+    t_config *config = config_create(pathMetadata);
+    if (config == NULL) {
+        perror("Error al abrir el archivo de metadata");
+        close(fd);
+        return;
+    }
+    int bloqueInicial = config_get_int_value(config, "bloqueInicial");
+    if (bloqueInicial < 0) {
+        fprintf(stderr, "Valor de bloqueInicial inválido\n");
+        config_destroy(config);
+        close(fd);
+        return;
+    }
+    // Mapear el archivo en memoria
+    void *map = mmap(NULL, BLOCK_COUNT * BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+        perror("Error al mapear el archivo");
+        config_destroy(config);
+        close(fd);
+        return;
+    }
+    int posicionInicial = BLOCK_SIZE * bloqueInicial + offset;
+    if (posicionInicial + cantidadBytes > BLOCK_COUNT * BLOCK_SIZE) {
+        fprintf(stderr, "Rango de bytes a borrar excede el tamaño del archivo\n");
+        munmap(map, BLOCK_COUNT * BLOCK_SIZE);
+        config_destroy(config);
+        close(fd);
+        return;
+    }
+    // Escribir ceros en la memoria mapeada
+    memset((char *)map + posicionInicial, 0, cantidadBytes);
+    // Sincronizar los cambios con el archivo en disco
+    if (msync(map, BLOCK_COUNT * BLOCK_SIZE, MS_SYNC) == -1) 
+        perror("Error al sincronizar los cambios con el archivo");
+    // Desmapear el archivo y cerrar el descriptor de archivo
+    if (munmap(map, BLOCK_COUNT * BLOCK_SIZE) == -1) 
+        perror("Error al desmapear el archivo");
+    config_destroy(config);
+    close(fd);
 }
