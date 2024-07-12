@@ -53,11 +53,11 @@ int obtenerPrimeraPosicionLibre(t_bitarray *bitmap);
 void create_bitmap_file(const char *filename, size_t size);
 void truncarArchivo2(char* nombre, int tamanio);
 void create_bloques_file(const char *filename, size_t size);
-void mostrar_tamano_archivo(const char *nombre);
+void mostrar_tamano_archivo(const char *nombre, const char *path);
 char *obtenerNombreSinExtension(const char *nombreArchivo);
 void crearMetadata(char *nombre, int bloqueInicial);
 void borrarContenidoArchivo(const char *nombreArchivo, size_t cantidadBytes);
-void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_t offset);
-void escribirIntEnArchivo(const char *nombreArchivo, int dato, off_t offset);
-char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t offset, size_t cantidadBytes);
+void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_t registroPunteroArchivo);
+void escribirIntEnArchivo(const char *nombreArchivo, int dato, off_t registroPunteroArchivo);
+char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t registroPunteroArchivo, size_t registroTamanio);
 #endif
