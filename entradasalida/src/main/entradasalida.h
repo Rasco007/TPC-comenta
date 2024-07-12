@@ -20,7 +20,7 @@
 
 #include <../include/io_kernel.h>
 //FS
-#include <commons/bitarray.h>
+/*#include <commons/bitarray.h>
 #include <fcntl.h>
 //#include <unistd.h>
 #include <sys/stat.h>
@@ -28,8 +28,8 @@
 //#include <errno.h>
 #include <sys/mman.h>
 //#include <string.h>
-#include <dirent.h>
-
+#include <dirent.h>*/
+#include <Filesystem/filesystem.h>
 extern t_log* loggerError;
 
 extern int fd_kernel;
@@ -45,19 +45,4 @@ extern char* PATH_BASE_DIALFS;
 extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
 
-//fs
-void delete_file(const char *filename);
-void crearArchivo2(char* nombre);
-void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo); 
-int obtenerPrimeraPosicionLibre(t_bitarray *bitmap);
-void create_bitmap_file(const char *filename, size_t size);
-void truncarArchivo2(char* nombre, int tamanio);
-void create_bloques_file(const char *filename, size_t size);
-void mostrar_tamano_archivo(const char *nombre, const char *path);
-char *obtenerNombreSinExtension(const char *nombreArchivo);
-void crearMetadata(char *nombre, int bloqueInicial);
-void borrarContenidoArchivo(const char *nombreArchivo, size_t cantidadBytes);
-void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_t registroPunteroArchivo);
-void escribirIntEnArchivo(const char *nombreArchivo, int dato, off_t registroPunteroArchivo);
-char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t registroPunteroArchivo, size_t registroTamanio);
 #endif
