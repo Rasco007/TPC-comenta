@@ -4,6 +4,7 @@
 - Planifica la ejecución de los procesos del sistema en el módulo CPU a través de dos conexiones con el mismo: una de dispatch y otra de interrupt.*/
 
 #include <main/kernel.h>
+#include "escuchaIO/servidorIO.h"
 #include "../src/planificacion/planificacion.h"
 
 int socketCliente;
@@ -13,6 +14,7 @@ t_config* config;
 pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h, ejecutarIO_h;
 Kernel_io kernel;
 void escucharAlIO();
+void inicializarStructsIO(Kernel_io *kernel);
 
 int main () {
     //Inicializar variables

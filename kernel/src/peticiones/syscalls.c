@@ -1,4 +1,5 @@
 #include <peticiones/syscalls.h>
+#include "syscalls.h"
 
 t_list *recursos;
 char **nombresRecursos;
@@ -25,13 +26,22 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             signal_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_GEN_SLEEP:
+            //existe la interfaz enviada? - hecho
+            //esta conectada? - hecho
+            //TODO - probarlo en el flujo nomas
             prc_io_gen_sleep(contextoEjecucion, proceso);
 
             break;
         case IO_STDIN_READ:
-            io_stdin_read(proceso, contextoEjecucion->motivoDesalojo->parametros);
+            //existe la interfaz enviada?
+            //esta conectada?
+            //puede ejecutar esta operacion?
+            prc_io_stdin_read(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_STDOUT_WRITE:
+            //existe la interfaz enviada?
+            //esta conectada?
+            //puede ejecutar esta operacion?
             io_stdout_write(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_FS_CREATE:
@@ -61,7 +71,54 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
     }
 }
 
+void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso)
+{
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
 
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        if (esValida == 1)
+        {
+            // en caso de validar() sea 1, hacemos io_gen_sleep
+            ejecutar_io_gen_sleep(proceso, contextoEjecucion->motivoDesalojo->parametros);
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "se debe mandar proceso a exit");
+        }
+    }
+    else
+    {
+        log_info(logger, "se debe mandar proceso a exit");
+        // mandar proceso a exit
+    }
+}
+
+void prc_io_stdin_read(t_contexto *contextoEjecucion, t_pcb *proceso){
+     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDIN");
+        if (esValida == 1)
+        {
+            // en caso de validar() sea 1, hacemos io_gen_sleep
+            ejecutar_io_stdin_read(proceso, contextoEjecucion->motivoDesalojo->parametros);
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "se debe mandar proceso a exit");
+        }
+    }
+    else
+    {
+        log_info(logger, "se debe mandar proceso a exit");
+        // mandar proceso a exit
+    }
+}
 
 
 void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {
@@ -176,16 +233,20 @@ void signal_s(t_pcb *proceso,char **parametros){
     //if (strncmp (parametros[2], "EXIT", 4)) volverACPU(proceso);
 }
 
+void resize_s(t_pcb *proceso,char **parametros){
+
+}
+
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
 void ejecutar_io_gen_sleep(t_pcb *proceso, char **parametros,  Kernel_io *kernel)
 {
-    
 
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
     loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+  
 
     log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
 
@@ -215,38 +276,240 @@ void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){
      log_info(logger, "luego e recobor msj");
     pasarAReady(proceso);
      
-   
     return; // Add this line to fix the issue
 }
 
 
 
-void io_stdin_read(t_pcb *proceso,char **parametros){
 
+void ejecutar_io_stdin_read(t_pcb *proceso, char **parametros)
+{
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+
+    loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+
+    log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ", proceso->pid);
+
+    pthread_t pcb_bloqueado;
+    if (!pthread_create(&pcb_bloqueado, NULL, mandar_ejecutar_stdin(parametros[0], parametros[1], parametros[2]), proceso))
+    {
+        pthread_detach(pcb_bloqueado);
+    }
+    else
+    {
+        log_error(loggerError, "Error al crear hilo para ejecutar IO STDIN");
+    }
 }
 
-void io_stdout_write(t_pcb *proceso,char **parametros){
+void io_stdout_write(t_pcb *proceso, char **parametros)
+{
+     estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
 
+    loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+
+    log_info(logger, "PID <%d>-Ejecuta IO_STDOUT_WRITE", proceso->pid);
+
+    pthread_t pcb_bloqueado;
+    if (!pthread_create(&pcb_bloqueado, NULL, mandar_ejecutar_stdout(proceso, parametros[0], parametros[1], parametros[2]), proceso))
+    {
+        pthread_detach(pcb_bloqueado);
+    }
+    else
+    {
+        log_error(loggerError, "Error al crear hilo para ejecutar IO STDOUT");
+    }
 }
 
-void io_fs_create(t_pcb *proceso,char **parametros){
-
+void io_fs_create(t_pcb *proceso, char **parametros)
+{
 }
 
-void io_fs_delete(t_pcb *proceso,char **parametros){
 
+void io_fs_delete(t_pcb *proceso, char **parametros)
+{
 }
 
-void io_fs_truncate(t_pcb *proceso,char **parametros){
-
+void io_fs_truncate(t_pcb *proceso, char **parametros)
+{
 }
 
-void io_fs_write(t_pcb *proceso,char **parametros){
-
+void io_fs_write(t_pcb *proceso, char **parametros)
+{
 }
 
-void io_fs_read(t_pcb *proceso,char **parametros){
+void io_fs_read(t_pcb *proceso, char **parametros)
+{
+}
 
+
+//COMO OBTENGO EL SOCKET CORRESPONDIENTE A ESA INTERFAZ?
+//STDOUT
+void *mandar_ejecutar_stdout(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio){
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+   log_info(logger, "se recibio el socket %d", socketClienteIO);
+    //enviarMensajeSTDOUT(socketClienteIO, interfaz, registroDireccion, registroTamanio);//como hago para recuperar el socket del IO que obtuve en escucharIO
+        
+    // TODO: esperar la rta de IO
+    pasarAReady(proceso);
+    return; 
+}
+
+//STDIN - POR EL MOMENTO LE SAQUE EL PROCESO PARA PROBARLO
+void *mandar_ejecutar_stdin(char *interfaz,char *registroDireccion, char* registroTamanio){
+   int socketClienteIO = obtener_socket(&kernel, interfaz);
+   log_info(logger, "se recibio el socket %d", socketClienteIO);
+    
+    enviarMensajeSTDIN(socketClienteIO, interfaz, registroDireccion, registroTamanio);
+        
+    // TODO: esperar la rta de IO
+    //pasarAReady(proceso);
+    return; 
+}
+
+
+void recibirMsjIO(int socketClienteIO){
+    char buffer[1024];
+    int bytes_recibidos = recv(socketClienteIO, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return NULL;
+    }
+    buffer[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
+    
+    log_info(logger, "valor recibido: %s", buffer);
+}
+
+// MENSAJES
+void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero)
+{
+    // Asignar memoria para el paquete
+    t_paquetebeta *paquete = malloc(sizeof(t_paquete));
+
+    // Asignar el código de operación al paquete
+    paquete->codigo_operacion = IO_GEN_SLEEP;
+
+    // Asignar memoria para el buffer
+    paquete->buffer = malloc(sizeof(t_buffer));
+
+    // Copiar el mensaje al buffer
+    paquete->buffer->size = strlen(mensaje) + 1;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
+
+    // Asignar el entero al paquete
+    paquete->entero = entero;
+
+    // Calcular el tamaño total del paquete
+    int bytes = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
+
+    // Serializar el paquete
+    void *a_enviar = malloc(bytes);
+    memcpy(a_enviar, &(paquete->codigo_operacion), sizeof(op_code));
+    memcpy(a_enviar + sizeof(op_code), &(paquete->entero), sizeof(int));
+    memcpy(a_enviar + sizeof(op_code) + sizeof(int), paquete->buffer->stream, paquete->buffer->size);
+
+    // Enviar el paquete a través del socket
+    send(socket_cliente, a_enviar, bytes, 0);
+    log_info(logger, "La interfaz '%s' dormirá durante %d unidades de tiempo", mensaje, entero);
+    // Liberar la memoria asignada
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+}
+
+void enviarMensajeSTDIN(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio){
+    // Crear paquete
+    t_paquete *paquete = crearPaquete();
+
+ // Inicializar buffer
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 0;
+    paquete->buffer->stream = NULL;
+
+    // Agregar la primera variable char* al paquete
+    agregarAPaquete(paquete, registroDireccion, strlen(registroDireccion) + 1);
+
+    // Agregar la segunda variable char* al paquete
+    agregarAPaquete(paquete, registroTamanio, strlen(registroTamanio) + 1);
+
+    // // Agregar el tamaño al paquete
+     //agregarAPaquete(paquete, &tamanio, sizeof(int));
+
+    paquete->codigo_operacion = READ;
+     // Asignar memoria para el buffer
+   
+
+    // // Agregar la dirección al paquete
+     //agregarAPaquete(paquete, direccion, sizeof(void*));
+
+      // Calcular el tamaño total del paquete
+   
+    
+    // Enviar el paquete a través del socket
+    enviarPaquete(paquete, socketClienteIO);
+
+    // Eliminar el paquete después de enviarlo
+    eliminarPaquete(paquete);
+    
+}
+
+void enviarMensajeSTDOUT(int socketClienteIO, char* nombreInterfaz, char* registroDireccion, char *registroTamanio){
+   
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = IO_STDOUT_WRITE;
+    paquete->buffer = malloc(sizeof(t_buffer));
+
+    // Calcular el tamaño total del buffer
+    int nombre_len = strlen(nombreInterfaz) + 1;
+    int param1_len = strlen(registroDireccion) + 1;
+    int param2_len = strlen(registroTamanio) + 1;
+
+    int total_size = sizeof(int) + nombre_len + sizeof(int) + param1_len + sizeof(int) + param2_len + sizeof(int);
+
+    paquete->buffer->size = total_size;
+    paquete->buffer->stream = malloc(total_size);
+
+    // Serializar los datos en el buffer
+    int desplazamiento = 0;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &nombre_len, sizeof(int));
+    desplazamiento += sizeof(int);
+    memcpy(paquete->buffer->stream + desplazamiento, nombreInterfaz, nombre_len);
+    desplazamiento += nombre_len;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &param1_len, sizeof(int));
+    desplazamiento += sizeof(int);
+    memcpy(paquete->buffer->stream + desplazamiento, registroDireccion, param1_len);
+    desplazamiento += param1_len;
+
+    memcpy(paquete->buffer->stream + desplazamiento, &param2_len, sizeof(int));
+    desplazamiento += sizeof(int);
+    memcpy(paquete->buffer->stream + desplazamiento, registroTamanio, param2_len);
+    desplazamiento += param2_len;
+
+    // Serializar y enviar el paquete
+    int bytes = paquete->buffer->size + 2 * sizeof(int);
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    send(socket, a_enviar, bytes, 0);
+
+    free(a_enviar);
+    eliminarPaquete(paquete);
+}
+
+//READY
+void pasarAReady(t_pcb *proceso)
+{
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    ingresarAReady(proceso);
 }
 
 //EXIT

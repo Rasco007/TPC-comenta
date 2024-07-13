@@ -19,7 +19,7 @@
 #include <../include/iniciar_io.h>
 
 #include <../include/io_kernel.h>
-
+#include <../include/io_memoria.h>
 extern t_log* loggerError;
 
 extern int fd_kernel;

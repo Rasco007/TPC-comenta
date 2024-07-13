@@ -26,12 +26,16 @@ void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso);
 void volverACPU(t_pcb *);
 
 
+void *dormirIO(t_pcb *proceso, char *interfaz, char *tiempo);
+
 
 void recibirMsjIO(int socketClienteIO);
 
 void wait_s(t_pcb *proceso, char **parametros);
 void resize_s(t_pcb *proceso, char **parametros);
 void signal_s(t_pcb *proceso, char **parametros);
+
+void ejecutar_io_gen_sleep(t_pcb *proceso, char **parametros);
 
 void ejecutar_io_stdin_read(t_pcb *proceso, char **parametros);
 void io_stdout_write(t_pcb *proceso, char **parametros);

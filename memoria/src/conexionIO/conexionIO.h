@@ -7,8 +7,8 @@
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
 #include <global.h>
-
-int ejecutarServidorIO(int*); 
+#include <./main/memoria.h>
+int ejecutarServidorIO(); 
 
 int ejecutarServidorCPU(int *socketCliente);
 char* leer(int32_t direccionFisica, int tamanio);

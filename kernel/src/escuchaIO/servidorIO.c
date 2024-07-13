@@ -15,7 +15,6 @@ void escucharAlIO() {
     int socketKernel = alistarServidorMulti(puertoEscucha);
 
     while (1) {
-        
         log_info(logger,"Esperando conexiones con IO...");
         pthread_t thread;
         
@@ -51,6 +50,7 @@ void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
         }else{
             log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
             log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
+
             guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO);
         }
         
@@ -110,6 +110,7 @@ void destruirStructsIO (Kernel_io *kernel) {
     kernel->cantidad = 0;
 }
 
+
 //esta funcion anda flama
 int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
     for (size_t i = 0; i < kernel->cantidad; i++) {
@@ -137,7 +138,7 @@ void desconectar_interfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     log_info(logger,"Interfaz %s no encontrada\n", nombre_interfaz);
 }
 
-int existeLaInterfaz(char *nombreInterfaz, Kernel_io *kernel){
+int existeLaInterfaz(char *nombreInterfaz, const Kernel_io *kernel){
     //verifico que exista en la estructura
     int socket = obtener_socket(kernel, nombreInterfaz);
     if(socket == -1){
@@ -149,20 +150,7 @@ int existeLaInterfaz(char *nombreInterfaz, Kernel_io *kernel){
         return estaConectado;
     }
 }
-int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
-    for (size_t i = 0; i < kernel->cantidad; i++) {
-        log_info(logger, "nombre interfaz: %s", kernel->interfaces[i].nombre_interfaz);
-        log_info(logger, "tipo interfaz: %s", kernel->interfaces[i].tipo_interfaz);
-        log_info(logger, "tipo requerido: %s", tipoRequerido);
-        log_info(logger, "nombre requerido: %s", tipoRequerido);
-        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombreInterfaz) == 0) {
-            if (strcmp(kernel->interfaces[i].tipo_interfaz, tipoRequerido) == 0) {
-                return 1;
-            }
-        }
-    }
-    return -1;
-}
+
 int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     fd_set readfds;
     struct timeval timeout;
@@ -215,10 +203,10 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
 
 
 int ejecutarServidorKernel(int socketClienteIO){
-    // char * tamaño_max = "1024";
-     //char * direc_memoria = "1234";
+     char * tamaño_max = "1024";
+     char * direc_memoria = "1234";
     //dormirIO("IntX", 1);
-    //mandar_ejecutar_stdin("IntX",direc_memoria, tamaño_max);
+    mandar_ejecutar_stdin("IntX",direc_memoria, tamaño_max);
     return 0;
      /*while (1) {//ver de solamente poner un recv en vez de while 1 aunque en realidad recibe la operacion en syscalls
         instruccionActual = -1; //habria que importar el ciclo de instrucciones para que la reconozca
@@ -239,6 +227,21 @@ int ejecutarServidorKernel(int socketClienteIO){
 		}
 	}*/
 
+
 }
 
 
+int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
+    for (size_t i = 0; i < kernel->cantidad; i++) {
+        log_info(logger, "nombre interfaz: %s", kernel->interfaces[i].nombre_interfaz);
+        log_info(logger, "tipo interfaz: %s", kernel->interfaces[i].tipo_interfaz);
+        log_info(logger, "tipo requerido: %s", tipoRequerido);
+        log_info(logger, "nombre requerido: %s", tipoRequerido);
+        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombreInterfaz) == 0) {
+            if (strcmp(kernel->interfaces[i].tipo_interfaz, tipoRequerido) == 0) {
+                return 1;
+            }
+        }
+    }
+    return -1;
+}

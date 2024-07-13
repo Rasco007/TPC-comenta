@@ -94,15 +94,14 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
     // Asegurarse de que el nombre esté correctamente terminado por un carácter nulo
     nombre[bytes_recibidos - sizeof(int)] = '\0';
 	
-	log_info(logger, "Nombre recibido: %s", nombre);
-	log_info(logger, "Tiempo a dormir recibido: %d", unidades ); 
-	log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
-	log_info(logger, "antes de dormir");
-	sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
-	log_info(logger, "despues de dormir");
-	//mandar mensaje luego de dormir a kernel
-	 char* respuesta = "OK";
+	  log_info(logger, "Nombre recibido: %s", nombre);
+	  log_info(logger, "Tiempo a dormir recibido: %d", unidades ); 
+	  log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
+	  log_info(logger, "antes de dormir");
+	  sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
+  
+	  //mandar mensaje luego de dormir a kernel
+	  char* respuesta = "OK";
     send(socket_cliente, respuesta, strlen(respuesta), 0);
-	log_info(logger, "luego de enviar respuesta");
-    
+
 }

@@ -12,7 +12,7 @@
 #include <contextoEjecucion/contextoEjecucion.h>
 #include <./main/entradasalida.h>
 
-
-void conexionKernel(); 
+void conexionKernel(char **argv);
+void enviarHandshake(char *nombreInterfaz);
 
 #endif
