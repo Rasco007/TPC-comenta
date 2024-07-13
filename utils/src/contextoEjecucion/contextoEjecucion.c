@@ -92,9 +92,9 @@ log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
     log_info(logger,"ALGORITMO: %d", contexto->algoritmo);
 
     //serializo el tiempo de cpu
-    /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
     desplazamiento += sizeof(contexto->tiempoDeUsoCPU);
-    log_info(logger,"ALGORITMO: %d", contexto->tiempoDeUsoCPU);*/
+    
 
 log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
@@ -222,8 +222,8 @@ log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
     log_info(logger,"ALGORITMO: %d", contextoEjecucion->algoritmo);
 
     //Deserializar tiempoDeUsoCPU
-    /*memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
-    desplazamiento += sizeof(contextoEjecucion->tiempoDeUsoCPU);*/
+    memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
+    desplazamiento += sizeof(contextoEjecucion->tiempoDeUsoCPU);
 
     log_info(logger, "termino de recibir todo");
     

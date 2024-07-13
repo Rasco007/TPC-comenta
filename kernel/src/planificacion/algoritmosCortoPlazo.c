@@ -58,6 +58,8 @@ t_pcb *proximoAEjecutarVRR(){
     else{
         t_pcb *pcbActual = desencolar(pcbsREADYaux);
         int64_t quantumConsumido=temporal_gettime(pcbActual->tiempoDeUsoCPU);
+        //Los procesos que vuelven de IO se encolan en READYaux
+        //el quantum para estos casos es el Q definido menos el Q consumido previamente
         pcbActual->quantum = quantumConfig-quantumConsumido;
         pcbActual->algoritmo=VRR;
         return pcbActual;
