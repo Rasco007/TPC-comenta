@@ -28,7 +28,7 @@ char** elementosInstruccion;
 int instruccionActual; 
 int cantParametros;
 int tiempoEspera;
-int nroSegmento;
+int flag_check_interrupt=0;
 
 t_temporal* rafagaCPU; 
 int64_t rafagaCPUEjecutada; 
@@ -37,7 +37,13 @@ void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
-    check_interrupt(); //control de quantum
+
+    //Cuando le seteo en uno por el desalojo, no entraria al check interupt
+    if(flag_check_interrupt==0){
+        check_interrupt();//control de quantum
+    }
+    flag_check_interrupt=0;
+    
     liberarMemoria();
 }
 void solicitarInstruccion(int pid, int indice, int socket){
@@ -175,42 +181,56 @@ void io_fs_delete(char* interfaz,char* nombreArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 /*Copio la cantidad de bytes indicada del string apuntado por SI a DI*/
@@ -310,7 +330,7 @@ void io_gen_sleep(char* interfaz, char* unidades_trabajo){
     modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
-    //hacer flag
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 /*Desalojo el proceso y le pido a kernel que asigne una instancia del recurso indicado*/
@@ -319,6 +339,7 @@ void wait_c(char* recurso){
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
      flag_bloqueante = 1;
+     flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 /*Desalojo el proceso y le pido a kernel que libere una instancia del recurso indicado*/
@@ -327,6 +348,7 @@ void signal_c(char* recurso){
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
      flag_bloqueante = 1;
+     flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 /*Desalojo el proceso y kernel se encarga de mover el proceso a EXIT*/
@@ -335,10 +357,11 @@ void exit_c () {
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     log_info(logger, "Pasa modificarMotivoDesalojo");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); //TODO: HACER CON INTERRUPT
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion); //TODO: HACER CON INTERRUPT
     free (terminado);
     log_info(logger, "fin exit_c");
-     flag_bloqueante = 1;
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 /*Leo el valor almacenado en la direccion fisica de memoria y lo almaceno en el registro*/

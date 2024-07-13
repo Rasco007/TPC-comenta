@@ -5,6 +5,7 @@
 t_buffer* bufferContexto;
 int conexionACPU;
 int conexionACPUInterrupt;
+sem_t memoriaOK;
 
 void conexionCPU() {
     //CONEXION CPU DISPATCH
@@ -45,10 +46,10 @@ void conexionCPU() {
 int recibirOperacionDeCPU(){ 
 	int cod_op;
     
-	if (recv(conexionACPU, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+	if (recv(conexionACPUInterrupt, &cod_op, sizeof(int), MSG_WAITALL) > 0)
 		return cod_op;
 	else {
-		close(conexionACPU);
+		close(conexionACPUInterrupt);
 		return -1;
 	}
 }
@@ -59,7 +60,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 	iniciarContexto ();
     
     bufferContexto = malloc(sizeof(t_buffer));
-
+    sem_wait(&memoriaOK);
     asignarPCBAContexto(procesoEnEjecucion);
     log_info(logger, "el algoritmo es %d", contextoEjecucion->algoritmo);
     // Loguear registros CPU
@@ -70,7 +71,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
 
-    recibirContextoBeta(conexionACPU); //TODO: Hacer con conexion interrupt
+    recibirContextoBeta(conexionACPUInterrupt); //TODO: Hacer con conexion interrupt
 
     actualizarPCB(procesoEnEjecucion);
 

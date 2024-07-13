@@ -86,6 +86,7 @@ void inicializarSemaforos(){
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
+    sem_init(&memoriaOK,0,0);
 }
 
 void destruirSemaforos () {
@@ -94,6 +95,7 @@ void destruirSemaforos () {
     sem_close(&hayProcesosNuevos);
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);
+    sem_close(&memoriaOK);
 }
 
 //Manejo de colas
