@@ -1,12 +1,12 @@
 #include <conexionMemoria/conexionMemoria.h>
 
-void conexionMemoria(char **argv) {
+void conexionIOMemoria(char **argv) {
 char *nombreInterfaz = argv[1];
     while(1){
         fd_memoria = conexion("MEMORIA");
         
         if(fd_memoria != -1){
-            enviarHandshake(nombreInterfaz);
+            enviarHandshakeMemoria();
             break;
         }
         else {
@@ -15,16 +15,18 @@ char *nombreInterfaz = argv[1];
         }
     }
 }
-void enviarHandshake(char *nombreInterfaz)
+void enviarHandshakeMemoria()
 {
     size_t bytes;
 
     int32_t handshake = 1;
     int32_t result;
-
+    
+    log_info(logger, "antes de hacer send");
     bytes = send(fd_memoria, &handshake, sizeof(int32_t), 0);
+    
     bytes = recv(fd_memoria, &result, sizeof(int32_t), MSG_WAITALL);
-
+    log_info(logger, "luego de hacer recv cin valor %d", result);
     if (result == 0)
     {
         log_info(logger, "Handshake OK");

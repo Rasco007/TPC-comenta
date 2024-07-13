@@ -14,6 +14,6 @@
 
 
 
-void conexionMemoria(); 
+void conexionIOMemoria(char **argv);
 
 #endif
