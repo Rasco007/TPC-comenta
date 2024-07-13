@@ -28,9 +28,11 @@ typedef struct {
 void escucharAlIO(); 
 void destruirStructsIO(Kernel_io *kernel);
 void inicializarStructsIO(Kernel_io *kernel);
-int existeLaInterfaz(char *nombreInterfaz, const Kernel_io *kernel);
+int existeLaInterfaz(char *nombreInterfaz, Kernel_io *kernel);
 int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz);
 int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz);
+int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido);
+void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo);
 extern t_contexto* contextoEjecucion;
 
 extern Kernel_io kernel;

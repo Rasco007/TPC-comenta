@@ -50,27 +50,37 @@ void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
         }else{
             log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
             log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
-            guardarNombreYSocketEnStruct(kernel, nombreInterfaz, socketClienteIO);
+
+            guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO);
         }
         
     }
 }
 
-void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], int socketClienteIO)
+void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[256], char tipoInterfaz[256], int socketClienteIO)
 {
     kernel->interfaces = realloc(kernel->interfaces, (kernel->cantidad + 1) * sizeof(Interfaz));
     if (kernel->interfaces == NULL)
     {
-        log_error(loggerError,"Error al redimensionar el arreglo de interfaces");
+        log_error(loggerError, "Error al redimensionar el arreglo de interfaces");
         exit(EXIT_FAILURE);
     }
+    
+    // Guardar nombre de la interfaz
     strncpy(kernel->interfaces[kernel->cantidad].nombre_interfaz, nombreInterfaz, sizeof(kernel->interfaces[kernel->cantidad].nombre_interfaz) - 1);
     kernel->interfaces[kernel->cantidad].nombre_interfaz[sizeof(kernel->interfaces[kernel->cantidad].nombre_interfaz) - 1] = '\0';
-    kernel->interfaces[kernel->cantidad].socket_interfaz = socketClienteIO;
-    kernel->cantidad++;
-    log_info(logger,"Se han guardado los datos necesarios en la estructura Kernel_io");
-
     
+    // Guardar tipo de la interfaz
+    strncpy(kernel->interfaces[kernel->cantidad].tipo_interfaz, tipoInterfaz, sizeof(kernel->interfaces[kernel->cantidad].tipo_interfaz) - 1);
+    kernel->interfaces[kernel->cantidad].tipo_interfaz[sizeof(kernel->interfaces[kernel->cantidad].tipo_interfaz) - 1] = '\0';
+    
+    // Guardar socket de la interfaz
+    kernel->interfaces[kernel->cantidad].socket_interfaz = socketClienteIO;
+
+    // Incrementar la cantidad de interfaces
+    kernel->cantidad++;
+    
+    log_info(logger, "Se han guardado los datos necesarios en la estructura Kernel_io");
 }
 
 void hacerHandshake(int socketClienteIO){
@@ -99,6 +109,7 @@ void destruirStructsIO (Kernel_io *kernel) {
     kernel->interfaces = NULL;
     kernel->cantidad = 0;
 }
+
 
 //esta funcion anda flama
 int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
@@ -139,16 +150,7 @@ int existeLaInterfaz(char *nombreInterfaz, const Kernel_io *kernel){
         return estaConectado;
     }
 }
-int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
- for (size_t i = 0; i < kernel->cantidad; i++) {
-        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombreInterfaz) == 0) {
-            if( kernel->interfaces[i].tipo_interfaz == tipoRequerido){
-                return 1;
-            }
-        }
-    }
-    return -1;
-}
+
 int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     fd_set readfds;
     struct timeval timeout;
@@ -225,5 +227,21 @@ int ejecutarServidorKernel(int socketClienteIO){
 		}
 	}*/
 
+
 }
 
+
+int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
+    for (size_t i = 0; i < kernel->cantidad; i++) {
+        log_info(logger, "nombre interfaz: %s", kernel->interfaces[i].nombre_interfaz);
+        log_info(logger, "tipo interfaz: %s", kernel->interfaces[i].tipo_interfaz);
+        log_info(logger, "tipo requerido: %s", tipoRequerido);
+        log_info(logger, "nombre requerido: %s", tipoRequerido);
+        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombreInterfaz) == 0) {
+            if (strcmp(kernel->interfaces[i].tipo_interfaz, tipoRequerido) == 0) {
+                return 1;
+            }
+        }
+    }
+    return -1;
+}

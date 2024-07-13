@@ -20,18 +20,19 @@ t_pcb *crearPCB(){
     nuevoPCB->tablaDePaginas = list_create();
     log_info(logger, "antes de ingresar a NEW");
     recibirEstructurasInicialesMemoria(nuevoPCB); //Mando señal a memoria para que reserve espacio para el PCB
-
     log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
     return nuevoPCB;
 }
 
 void destruirPCB(t_pcb *pcb){
+    int pid_copia = pcb->pid;
+    list_add(pcbsParaExit, (void*)(uintptr_t)pid_copia);
     list_destroy_and_destroy_elements(pcb->instrucciones, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
-    liberarMemoriaPCB(pcb); //Mando señal a memoria para que libere espacio para el PCB
-    free(pcb);
     log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
+    free(pcb);
+    
 }
 
 t_dictionary *crearDiccionarioDeRegistros(){
@@ -91,6 +92,12 @@ void imprimirListaPCBs(t_list *pcbs){
     for(int i = 0; i < list_size(pcbs); i++){
         t_pcb *pcb = list_get(pcbs, i);
         log_info(logger, "PID: %d", pcb->pid);
+    }
+}
+
+void imprimirListaExit(t_list *idsExit){
+    for(int i = 0; i < list_size(idsExit); i++){
+        log_info(logger, "PID: %d", (int)(uintptr_t)list_get(idsExit, i));
     }
 }
 

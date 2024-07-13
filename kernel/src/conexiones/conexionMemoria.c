@@ -2,6 +2,7 @@
 #include <conexiones/conexionMemoria.h>
 
 int conexionAMemoria;
+int numeroInstrucciones;
 
 void conexionMemoria() {
     logger = cambiarNombre (logger,"Kernel-Memoria");
@@ -33,8 +34,12 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     enviarPaquete(peticion, conexionAMemoria); 
     eliminarPaquete (peticion);
 
+    //Recibo respuesta memoria
+    recv(conexionAMemoria,&numeroInstrucciones,sizeof(int),0);
+    log_info(logger, "SE RECIBIERON %d", numeroInstrucciones);
+
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
-    //recibirOperacion (conexionAMemoria);
+   
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }

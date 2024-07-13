@@ -10,6 +10,7 @@
 #include <commons/temporal.h>
 #include <global.h>
 #include <main/configuraciones.h>
+#include <contextoEjecucion/contextoEjecucion.h>
 
 typedef enum estadoProceso{
     NEW, 
@@ -38,11 +39,14 @@ typedef struct {
     t_list* recursosAsignados;
     t_list* tablaDePaginas;
     int64_t quantum;
+    t_algoritmo algoritmo;
 } t_pcb; 
 
 extern t_list *pcbsNEW;
 extern t_list *pcbsREADY;
 extern t_list *pcbsEnMemoria;
+extern t_list *pcbsBloqueados;
+extern t_list *pcbsParaExit;
 extern t_log* logger;
 extern int32_t procesosCreados;
 extern char* pidsInvolucrados; 
@@ -98,6 +102,7 @@ void agregarPID(void *value);
 void listarPIDS(t_list *pcbs);
 void imprimirListaPCBs(t_list *pcbs);
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid);
+void imprimirListaExit(t_list *idsExit);
 
 
 

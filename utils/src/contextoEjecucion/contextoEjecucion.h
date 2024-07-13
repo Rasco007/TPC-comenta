@@ -14,7 +14,7 @@ typedef struct {
 
         t_comando motivo; 
         int parametrosLength;
-        char* parametros[3]; 
+        char* parametros[5]; 
 
 }t_motivoDeDesalojo; 
 
@@ -22,7 +22,7 @@ typedef struct {
     int idPagina;
     int idFrame;
     int bitDeValidez;
-}t_pagina; //Ver si es correcto
+}t_pagina; //Ver si se requiere agregar bit de modificacion y de acceso
 
 typedef enum{
     FIFO,
@@ -70,7 +70,9 @@ void deserializarTablaDePaginas (void * buffer, int * desplazamiento);
 void iniciarContexto();
 void destroyContexto();
 void destroyContextoUnico();
-
-
-
+void iniciarContextoBeta();
+void enviarContextoBeta(int socket, t_contexto* contexto);
+void recibirContextoBeta(int socket);
+void deserializarInstruccionesBeta (void * buffer, int * desplazamiento, t_contexto * contextoEjecucionBeta);
+void agregarInstruccionesAPaqueteBeta(t_paquete* paquete, t_list* instrucciones, t_contexto * contexto);
 #endif

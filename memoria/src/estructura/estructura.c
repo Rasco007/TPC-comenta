@@ -33,7 +33,14 @@ TablaPaginas *inicializar_tabla_paginas() {
 }
 
 void liberar_tabla_paginas(TablaPaginas *tp) {
-    free(tp);
+    if (tp != NULL) {
+        // No es necesario liberar cada entrada individualmente ya que es un array estático
+        // Solo liberamos la estructura TablaPaginas
+        free(tp);
+        log_info(logger, "Tabla de páginas liberada");
+    } else {
+        log_warning(logger, "Tabla de páginas es NULL");
+    }
 }
 
 // Implementación del proceso
@@ -134,6 +141,7 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
             mf->marcos[i].libre = false;
             mf->marcos[i].numero_pagina = numero_pagina;
             mf->marcos[i].pid = proceso->pid;
+            mf->marcos[i].proceso = proceso; //va?
             proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
             proceso->tabla_paginas->entradas[numero_pagina].numero_marco = i;
             proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas

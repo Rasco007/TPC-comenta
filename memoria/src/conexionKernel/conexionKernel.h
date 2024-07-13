@@ -15,6 +15,7 @@
 //extern t_config *config;
 extern MemoriaFisica *mf;
 extern char* pathInstrucciones;
+extern int PID;
 
 // Funciones
 int ejecutarServidorKernel(int *socketCliente);
