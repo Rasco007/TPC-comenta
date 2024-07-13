@@ -52,21 +52,17 @@ int main() {
     int tam_pagina = confGetInt("TAM_PAGINA");
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
     mf = inicializar_memoria_fisica(tam_pagina);
-    mf->marcos[8].pid = 1;
-    mf->marcos[8].numero_pagina = 6;
-
-    // Inicializa dos procesos con sus archivos de pseudocódigo
-    //Espero a que me llege un path
-    //sem_t path;
-    sem_init(&path, 0, 0);
-    sem_wait(&path);
-    Proceso *proceso = inicializar_proceso(1, pathInstrucciones);
     
+   /*sem_init(&path, 0, 0);
+    sem_wait(&path);
+    Proceso *proceso = inicializar_proceso(PID, pathInstrucciones); //TODO: esto debería estar en el NEWPCB
+    mf->marcos[0].proceso=proceso;
+
     if (!proceso) {
         printf("Error al inicializar el procesos.\n");
         liberar_memoria_fisica(mf);
         return 1;
-    }
+    }*/
 
     // Asigna algunas páginas a los procesos
     if (!asignar_pagina(mf, proceso, 0)) {

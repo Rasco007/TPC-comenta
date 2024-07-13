@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <commons/log.h>
 #include <commons/config.h>
+#include <commons/temporal.h>
 
 #include <utilsServidor/utilsServidor.h>
 #include <utilsCliente/utilsCliente.h>
@@ -15,8 +16,11 @@
 extern t_log* loggerError; 
 
 void escucharAlKernel(); 
-
+int ejecutarServidorCPU();
+int noEsBloqueante(t_comando instruccionActual);
+extern int socketClienteDispatch;
+extern int socketClienteInterrupt;
 extern t_contexto* contextoEjecucion;
 extern t_temporal* rafagaCPU;
-
+extern int flag_bloqueante;
 #endif

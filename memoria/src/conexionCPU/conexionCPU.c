@@ -14,6 +14,18 @@ void limpiarBuffer(int socketCliente){
     void* buffer = recibirBuffer(socketCliente, &size);
     free(buffer);
 }
+void recibirEnteros2(int socket, int *pid, int *indice) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    memcpy(pid ,buffer+sizeof(op_code), sizeof(int));
+    memcpy(indice, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+}
 
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
@@ -23,7 +35,6 @@ int ejecutarServidorCPU(int *socketCliente) {
         log_info(logger, "Se recibió petición %d del CPU", peticion);
 
         switch (peticion) {
-
             case READ:
             log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
@@ -47,13 +58,32 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
-                log_info(logger, "Se recibió la peticion de CPU");
-                t_list* elementosPaquete=recibirPaquete(*socketCliente);
+                log_info(logger, "Se recibió la peticion de CPU"); 
+                /*t_list* elementosPaquete=recibirPaquete(*socketCliente);
                 indice=(int)list_get(elementosPaquete,0);
-                pid=(int)list_get(elementosPaquete,1);
-                Proceso *proceso=buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
-                instruccion=obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
-                enviarMensaje(instruccion,*socketCliente);
+                pid=(int)list_get(elementosPaquete,1);*/
+                recibirEnteros2(*socketCliente, &pid, &indice);
+                log_info(logger, "Indice: %d - PID: %d",indice,pid);
+                Proceso *proceso = buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
+                log_info(logger, "Proc: %d",proceso->pid);
+                instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
+                log_info(logger, "Instruccion: %s",instruccion);
+                sleep(config_get_int_value(config, "RETARDO_RESPUESTA")/1000); //Agrego retardo
+                enviarMensaje(instruccion,*socketCliente); 
+                // limpiarBuffer(*socketCliente);
+                break;
+            case RESIZE: //VER
+                log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
+                int nuevo_tamano;
+                recv(*socketCliente, &pid, sizeof(int), 0);
+                recv(*socketCliente, &nuevo_tamano, sizeof(int), 0);
+                log_info(logger, "Nuevo tamaño: %d", nuevo_tamano);
+                proceso = buscar_proceso_por_pid(pid);
+                if (proceso == NULL) {
+                    log_error(loggerError, "No se encontró el proceso con PID: %d", pid);
+                    break;
+                }
+                proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
                 break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");

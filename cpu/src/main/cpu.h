@@ -18,7 +18,7 @@
 #include <escuchaKernel/servidorKernel.h>
 #include <mmu/mmu.h>
 
-int socketCliente;
+
 t_log* logger;
 t_log* loggerError; 
 t_config* config;
