@@ -64,6 +64,30 @@ void solicitarInstruccion(int pid, int indice, int socket){
 	free(paquete);
 }
 
+void solicitudResize(int pid, int tamanio, int socket){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = RESIZE;
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->buffer->size = 2*sizeof(int);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+
+	memcpy(paquete->buffer->stream, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(tamanio), &tamanio, sizeof(tamanio));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE);
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+	free(a_enviar);
+	free(paquete);
+}
+
 // ------- Funciones del ciclo ------- //
 void fetch() { 
     log_info(logger, "inicio fetch");
@@ -127,16 +151,21 @@ int buscar(char *elemento, char **lista) {
 }
  
 void check_interrupt(){
+    log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
         t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+
+        log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
+        log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
-        log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
+            log_info(logger,"FIN DE QUANTUM");
             destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
             modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-            enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+            enviarContextoBeta(socketClienteDispatch, contextoEjecucion); //TODO: HACER CON INTERRUPT
+            flag_bloqueante = 1;
         }
     }
 }
@@ -145,59 +174,57 @@ void check_interrupt(){
 void io_fs_delete(char* interfaz,char* nombreArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
+/*Copio la cantidad de bytes indicada del string apuntado por SI a DI*/
 void copy_string(char* tamanio){
     //Copiar contenido de SI a DI
     memcpy((void*)&contextoEjecucion->DI, (const void*)&contextoEjecucion->SI, sizeof(uint32_t));
 }
 
+/*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
-    t_paquete* paquete = crearPaquete();
-    paquete->codigo_operacion = RESIZE;
-    agregarAPaquete(paquete, tamanio, sizeof(tamanio));
-    agregarAPaquete(paquete, &contextoEjecucion->pid, sizeof(uint32_t));
-    enviarPaquete(paquete, conexionAMemoria);
-
+    solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
 }
 
+/*Le asigno al registro el valor que se indica*/
 void set_c(char* registro, char* valor){ 
     log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
     if(strcmp(registro, "PC") == 0){
@@ -218,6 +245,7 @@ void set_c(char* registro, char* valor){
     }
 }
 
+/*RD=RD+RO*/
 void sum_c(char* registro_destino, char* registro_origen){ 
     // Verificar que los registros existen en el diccionario
     char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
@@ -236,6 +264,7 @@ void sum_c(char* registro_destino, char* registro_origen){
     log_info(logger, "fin sum_c");
 }
 
+/*RD=RD-RO*/
 void sub_c(char* registro_destino, char* registro_origen){ 
     // Verificar que los registros existen en el diccionario
     char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
@@ -253,7 +282,7 @@ void sub_c(char* registro_destino, char* registro_origen){
     dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
 }
 
-
+/*Me fijo que el registro sea distinto de 0. Si lo es, seteo el PC con la instruccion indicada*/
 void jnz(char* registro, char* instruccion){ 
     log_info(logger,"En jnz con: %s y %s", registro, instruccion);
     // Obtener el valor del registro desde el diccionario
@@ -274,49 +303,55 @@ void jnz(char* registro, char* instruccion){
         contextoEjecucion->programCounter = atoi(instruccion);
     }
 }
-
+/*Desalojo el proceso y kernel le indica a IO que haga un sleep en una interfaz indicada y un tiempo indicado*/
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
-    modificarMotivoDesalojo (IO_GEN_SLEEP, 2, interfaz, unidades_trabajo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    log_info(logger,"luego del temporizador del gen sleep");
+    modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    //hacer flag
 }
 
+/*Desalojo el proceso y le pido a kernel que asigne una instancia del recurso indicado*/
 void wait_c(char* recurso){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+     flag_bloqueante = 1;
 }
 
+/*Desalojo el proceso y le pido a kernel que libere una instancia del recurso indicado*/
 void signal_c(char* recurso){
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+     flag_bloqueante = 1;
 }
 
+/*Desalojo el proceso y kernel se encarga de mover el proceso a EXIT*/
 void exit_c () {
-    int64_t n=temporal_gettime(contextoEjecucion->tiempoDeUsoCPU);
-    log_info(logger,"Tiempo %ld" PRId64 ,n);
-
     destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     log_info(logger, "Pasa modificarMotivoDesalojo");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); 
+    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); //TODO: HACER CON INTERRUPT
     free (terminado);
     log_info(logger, "fin exit_c");
+     flag_bloqueante = 1;
 }
 
-
+/*Leo el valor almacenado en la direccion fisica de memoria y lo almaceno en el registro*/
 void mov_in(char* registro, char* direccionLogica){
-
+    uint32_t pid=contextoEjecucion->pid;
     char* valorAInsertar;
-    uint32_t tamRegistro = (uint32_t)obtenerTamanioReg(registro);
+    int tamRegistro = obtenerTamanioReg(registro);
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
+    dirFisica = mmu(pid,direccionLogica, tamRegistro); 
 
     log_info(logger, "Direccion fisica: %d", dirFisica);
 
-    if(dirFisica!=UINT32_MAX){
+    if(dirFisica!=UINT32_MAX){//VER
         t_paquete* peticion = crearPaquete();
         peticion->codigo_operacion = READ;
         agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
@@ -331,22 +366,23 @@ void mov_in(char* registro, char* direccionLogica){
         dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
         
-        log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
+        log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", dirFisica, valorAInsertar);
         free (valorAInsertar);
     }else {
         log_info(logger, "Error: Dirección física inválida\n");
     }
 };
 
+/*Escribo en la direccion fisica de memoria el valor almacenado en el registro*/
 void mov_out(char* direccionLogica, char* registro){
-
+    uint32_t pid=contextoEjecucion->pid;
     void * valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
     int tamRegistro = obtenerTamanioReg(registro);
 
     uint32_t dirFisica = UINT32_MAX;
-    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
+    dirFisica = mmu(pid,direccionLogica, tamRegistro);
 
-    if(dirFisica != UINT32_MAX){    
+    if(dirFisica != UINT32_MAX){  //VER  
     t_paquete* peticion = crearPaquete();
     peticion->codigo_operacion = WRITE;
 
@@ -361,7 +397,7 @@ void mov_out(char* direccionLogica, char* registro){
     char * respuesta = recibirMensaje(conexionAMemoria);
     free (respuesta);
 
-    log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", nroSegmento, dirFisica, (char *)valor);
+    log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", dirFisica, (char *)valor);
     }
 };
 
@@ -374,13 +410,13 @@ void destruirTemporizador (t_temporal * temporizador) {
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
     contextoEjecucion->motivoDesalojo->motivo = comando;
-    log_info(logger, "numero de parametros en motivo de EXIT %d", numParametros);
+    log_info(logger, "numero de parametros en motivo de %d :%d",comando, numParametros);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
     for (int i = 0; i < numParametros; i++){
      
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     
-    log_info(logger, "parametro EXIT %s" , contextoEjecucion->motivoDesalojo->parametros[i] );
+    log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
     }
 }
 

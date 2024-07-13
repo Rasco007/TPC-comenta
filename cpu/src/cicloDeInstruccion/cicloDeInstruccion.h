@@ -17,6 +17,7 @@
     #include <contextoEjecucion/contextoEjecucion.h>
     #include <conexionMemoria/conexionMemoria.h>
     #include <escuchaKernel/servidorKernel.h>
+    #include <mmu/mmu.h>
 
     #define obtenerTiempoEspera() config_get_int_value(config, "RETARDO_INSTRUCCION")
     

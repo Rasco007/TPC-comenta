@@ -10,6 +10,7 @@
 #include <commons/temporal.h>
 #include <global.h>
 #include <main/configuraciones.h>
+#include <contextoEjecucion/contextoEjecucion.h>
 
 typedef enum estadoProceso{
     NEW, 
@@ -38,6 +39,7 @@ typedef struct {
     t_list* recursosAsignados;
     t_list* tablaDePaginas;
     int64_t quantum;
+    t_algoritmo algoritmo;
 } t_pcb; 
 
 extern t_list *pcbsNEW;

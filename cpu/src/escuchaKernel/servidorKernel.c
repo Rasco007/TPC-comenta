@@ -19,6 +19,18 @@ void escucharAlKernel() {
     ejecutarServidorCPU(socketClienteDispatch);
 }
 
+int noEsBloqueante(t_comando instruccionActual) {
+	t_comando instruccionesBloqueantes[13] = {
+		IO_FS_CREATE, IO_FS_DELETE, IO_FS_READ, IO_FS_TRUNCATE,
+		IO_FS_WRITE, IO_GEN_SLEEP, IO_STDIN_READ, IO_STDOUT_WRITE, WAIT, SIGNAL 
+	};
+
+	for (int i = 0; i < 13; i++) 
+		if (instruccionActual == instruccionesBloqueantes[i]) return 0;
+
+	return 1;
+}
+
 
 //CPU recibe instrucciones del Kernel para hacer el ciclo de instruccion
 int ejecutarServidorCPU(int socketCliente){
@@ -51,10 +63,11 @@ int ejecutarServidorCPU(int socketCliente){
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);*/
 					log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
 					log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
-					// 	cicloDeInstruccion();
-					// contextoEjecucion->instruccionesLength = 5; //TODO: Quitar nro magico
-					 while(contextoEjecucion->programCounter < 5) { //TODO: Quitar nro magico por contextoEjecucion->instruccionesLength
-					 	log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
+					 
+					 flag_bloqueante = 0;
+					 while(contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength && flag_bloqueante == 0) {
+					 	
+						log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
 					 } 
 					//temporal_destroy (rafagaCPU);

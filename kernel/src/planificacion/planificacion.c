@@ -20,10 +20,11 @@ char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"};
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
+   
     //log_info(logger, "Planificador a largo plazo iniciado");
     while (!pausaPlanificacion) //Mientras no este pausado...
     {
-        //log_info(logger, "------comienza while");
+        log_info(logger, "------comienza while largo plazo");
         sem_wait(&hayProcesosNuevos);
         sem_wait(&semGradoMultiprogramacion);
         //log_info(logger, "------obtenerSiguienteAReady");
@@ -47,7 +48,12 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
     while (1)
     {
+         
+        int sval;
+         log_info(logger, "sem ready antes de wait %d",  sem_getvalue(&hayProcesosReady, &sval));
+       
         sem_wait(&hayProcesosReady);
+         
         log_info(logger, "hay proceso en ready");
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
@@ -66,6 +72,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
          log_info(logger, "APAREZCO KERNEL");
+         
     }
 }
 

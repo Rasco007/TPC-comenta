@@ -10,7 +10,7 @@ solicitar una llamada al Kernel, o deber ser desalojado (interrupción).*/
 
 TLB tlb;
 uint64_t tiempo_actual = 0; // Contador de tiempo para LRU
-
+int flag_bloqueante;
 
 int main(void){
 	
