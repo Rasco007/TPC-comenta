@@ -322,10 +322,10 @@ void io_fs_read(t_pcb *proceso, char **parametros)
 void *mandar_ejecutar_stdout(t_pcb *proceso, char *interfaz,char *registroDireccion, char* registroTamanio){
     int socketClienteIO = obtener_socket(&kernel, interfaz);
    log_info(logger, "se recibio el socket %d", socketClienteIO);
-    //enviarMensajeSTDOUT(socketClienteIO, interfaz, registroDireccion, registroTamanio);//como hago para recuperar el socket del IO que obtuve en escucharIO
+    enviarMensajeSTDOUT(socketClienteIO, interfaz, registroDireccion, registroTamanio);//como hago para recuperar el socket del IO que obtuve en escucharIO
         
     // TODO: esperar la rta de IO
-    pasarAReady(proceso);
+   // pasarAReady(proceso);
     return NULL; 
 }
 

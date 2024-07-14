@@ -62,6 +62,17 @@ int main() {
         return 1;
     }*/
 
+    //PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
+    char *prueba = "hola";
+    size_t offset = 0;
+    memcpy((char*)mf->memoria + offset, prueba, strlen(prueba) + 1);
+    size_t nuevoOffset = 1;
+    size_t longitudSubcadena = strlen(prueba) - nuevoOffset;
+    char *datosLeidos = malloc(longitudSubcadena + 1);
+    memcpy(datosLeidos, (char*)mf->memoria + nuevoOffset, longitudSubcadena);
+    datosLeidos[longitudSubcadena] = '\0';
+    printf("Texto leído: %s\n", datosLeidos);
+    ////
 
     // Espera a que los hilos terminen
     pthread_join(threadCPU, NULL);

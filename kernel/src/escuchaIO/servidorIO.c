@@ -3,7 +3,7 @@
 #define BUFFER_SIZE 1024
 int instruccionActual;
 char* nombre;
-int ejecutarServidorKernel();
+void ejecutarServidorKernel(int socketClienteIO);
 void hacerHandshake(int socketClienteIO);
 void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel);
 
@@ -203,11 +203,12 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
 }
 
 
-int ejecutarServidorKernel(int socketClienteIO){
-     char * tamaño_max = "1024";
+void ejecutarServidorKernel(int socketClienteIO){
+     char * tamaño_max = "5";
      char * direc_memoria = "1234";
-    dormirIO(NULL,nombre,"5");
-    mandar_ejecutar_stdin(nombre,direc_memoria, tamaño_max);
+    //dormirIO(NULL,nombre,"5");
+    //mandar_ejecutar_stdin(nombre,direc_memoria, tamaño_max);//IR COMENTANDO Y DESCOMENTANDO 
+    mandar_ejecutar_stdout(NULL, nombre,direc_memoria, tamaño_max);//IR COMENTANDO Y DESCOMENTANDO
     return 0;
      /*while (1) {//ver de solamente poner un recv en vez de while 1 aunque en realidad recibe la operacion en syscalls
         instruccionActual = -1; //habria que importar el ciclo de instrucciones para que la reconozca

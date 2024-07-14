@@ -1,6 +1,6 @@
 #include <conexionIO/conexionIO.h>
 
-int ejecutarServidorIO(){
+void ejecutarServidorIO(){
     //tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     
      //char *puertoEscucha = confGet("PUERTO_ESCUCHA");
@@ -8,25 +8,25 @@ int ejecutarServidorIO(){
 
     while (1) {
         log_info(logger,"Esperando conexiones con IO...");
-        //pthread_t thread;
+        pthread_t thread;
         
         int *socketClienteIO = malloc(sizeof(int));
         
         *socketClienteIO = esperarCliente(server_fd);
         log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
 
-        hacerHandshake(*socketClienteIO);
-       
+        hacerHandshake2(*socketClienteIO);
+        //ejecutarServidor(*socketClienteIO);
 
-        // pthread_create(&thread,
-        //                 NULL,
-        //                 (void*) ejecutarServidor,
-        //                 socketClienteIO);
-        // pthread_detach(thread);
+        pthread_create(&thread,
+                        NULL,
+                         (void*) ejecutarServidor,
+                        socketClienteIO);
+        pthread_join(thread,NULL);
     }
+    //return EXIT_SUCCESS;
+}
 
-    return EXIT_SUCCESS;
-} 
 
 void ejecutarServidor(int socketClienteIO){
 
@@ -39,9 +39,41 @@ void ejecutarServidor(int socketClienteIO){
                 recibirPeticionDeLectura(socketClienteIO);
                 enviarValorObtenido(socketClienteIO);
                 break;
+            case MENSAJE:
+   	 		    char* mensaje = recibirMensaje(socketClienteIO);
+                log_info(logger, "Mensaje recibido: %s", mensaje);            
+                break;
             case WRITE:
                 recibirPeticionDeEscritura(socketClienteIO);
                 enviarMensaje("OK", socketClienteIO);
+                break;
+            case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
+                int dir;
+                char cadena[2048];
+                recibirDirYCadena(socketClienteIO, &dir, cadena);
+                printf("Direccion: %d\n", dir);
+                printf("Cadena: %s\n", cadena);
+                memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
+                char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
+                memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
+                printf("Dato escrito: %s\n", datoEscrito);
+                /*char *datoAEscribir= recibirMensaje(socketClienteIO);
+                log_info(logger, "Mensaje recibido: %s", datoAEscribir);
+                int longitud = strlen(datoAEscribir);size_t offset = 0;
+                memcpy((char*)mf->memoria + offset, datoAEscribir, strlen(datoAEscribir));
+                char *datoEscrito= malloc(longitud);
+                memcpy(datoEscrito, (char*)mf->memoria + offset, longitud);
+                printf("Dato escrito: %s\n", datoEscrito);*/
+                break;
+            case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT)
+                int dir2,tamano;
+                recibirDireccionyTamano(socketClienteIO, &dir2,&tamano);
+                printf("Direccion: %d\n", dir2);
+                printf("Tamaño: %d\n", tamano);
+                char* datosLeidos = malloc(2048);
+                memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
+                printf("Texto leído: %s\n", datosLeidos);
+                enviarMensaje(datosLeidos, socketClienteIO);
                 break;
             case -1:
                 log_error(logger, "IO se desconectó");
@@ -52,11 +84,10 @@ void ejecutarServidor(int socketClienteIO){
                 break;
         }
     }
+    return;
 }
 
-
-
-void hacerHandshake(int socketClienteIO){
+void hacerHandshake2(int socketClienteIO){
     size_t bytes;
 
    int32_t handshake;
@@ -71,4 +102,56 @@ void hacerHandshake(int socketClienteIO){
         bytes = send(socketClienteIO, &resultError, sizeof(int32_t), 0);
     }
    
+}
+
+void recibirDirYCadena(int socket, int *dir, char* cadena) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    memcpy(dir, buffer + sizeof(op_code), sizeof(int));
+    // Calcular la longitud de la cadena recibida
+    int longitud_cadena = bytes_recibidos - sizeof(int) - sizeof(op_code);
+    // Asegurarse de no exceder el tamaño del buffer
+    if (longitud_cadena > 2047) {
+        longitud_cadena = 2047;
+    }
+    // Copiar la cadena recibida
+    memcpy(cadena, buffer + sizeof(int) + sizeof(op_code), longitud_cadena);
+    // Asegurarse de que la cadena esté terminada en nulo
+   // cadena[longitud_cadena] = '\0';
+   // printf("Cadena recibida: %s\n", cadena);
+}
+
+void recibirDireccionyTamano(int socket, int *dir, int *tamano) {
+    char buffer[sizeof(op_code) + 2 * sizeof(int)];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(op_code) + 2 * sizeof(int)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    memcpy(dir, buffer + sizeof(op_code), sizeof(int));
+    memcpy(tamano, buffer + sizeof(op_code) + sizeof(int), sizeof(int));
 }
