@@ -5,6 +5,7 @@
 t_buffer* bufferContexto;
 int conexionACPU;
 int conexionACPUInterrupt;
+sem_t memoriaOK;
 
 void conexionCPU() {
     //CONEXION CPU DISPATCH
@@ -45,10 +46,10 @@ void conexionCPU() {
 int recibirOperacionDeCPU(){ 
 	int cod_op;
     
-	if (recv(conexionACPU, &cod_op, sizeof(int), MSG_WAITALL) > 0)
+	if (recv(conexionACPUInterrupt, &cod_op, sizeof(int), MSG_WAITALL) > 0)
 		return cod_op;
 	else {
-		close(conexionACPU);
+		close(conexionACPUInterrupt);
 		return -1;
 	}
 }
@@ -59,7 +60,9 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 	iniciarContexto ();
     
     bufferContexto = malloc(sizeof(t_buffer));
-
+    
+    sem_wait(&memoriaOK);
+    
     asignarPCBAContexto(procesoEnEjecucion);
     log_info(logger, "el algoritmo es %d", contextoEjecucion->algoritmo);
     // Loguear registros CPU
@@ -69,11 +72,11 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     enviarContextoBeta(conexionACPU, contextoEjecucion);
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
-
-    recibirContextoBeta(conexionACPU); //TODO: Hacer con conexion interrupt
+    
+    recibirContextoBeta(conexionACPUInterrupt);
 
     actualizarPCB(procesoEnEjecucion);
-
+    sem_post(&memoriaOK);
     free(bufferContexto);
     return contextoEjecucion;
 }
@@ -83,21 +86,28 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     }
 
 void actualizarPCB(t_pcb* proceso){
-	list_destroy_and_destroy_elements(proceso->instrucciones, free);
-    proceso->instrucciones = list_duplicate(contextoEjecucion->instrucciones);
+	//list_destroy_and_destroy_elements(proceso->instrucciones, free);
+    //proceso->instrucciones = list_duplicate(contextoEjecucion->instrucciones);
+    contextoEjecucion->instruccionesLength = numeroInstrucciones;
     proceso->pid = contextoEjecucion->pid;
     proceso->programCounter = contextoEjecucion->programCounter;
 	dictionary_destroy_and_destroy_elements(proceso->registrosCPU, free);
     proceso->registrosCPU = registrosDelCPU(contextoEjecucion->registrosCPU);
-     list_destroy_and_destroy_elements (proceso->tablaDePaginas, free);
-    proceso->tablaDePaginas = list_duplicate(contextoEjecucion->tablaDePaginas);
-
+    // list_destroy_and_destroy_elements (proceso->tablaDePaginas, free);
+    //proceso->tablaDePaginas = list_duplicate(contextoEjecucion->tablaDePaginas);
+    contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
+    contextoEjecucion->DI=proceso->DI;
+    contextoEjecucion->SI=proceso->SI;
+    contextoEjecucion->algoritmo = proceso->algoritmo;
+    if(contextoEjecucion->algoritmo != FIFO){
+        contextoEjecucion->quantum=proceso->quantum;
+        log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
+    }
 }
 
 void asignarPCBAContexto(t_pcb* proceso){
-
-    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
+    //list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
+    //contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
     contextoEjecucion->instruccionesLength = numeroInstrucciones;//list_size(contextoEjecucion->instrucciones);
     contextoEjecucion->pid = proceso->pid;
     contextoEjecucion->programCounter = proceso->programCounter;
@@ -109,12 +119,12 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->algoritmo = proceso->algoritmo;
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
- log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
+        log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
     }
     
-    list_destroy_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
-    contextoEjecucion->tablaDePaginas = list_duplicate(proceso->tablaDePaginas);
-    contextoEjecucion->tablaDePaginasSize = list_size(contextoEjecucion->tablaDePaginas);
+    //list_destroy_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
+    //contextoEjecucion->tablaDePaginas = list_duplicate(proceso->tablaDePaginas);
+    //contextoEjecucion->tablaDePaginasSize = list_size(contextoEjecucion->tablaDePaginas);
 
  
   log_info(logger, "PID: %u", contextoEjecucion->pid);
@@ -124,22 +134,6 @@ void asignarPCBAContexto(t_pcb* proceso){
     log_info(logger, "Instrucciones Length: %u", contextoEjecucion->instruccionesLength);
    
     log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
-
-    // Loguear instrucciones
-    for (int i = 0; i < list_size(contextoEjecucion->instrucciones); i++) {
-        char *instruccion = list_get(contextoEjecucion->instrucciones, i);
-        log_info(logger, "Instrucción %d: %s", i, instruccion);
-    }
-
-   
-
-    // Loguear tabla de páginas
-    log_info(logger, "Tabla de Páginas Size: %u", contextoEjecucion->tablaDePaginasSize);
-    for (int i = 0; i < list_size(contextoEjecucion->tablaDePaginas); i++) {
-        t_pagina *pagina = list_get(contextoEjecucion->tablaDePaginas, i);
-        log_info(logger, "Página %d: IdPagina: %d, idFrame: %d, Bit de validez: %d",
-                 i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
-    }
 
     // Loguear motivo de desalojo
     log_info(logger, "Motivo de Desalojo: %d", contextoEjecucion->motivoDesalojo->motivo);

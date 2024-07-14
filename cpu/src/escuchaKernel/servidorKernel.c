@@ -50,10 +50,6 @@ int ejecutarServidorCPU(int socketCliente){
 					}
 					return EXIT_FAILURE;
 				case CONTEXTOEJECUCION:
-					if (contextoEjecucion != NULL){
-						list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
-						list_clean_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
-					}
 					log_info(logger,"APAREZCO DESDE CPU");
 					recibirContextoBeta(socketCliente);
 					//Inicio el cronometro del tiempo de uso de CPU

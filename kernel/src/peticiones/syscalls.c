@@ -271,18 +271,14 @@ void exit_s(t_pcb *proceso,char **parametros){
 
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){
-    t_algoritmo algoritmo=contextoEjecucion->algoritmo;
-    
+    log_info(logger,"PID: <%d> - Desalojado por fin de Quantum",proceso->pid); //Log obligatorio
+
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
-    if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
-        ingresarAReady(proceso); //TODO: VER POR QUE TIRA LA OPERACION DESCONOCIDA
-    } 
-    if(algoritmo==VRR){//Si es VRR, encolo el proceso en READYaux
-        //encolar(pcbsREADYaux,proceso); //TODO: Ingresar a auxiliar
-    }
+    //No importa si es RR o VRR, siempre se encola en READY
+    ingresarAReady(proceso); 
 }
 
 void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
@@ -368,7 +364,13 @@ void pasarAReady(t_pcb *proceso)
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    ingresarAReady(proceso);
+    if(proceso->algoritmo==VRR){ //Para los procesos que vuelven de hacer IO
+        encolar(pcbsREADYaux,proceso);
+        pidsInvolucrados = string_new();
+        listarPIDS(pcbsREADYaux);
+        log_info(logger, "Cola Ready AUX <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
+        free(pidsInvolucrados);
+    } else ingresarAReady(proceso);
 }
 
 void recibirMsjIO(int socketClienteIO){

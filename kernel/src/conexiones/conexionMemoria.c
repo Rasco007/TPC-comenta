@@ -1,5 +1,7 @@
 /* KERNEL- cliente | MEMORIA - servidor*/
 #include <conexiones/conexionMemoria.h>
+#include <semaphore.h>
+#include <conexiones/conexionCPU.h>
 
 int conexionAMemoria;
 int numeroInstrucciones;
@@ -39,7 +41,8 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     log_info(logger, "SE RECIBIERON %d", numeroInstrucciones);
 
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
-   
+    
+    sem_post(&memoriaOK); //Le doy la senhal a cpu para que prosiga
     logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }
