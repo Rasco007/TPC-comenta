@@ -41,7 +41,7 @@ typedef struct {
     uint32_t tablaDePaginasSize;
     t_list* tablaDePaginas; 
     t_motivoDeDesalojo* motivoDesalojo;
-    t_temporal* tiempoDeUsoCPU;
+    int64_t tiempoDeUsoCPU;
     int64_t quantum;
     t_algoritmo algoritmo;
 } t_contexto;

@@ -161,14 +161,15 @@ void check_interrupt(){
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
-        t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
 
         log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
         log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
             log_info(logger,"FIN DE QUANTUM");
-            destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+            temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+            contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+            temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
             modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
             enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
             flag_bloqueante = 1;
@@ -178,7 +179,9 @@ void check_interrupt(){
 
 // Instrucciones
 void io_fs_delete(char* interfaz,char* nombreArchivo){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -186,7 +189,9 @@ void io_fs_delete(char* interfaz,char* nombreArchivo){
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -194,7 +199,9 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -202,7 +209,9 @@ void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -210,7 +219,9 @@ void io_fs_create(char* interfaz, char* nombreArchivo){
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -218,13 +229,17 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -323,8 +338,9 @@ void jnz(char* registro, char* instruccion){
 }
 /*Desalojo el proceso y kernel le indica a IO que haga un sleep en una interfaz indicada y un tiempo indicado*/
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
-    log_info(logger,"luego del temporizador del gen sleep");
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -333,7 +349,9 @@ void io_gen_sleep(char* interfaz, char* unidades_trabajo){
 
 /*Desalojo el proceso y le pido a kernel que asigne una instancia del recurso indicado*/
 void wait_c(char* recurso){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -342,7 +360,9 @@ void wait_c(char* recurso){
 
 /*Desalojo el proceso y le pido a kernel que libere una instancia del recurso indicado*/
 void signal_c(char* recurso){
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
@@ -351,7 +371,9 @@ void signal_c(char* recurso){
 
 /*Desalojo el proceso y kernel se encarga de mover el proceso a EXIT*/
 void exit_c () {
-    destruirTemporizador(contextoEjecucion->tiempoDeUsoCPU);
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     log_info(logger, "Pasa modificarMotivoDesalojo");
@@ -423,10 +445,6 @@ void mov_out(char* direccionLogica, char* registro){
 };
 
 // Funciones grales
-
-void destruirTemporizador (t_temporal * temporizador) {
-    temporal_stop(temporizador); 
-}
 
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};

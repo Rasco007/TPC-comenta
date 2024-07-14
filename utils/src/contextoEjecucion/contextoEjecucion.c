@@ -250,6 +250,7 @@ void destroyContextoUnico () {
         if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
     free(contextoEjecucion->motivoDesalojo);
     free(contextoEjecucion);
+    
     contextoEjecucion = NULL;
 }
 

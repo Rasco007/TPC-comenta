@@ -35,7 +35,7 @@ typedef struct {
     uint32_t DI;   
     estadoProceso estado; 
     t_dictionary* registrosCPU;
-    t_temporal* tiempoDeUsoCPU; 
+    int64_t tiempoDeUsoCPU; 
     t_list* recursosAsignados;
     t_list* tablaDePaginas;
     int64_t quantum;

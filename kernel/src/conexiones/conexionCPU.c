@@ -64,8 +64,6 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     sem_wait(&memoriaOK);
     
     asignarPCBAContexto(procesoEnEjecucion);
-    log_info(logger, "el algoritmo es %d", contextoEjecucion->algoritmo);
-    // Loguear registros CPU
    
     dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
 
@@ -74,7 +72,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
     
     recibirContextoBeta(conexionACPUInterrupt);
-
+    
     actualizarPCB(procesoEnEjecucion);
     sem_post(&memoriaOK);
     free(bufferContexto);
@@ -88,20 +86,19 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
 void actualizarPCB(t_pcb* proceso){
 	//list_destroy_and_destroy_elements(proceso->instrucciones, free);
     //proceso->instrucciones = list_duplicate(contextoEjecucion->instrucciones);
-    contextoEjecucion->instruccionesLength = numeroInstrucciones;
     proceso->pid = contextoEjecucion->pid;
     proceso->programCounter = contextoEjecucion->programCounter;
 	dictionary_destroy_and_destroy_elements(proceso->registrosCPU, free);
     proceso->registrosCPU = registrosDelCPU(contextoEjecucion->registrosCPU);
     // list_destroy_and_destroy_elements (proceso->tablaDePaginas, free);
     //proceso->tablaDePaginas = list_duplicate(contextoEjecucion->tablaDePaginas);
-    contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
-    contextoEjecucion->DI=proceso->DI;
-    contextoEjecucion->SI=proceso->SI;
-    contextoEjecucion->algoritmo = proceso->algoritmo;
-    if(contextoEjecucion->algoritmo != FIFO){
-        contextoEjecucion->quantum=proceso->quantum;
-        log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
+    proceso->tiempoDeUsoCPU=contextoEjecucion->tiempoDeUsoCPU;
+    proceso->DI=contextoEjecucion->DI;
+    proceso->SI=contextoEjecucion->SI;
+    proceso->algoritmo=contextoEjecucion->algoritmo;
+    
+    if(proceso->algoritmo != FIFO){
+        proceso->quantum=contextoEjecucion->quantum;
     }
 }
 
