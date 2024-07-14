@@ -220,33 +220,90 @@ void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){
 }
 
 
-
+//IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
 void io_stdin_read(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    //TODO: falta implementar
 }
 
+//IO_STDOUT_WRITE (Interfaz, Registro Dirección, Registro Tamaño)
 void io_stdout_write(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    char* interfaz = parametros[0];
+    char* direccion = parametros[1];
+    char* tamanio = parametros[2];
+
+    //TODO: falta implementar
 }
 
+
+
+//IO_FS_CREATE (Interfaz, Nombre Archivo)
 void io_fs_create(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    char* interfaz=parametros[0];
+    char* nombreArchivo=parametros[1];
+
+    //TODO: falta implementar
 }
 
+//IO_FS_DELETE (Interfaz, Nombre Archivo)
 void io_fs_delete(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    //TODO: falta implementar
 }
 
+//IO_FS_TRUNCATE (Interfaz, Nombre Archivo, Registro Tamaño)
 void io_fs_truncate(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    //TODO: falta implementar
 }
 
+//IO_FS_WRITE (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
 void io_fs_write(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    //TODO: falta implementar
 }
 
+//IO_FS_READ (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
 void io_fs_read(t_pcb *proceso,char **parametros){
+    estadoAnterior = proceso->estado;
+    proceso->estado = BLOCKED;
+    
+    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
+    //TODO: falta implementar
 }
 
 //EXIT

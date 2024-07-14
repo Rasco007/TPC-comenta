@@ -43,6 +43,21 @@ void io_atender_kernel(){
    			
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
+		case IO_FS_CREATE:
+			//TODO
+			break;
+		case IO_FS_DELETE:
+			//TODO
+			break;
+		case IO_FS_READ:
+			//TODO
+			break;
+		case IO_FS_TRUNCATE:
+			//TODO
+			break;
+		case IO_FS_WRITE:
+			//TODO
+			break;
     	case -1:
    			log_error(logger, "Kernel se desconectó. Terminando servidor");
    			control = 0;
