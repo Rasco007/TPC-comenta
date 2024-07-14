@@ -2,7 +2,7 @@
 #include <global.h>
 #define BUFFER_SIZE 1024
 int instruccionActual;
-
+char* nombre;
 int ejecutarServidorKernel();
 void hacerHandshake(int socketClienteIO);
 void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel);
@@ -20,7 +20,7 @@ void escucharAlIO() {
         
         int *socketClienteIO = malloc(sizeof(int));
         *socketClienteIO = esperarCliente(socketKernel);
-        log_info(logger, "IO conectado, en socket: %d",socketClienteIO);
+        log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
 
         hacerHandshake(*socketClienteIO);
         recibirNombreInterfaz(*socketClienteIO, &kernel);
@@ -52,6 +52,7 @@ void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
             log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
 
             guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO);
+            nombre=nombreInterfaz;
         }
         
     }
@@ -138,7 +139,7 @@ void desconectar_interfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     log_info(logger,"Interfaz %s no encontrada\n", nombre_interfaz);
 }
 
-int existeLaInterfaz(char *nombreInterfaz, const Kernel_io *kernel){
+int existeLaInterfaz(char *nombreInterfaz, Kernel_io *kernel){
     //verifico que exista en la estructura
     int socket = obtener_socket(kernel, nombreInterfaz);
     if(socket == -1){
@@ -205,8 +206,8 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
 int ejecutarServidorKernel(int socketClienteIO){
      char * tamaño_max = "1024";
      char * direc_memoria = "1234";
-    //dormirIO("IntX", 1);
-    mandar_ejecutar_stdin("IntX",direc_memoria, tamaño_max);
+    dormirIO(NULL,nombre,"5");
+    mandar_ejecutar_stdin(nombre,direc_memoria, tamaño_max);
     return 0;
      /*while (1) {//ver de solamente poner un recv en vez de while 1 aunque en realidad recibe la operacion en syscalls
         instruccionActual = -1; //habria que importar el ciclo de instrucciones para que la reconozca

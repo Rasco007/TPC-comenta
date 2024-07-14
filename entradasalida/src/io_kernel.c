@@ -99,9 +99,10 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
 	  log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
 	  log_info(logger, "antes de dormir");
 	  sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
-  
+	  log_info(logger, "Despues de dormir");
 	  //mandar mensaje luego de dormir a kernel
 	  char* respuesta = "OK";
-    send(socket_cliente, respuesta, strlen(respuesta), 0);
-
+    send(socket_cliente, "OK", 2, 0);
+	//enviarMensaje("OK", socket_cliente);
+	return;
 }

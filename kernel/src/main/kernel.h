@@ -12,12 +12,13 @@
 #include <conexiones/conexionCPU.h>
 #include <main/configuraciones.h>
 #include <consola/consola.h>
-
+#include <peticiones/syscalls.h>
 #include <escuchaIO/servidorIO.h>
 
 // Utils y funciones del shared
 #include <configuraciones/configuraciones.h>
 
+//extern Kernel_io kernel;
 extern int socketCliente;
 extern t_log* logger;
 extern t_log* loggerError;
