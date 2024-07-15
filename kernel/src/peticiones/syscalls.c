@@ -19,6 +19,7 @@ void pasarAReady(t_pcb *proceso)
         listarPIDS(pcbsREADYaux);
         log_info(logger, "Cola Ready AUX <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
         free(pidsInvolucrados);
+        sem_post(&hayProcesosReady);
     } else ingresarAReady(proceso);
 }
 
@@ -97,7 +98,7 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
 void wait_s(t_pcb *proceso,char **parametros){
     char* recurso=parametros[0];
     int indexRecurso = indiceRecurso(recurso);
-
+    log_info(logger,"AAAAAAAAAAAA");
     if(indexRecurso==-1){ //Verifico que exista el recurso
         exit_s(proceso,&invalidResource); //Si no existe, va a EXIT
         return;
@@ -344,6 +345,7 @@ void exit_s(t_pcb *proceso,char **parametros){
     destroyContextoUnico();
     sem_post(&semGradoMultiprogramacion);
     log_info(logger, "finalizo el exit");
+    //TODO: ver de encolar en pcbsParaExit
 }
 
 //FIN_DE_QUANTUM

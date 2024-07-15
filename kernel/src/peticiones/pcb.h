@@ -44,6 +44,7 @@ typedef struct {
 
 extern t_list *pcbsNEW;
 extern t_list *pcbsREADY;
+extern t_list *pcbsREADYaux;
 extern t_list *pcbsEnMemoria;
 extern t_list *pcbsBloqueados;
 extern t_list *pcbsParaExit;

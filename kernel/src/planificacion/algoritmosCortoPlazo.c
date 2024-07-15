@@ -49,6 +49,7 @@ t_pcb *proximoAEjecutarRR(){
 //La llegada de los procesos a las colas se delega a syscalls
 t_pcb *proximoAEjecutarVRR(){
     int64_t quantumConfig = obtenerQuantum();
+    
     if(list_is_empty(pcbsREADYaux)){
         t_pcb *pcbActual = desencolar(pcbsREADY);
         pcbActual->quantum = quantumConfig;

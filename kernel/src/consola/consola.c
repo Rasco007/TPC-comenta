@@ -180,7 +180,7 @@ void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de n
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){
     log_info(logger, "Busco");   
-    t_pcb* pcb = buscarPID(pcbsNEW,pid); //TODO: esto deberia ser la cola de pcbsParaExit ! 
+    t_pcb* pcb = buscarPID(pcbsParaExit,pid); //TODO: esto deberia ser la cola de pcbsParaExit ! 
     log_info(logger, "Destruyo");   
     destruirPCB(pcb);
     log_info(logger, "Se finaliza el proceso <%d>", pid);    
@@ -211,8 +211,8 @@ void procesoEstado(){
     imprimirListaPCBs(pcbsREADY);
     log_info(logger, "Procesos en EXEC");
     imprimirListaPCBs(pcbsEnMemoria);
-    log_info(logger, "Procesos en BLOCKED: HACER!");
-    //listarPIDS(pcbsBloqueados);
+    log_info(logger, "Procesos en BLOCKED:");
+    listarPIDS(pcbsBloqueados);
     log_info(logger, "Procesos en EXIT");
     imprimirListaExit(pcbsParaExit);
 }

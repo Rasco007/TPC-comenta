@@ -48,10 +48,6 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
     while (1)
     {
-         
-        int sval;
-         log_info(logger, "sem ready antes de wait %d",  sem_getvalue(&hayProcesosReady, &sval));
-       
         sem_wait(&hayProcesosReady);
          
         log_info(logger, "hay proceso en ready");

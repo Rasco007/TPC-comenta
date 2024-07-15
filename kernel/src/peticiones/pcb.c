@@ -56,13 +56,19 @@ t_dictionary *crearDiccionarioDeRegistros(){
 void inicializarListasPCBs(){
     pcbsNEW = list_create();
     pcbsREADY = list_create();
+    pcbsREADYaux=list_create();
     pcbsEnMemoria = list_create();
+    pcbsBloqueados=list_create();
+    pcbsParaExit=list_create();
 }
 
 void destruirListasPCBs () {
     destruirListaPCB(pcbsNEW);
     destruirListaPCB(pcbsREADY);
     destruirListaPCB(pcbsEnMemoria);
+    destruirListaPCB(pcbsBloqueados);
+    destruirListaPCB(pcbsREADYaux);
+    destruirListaPCB(pcbsParaExit);
 }
 
 void destruirListaPCB(t_list *pcbs){
