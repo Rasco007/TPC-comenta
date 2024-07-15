@@ -44,7 +44,7 @@ void planificarALargoPlazo(){
 
 void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
-    //crearColasBloqueo();
+    crearColasBloqueo();
 
     while (1)
     {

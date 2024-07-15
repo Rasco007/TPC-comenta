@@ -98,7 +98,7 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
 void wait_s(t_pcb *proceso,char **parametros){
     char* recurso=parametros[0];
     int indexRecurso = indiceRecurso(recurso);
-    log_info(logger,"AAAAAAAAAAAA");
+    
     if(indexRecurso==-1){ //Verifico que exista el recurso
         exit_s(proceso,&invalidResource); //Si no existe, va a EXIT
         return;
@@ -242,22 +242,58 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
 
 
 //IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* direccionFisica;
+    char* tamanio;
+}InterfazSalienteStdinRead;
+
+void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* direccionFisica=args->direccionFisica;
+    char* tamanio=args->tamanio;
+
+    //TODO
+}
+
 void io_stdin_read(t_pcb *proceso,char **parametros){
+    InterfazSalienteStdinRead* args=malloc(sizeof(InterfazSalienteStdinRead));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     //TODO: falta implementar
 }
 
 //IO_STDOUT_WRITE (Interfaz, Registro Dirección, Registro Tamaño)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* direccionFisica;
+    char* tamanio;
+}InterfazSalienteStdoutWrite;
+
+void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* direccionFisica=args->direccionFisica;
+    char* tamanio=args->tamanio;
+
+    //TODO
+}
+
 void io_stdout_write(t_pcb *proceso,char **parametros){
+    InterfazSalienteStdoutWrite* args=malloc(sizeof(InterfazSalienteStdoutWrite));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     char* interfaz = parametros[0];
@@ -270,11 +306,27 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
 
 
 //IO_FS_CREATE (Interfaz, Nombre Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+}InterfazSalienteFsCreate;
+
+void ejecutar_io_fs_create(InterfazSalienteFsCreate* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+
+    //TODO
+}
+
 void io_fs_create(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsCreate* args=malloc(sizeof(InterfazSalienteFsCreate));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_FS_CREATE");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     char* interfaz=parametros[0];
@@ -284,44 +336,122 @@ void io_fs_create(t_pcb *proceso,char **parametros){
 }
 
 //IO_FS_DELETE (Interfaz, Nombre Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+}InterfazSalienteFsDelete;
+
+void ejecutar_io_fs_delete(InterfazSalienteFsDelete* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+
+    //TODO
+}
+
 void io_fs_delete(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsDelete* args=malloc(sizeof(InterfazSalienteFsDelete));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_FS_DELETE");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     //TODO: falta implementar
 }
 
 //IO_FS_TRUNCATE (Interfaz, Nombre Archivo, Registro Tamaño)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+    char* tamanio;
+}InterfazSalienteFsTruncate;
+
+void ejecutar_io_fs_truncate(InterfazSalienteFsTruncate* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    char* tamanio=args->tamanio;
+
+    //TODO
+}
+
 void io_fs_truncate(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsTruncate* args=malloc(sizeof(InterfazSalienteFsTruncate));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     //TODO: falta implementar
 }
 
 //IO_FS_WRITE (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+    char* direccion; //logica o fisica?
+    char* tamanio;
+    char* punteroArchivo;
+}InterfazSalienteFsWrite;
+
+void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    char* direccion=args->direccion;
+    char* tamanio=args->tamanio;
+    char* punteroArchivo=args->punteroArchivo;
+
+    //TODO
+}
+
 void io_fs_write(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsWrite* args=malloc(sizeof(InterfazSalienteFsWrite));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     //TODO: falta implementar
 }
 
 //IO_FS_READ (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+    char* direccion; //logica o fisica?
+    char* tamanio;
+    char* punteroArchivo;
+}InterfazSalienteFsRead;
+
+void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    char* direccion=args->direccion;
+    char* tamanio=args->tamanio;
+    char* punteroArchivo=args->punteroArchivo;
+
+    //TODO
+}
+
 void io_fs_read(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsRead* args=malloc(sizeof(InterfazSalienteFsRead));
+
     estadoAnterior = proceso->estado;
     proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+    loggearBloqueoDeProcesos(proceso, "IO_FS_READ");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
     //TODO: falta implementar
