@@ -18,39 +18,57 @@ void ejecutarServidorIO(){
         hacerHandshake2(*socketClienteIO);
         //ejecutarServidor(*socketClienteIO);
 
-        pthread_create(&thread,
+         pthread_create(&thread,
                         NULL,
                          (void*) ejecutarServidor,
-                        socketClienteIO);
-        pthread_join(thread,NULL);
+                         socketClienteIO);
+         pthread_detach(thread);
     }
     //return EXIT_SUCCESS;
 }
 
 
-void ejecutarServidor(int socketClienteIO){
+
+
+void* ejecutarServidor(void* socketCliente) {
+    int sock = *(int*)socketCliente;
+    free(socketCliente);
+
+    // Hacer handshake
+    hacerHandshake(sock);
 
     while (1) {
-        int peticion = recibirOperacion(socketClienteIO);
+        int peticion;
+        ssize_t bytes = recv(sock, &peticion, sizeof(peticion), 0);
+        if (bytes <= 0) {
+            if (bytes == 0) {
+                log_info(logger, "El cliente cerró la conexión");
+            } else {
+                log_error(logger, "Error en la recepción de la petición: ");
+            }
+            close(sock);
+            return NULL;
+        }
+
         log_debug(logger, "Se recibió petición %d del IO", peticion);
 
         switch (peticion) {
             case READ:
-                recibirPeticionDeLectura(socketClienteIO);
-                enviarValorObtenido(socketClienteIO);
+                recibirPeticionDeLectura(sock);
+                enviarValorObtenido(sock);
                 break;
             case MENSAJE:
-   	 		    char* mensaje = recibirMensaje(socketClienteIO);
+   	 		    char* mensaje = recibirMensaje(sock);
                 log_info(logger, "Mensaje recibido: %s", mensaje);            
                 break;
             case WRITE:
-                recibirPeticionDeEscritura(socketClienteIO);
-                enviarMensaje("OK", socketClienteIO);
+                recibirPeticionDeEscritura(sock);
+                enviarMensaje("OK", sock);
                 break;
             case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
                 int dir;
                 char cadena[2048];
-                recibirDirYCadena(socketClienteIO, &dir, cadena);
+                recibirDirYCadena(sock, &dir, cadena);
                 printf("Direccion: %d\n", dir);
                 printf("Cadena: %s\n", cadena);
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
@@ -67,13 +85,13 @@ void ejecutarServidor(int socketClienteIO){
                 break;
             case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT)
                 int dir2,tamano;
-                recibirDireccionyTamano(socketClienteIO, &dir2,&tamano);
+                recibirDireccionyTamano(sock, &dir2,&tamano);
                 printf("Direccion: %d\n", dir2);
                 printf("Tamaño: %d\n", tamano);
                 char* datosLeidos = malloc(2048);
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
                 printf("Texto leído: %s\n", datosLeidos);
-                enviarMensaje(datosLeidos, socketClienteIO);
+                enviarMensaje(datosLeidos, sock);
                 break;
             case -1:
                 log_error(logger, "IO se desconectó");
@@ -84,7 +102,9 @@ void ejecutarServidor(int socketClienteIO){
                 break;
         }
     }
-    return;
+
+    close(sock);
+    return NULL;
 }
 
 void hacerHandshake2(int socketClienteIO){
@@ -97,6 +117,7 @@ void hacerHandshake2(int socketClienteIO){
     bytes = recv(socketClienteIO, &handshake, sizeof(int32_t), MSG_WAITALL);
    
     if (handshake == 1) {
+       
         bytes = send(socketClienteIO, &resultOk, sizeof(int32_t), 0);
     } else {
         bytes = send(socketClienteIO, &resultError, sizeof(int32_t), 0);
