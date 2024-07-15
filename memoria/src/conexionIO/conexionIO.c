@@ -15,7 +15,7 @@ void ejecutarServidorIO(){
         *socketClienteIO = esperarCliente(server_fd);
         log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
 
-        hacerHandshake2(*socketClienteIO);
+        //hacerHandshake(*socketClienteIO);
         //ejecutarServidor(*socketClienteIO);
 
          pthread_create(&thread,
@@ -107,7 +107,7 @@ void* ejecutarServidor(void* socketCliente) {
     return NULL;
 }
 
-void hacerHandshake2(int socketClienteIO){
+void hacerHandshake(int socketClienteIO){
     size_t bytes;
 
    int32_t handshake;

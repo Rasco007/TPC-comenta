@@ -10,7 +10,7 @@
 #include <./main/memoria.h>
 #include <pthread.h>
 #include <string.h>
-int ejecutarServidorIO(); 
+void ejecutarServidorIO(); 
 void* ejecutarServidor(void* socketCliente) ;
 int ejecutarServidorCPU(int *socketCliente);
 char* leer(int32_t direccionFisica, int tamanio);
@@ -18,7 +18,7 @@ void recibirPeticionDeLectura(int socketCPU);
 void recibirPeticionDeEscritura(int socketCPU);
 void enviarValorObtenido(int socketCPU);
 void escribir(char* valor, int32_t direccionFisica, int tamanio);
-void hacerHandshake2(int socketClienteIO);
+void hacerHandshake(int socketClienteIO);
 void recibirDirYCadena(int socket, int *dir, char* cadena);
 void recibirDireccionyTamano(int socket, int *dir, int *tamano);
 #endif 
