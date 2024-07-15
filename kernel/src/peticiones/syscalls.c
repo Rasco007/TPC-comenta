@@ -39,6 +39,7 @@ void recibirMsjIO(int socketClienteIO){
 
 //FUNCIONES GENERALES
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
+    logger=cambiarNombre(logger,"Kernel-Retorno Contexto");
     //Aca trato las instrucciones bloqueantes
     switch (contextoEjecucion->motivoDesalojo->motivo){
         case WAIT:
@@ -534,7 +535,7 @@ void io_fs_read(t_pcb *proceso,char **parametros){
 //EXIT
 void exit_s(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
-    proceso->estado = EXIT;
+    proceso->estado = SALIDA;
     log_info(logger, "llego al exit");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
@@ -543,6 +544,7 @@ void exit_s(t_pcb *proceso,char **parametros){
         liberarRecursosAsignados(proceso);
     }
 
+    flag_exit=1;
     liberarMemoriaPCB(proceso);
     list_remove_element(pcbsEnMemoria, proceso);
     destruirPCB(proceso); 

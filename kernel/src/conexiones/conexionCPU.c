@@ -9,8 +9,8 @@ sem_t memoriaOK;
 
 void conexionCPU() {
     //CONEXION CPU DISPATCH
-    logger = cambiarNombre(logger, "Kernel-CPU (dispatch)");
-    loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU (dispatch)");
+    logger = cambiarNombre(logger, "Kernel-CPU");
+    loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU");
 
     while(1){
         conexionACPU = conexion("CPU_DISPATCH");
@@ -25,9 +25,6 @@ void conexionCPU() {
     }
 
     //CONEXION CPU INTERRUPT
-    logger = cambiarNombre(logger, "Kernel-CPU (interrupt)");
-    loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU (interrupt)");
-
     while(1){
         conexionACPUInterrupt = conexion("CPU_INTERRUPT");
         
@@ -39,8 +36,6 @@ void conexionCPU() {
             sleep(5);
         }
     }
-    //log_info(logger, "Enviando HOLA!!");
-    //enviarMensaje("HOLA!!", conexionACPU);
 }
 
 int recibirOperacionDeCPU(){ 
@@ -56,6 +51,7 @@ int recibirOperacionDeCPU(){
 
 //Enviar proceso a CPU
 t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
+    logger= cambiarNombre(logger, "Kernel-Enviado de contexto");
     if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
     

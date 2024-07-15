@@ -14,14 +14,14 @@ pthread_mutex_t mutexListaReady;
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 bool pausaPlanificacion =false; //Flag para manejar el pausado de la planificacion desde consola
+int flag_exit=0;
 
 int gradoMultiprogramacion; 
 char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"}; 
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
-   
-    //log_info(logger, "Planificador a largo plazo iniciado");
+    logger=cambiarNombre(logger,"Kernel-Planificador LP");
     while (!pausaPlanificacion) //Mientras no este pausado...
     {
         log_info(logger, "------comienza while largo plazo");
@@ -43,14 +43,15 @@ void planificarALargoPlazo(){
 
 
 void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
-
+    
     crearColasBloqueo();
 
     while (1)
     {
+        flag_exit=0;
+        logger=cambiarNombre(logger,"Kernel-Planificador CP");
         sem_wait(&hayProcesosReady);
          
-        log_info(logger, "hay proceso en ready");
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
         
@@ -67,8 +68,8 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
        
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
-         log_info(logger, "APAREZCO KERNEL");
-         
+        log_info(logger, "APAREZCO KERNEL");
+        if(flag_exit==1) continue;
     }
 }
 

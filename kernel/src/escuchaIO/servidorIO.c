@@ -13,6 +13,8 @@ void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], 
 void escucharAlIO() {
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
+    logger=cambiarNombre(logger,"Kernel-IO");
+    loggerError=cambiarNombre(loggerError,"Errores Kernel-IO");
 
     while (1) {
         
