@@ -254,20 +254,61 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
     char* interfaz=args->interfaz;
     char* direccionFisica=args->direccionFisica;
     char* tamanio=args->tamanio;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_STDIN_READ;
+    agregarAPaquete(paquete,(void*)&direccionFisica,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);
 
-    //TODO
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso);
 }
 
 void io_stdin_read(t_pcb *proceso,char **parametros){
     InterfazSalienteStdinRead* args=malloc(sizeof(InterfazSalienteStdinRead));
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->direccionFisica = parametros[1];
+            args->tamanio = parametros[2];
 
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdin_read, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_info(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
 }
 
 //IO_STDOUT_WRITE (Interfaz, Registro Dirección, Registro Tamaño)
@@ -283,24 +324,57 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     char* interfaz=args->interfaz;
     char* direccionFisica=args->direccionFisica;
     char* tamanio=args->tamanio;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
 
-    //TODO
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_STDOUT_WRITE;
+    agregarAPaquete(paquete,(void*)&direccionFisica,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(char*));
 }
 
 void io_stdout_write(t_pcb *proceso,char **parametros){
     InterfazSalienteStdoutWrite* args=malloc(sizeof(InterfazSalienteStdoutWrite));
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_STDOUT_WRITE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->direccionFisica = parametros[1];
+            args->tamanio = parametros[2];
 
-    char* interfaz = parametros[0];
-    char* direccion = parametros[1];
-    char* tamanio = parametros[2];
-
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdout_write, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_info(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
 }
 
 
