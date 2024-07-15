@@ -8,7 +8,32 @@ estadoProceso estadoAnterior;
 int tiempoIO;
 bool hayOpFS;
 
+void pasarAReady(t_pcb *proceso)
+{
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    if(proceso->algoritmo==VRR){ //Para los procesos que vuelven de hacer IO
+        encolar(pcbsREADYaux,proceso);
+        pidsInvolucrados = string_new();
+        listarPIDS(pcbsREADYaux);
+        log_info(logger, "Cola Ready AUX <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
+        free(pidsInvolucrados);
+    } else ingresarAReady(proceso);
+}
 
+void recibirMsjIO(int socketClienteIO){
+    char buffer[1024];
+    int bytes_recibidos = recv(socketClienteIO, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        
+    }
+    buffer[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
+    
+    log_info(logger, "valor recibido: %s", buffer);
+}
 
 
 //FUNCIONES GENERALES
@@ -18,15 +43,11 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
         case WAIT:
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
-        case RESIZE:
-            //resize_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
-            break;
         case SIGNAL:
             signal_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_GEN_SLEEP:
-            prc_io_gen_sleep(contextoEjecucion, proceso);
-
+            io_gen_sleep(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_STDIN_READ:
             io_stdin_read(proceso, contextoEjecucion->motivoDesalojo->parametros);
@@ -53,11 +74,10 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             exit_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case FIN_DE_QUANTUM:
-            log_info(logger,"LOGGER DE LA VERDAD");
             finDeQuantum(proceso);
         default:
             log_error(loggerError, "Comando incorrecto");
-            break; //falta un case para el FIN_DE_QUANTUM
+            break;
     }
 }
 
@@ -70,31 +90,6 @@ void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {
 
 void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
     log_info(logger,"Finaliza el proceso <%d> - Motivo: <%s>", proceso->pid, motivo); //log obligatorio
-}
-
-void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso)
-{
-    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
-    if (existeInterfaz == 1)
-    {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
-        
-        if (esValida == 1)
-        {
-            // en caso de validar() sea 1, hacemos io_gen_sleep
-            ejecutar_io_gen_sleep(proceso, contextoEjecucion->motivoDesalojo->parametros, &kernel);
-        }
-        else
-        {
-            // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
-        }
-    }
-    else
-    {
-        log_info(logger, "no existe la interfaz - proceso a exit");
-        // mandar proceso a exit
-    }
 }
 
 //FUNCIONES RETORNO CONTEXTO
@@ -177,46 +172,71 @@ void signal_s(t_pcb *proceso,char **parametros){
 }
 
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
-void ejecutar_io_gen_sleep(t_pcb *proceso, char **parametros,  Kernel_io *kernel)
-{
+typedef struct{
+    t_pcb* proceso;
+    char* tiempo;
+    char* interfaz;
+}InterfazSalienteGenSleep;
+
+void dormir_IO(InterfazSalienteGenSleep* args){  
+    char* interfaz=args->interfaz;
+    char* tiempo=args->tiempo;
+    t_pcb* proceso=args->proceso;
+
+    log_info(logger, "tiempo recibido %s", tiempo);
+    log_info(logger, "interfaz recibida %s", interfaz);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    log_info(logger, "se recibio el socket %d", socketClienteIO);
+    enviarMensajeGen(socketClienteIO, interfaz, tiempo);
     
+    log_info(logger, "antes de recibir msj");
+    //Recibir mensaje de confirmacion de IO
+    recibirMsjIO( socketClienteIO);
+    log_info(logger, "luego e recobor msj");
+    pasarAReady(proceso);
+}
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-
-    log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
-
-   
-   
-    pthread_t pcb_bloqueado;
-     if (!pthread_create(&pcb_bloqueado, NULL, dormirIO(proceso, parametros[0], parametros[1]), proceso))
+void io_gen_sleep(t_pcb *proceso, char **parametros){
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
     {
-        pthread_detach(pcb_bloqueado);
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            // en caso de validar() sea 1, hacemos io_gen_sleep
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
+            
+            InterfazSalienteGenSleep* args = malloc(sizeof(InterfazSalienteGenSleep));
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->tiempo = parametros[1];
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo para dormir IO");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
     }
     else
     {
-        log_error(loggerError, "Error al crear hilo para dormir IO");
+        log_info(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
-}
-
-void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){  
-     log_info(logger, "tiempo recibido %s", tiempo);
-     log_info(logger, "interfaz recibida %s", interfaz);
-   int socketClienteIO = obtener_socket(&kernel, interfaz);
-   log_info(logger, "se recibio el socket %d", socketClienteIO);
-    enviarMensajeGen(socketClienteIO, interfaz, tiempo);
-    
-     log_info(logger, "antes de recibir msj");
-   // Recibir mensaje de confirmacion de IO
-    recibirMsjIO( socketClienteIO);
-     log_info(logger, "luego e recobor msj");
-    pasarAReady(proceso);
-     
-   
-    return; // Add this line to fix the issue
 }
 
 
@@ -416,29 +436,3 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
 }
 
 //READY
-void pasarAReady(t_pcb *proceso)
-{
-    estadoAnterior = proceso->estado;
-    proceso->estado = READY;
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    if(proceso->algoritmo==VRR){ //Para los procesos que vuelven de hacer IO
-        encolar(pcbsREADYaux,proceso);
-        pidsInvolucrados = string_new();
-        listarPIDS(pcbsREADYaux);
-        log_info(logger, "Cola Ready AUX <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
-        free(pidsInvolucrados);
-    } else ingresarAReady(proceso);
-}
-
-void recibirMsjIO(int socketClienteIO){
-    char buffer[1024];
-    int bytes_recibidos = recv(socketClienteIO, buffer, sizeof(buffer), 0);
-    
-    if (bytes_recibidos < 0) {
-        perror("Error al recibir el mensaje");
-        
-    }
-    buffer[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
-    
-    log_info(logger, "valor recibido: %s", buffer);
-}
