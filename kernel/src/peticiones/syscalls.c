@@ -391,25 +391,55 @@ void ejecutar_io_fs_create(InterfazSalienteFsCreate* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
 
-    //TODO
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_CREATE;
+    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);
+
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso);
 }
 
 void io_fs_create(t_pcb *proceso,char **parametros){
     InterfazSalienteFsCreate* args=malloc(sizeof(InterfazSalienteFsCreate));
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_FS_CREATE");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_CREATE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
 
-    char* interfaz=parametros[0];
-    char* nombreArchivo=parametros[1];
-
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_create, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
 }
-
 //IO_FS_DELETE (Interfaz, Nombre Archivo)
 typedef struct{
     t_pcb* proceso;
@@ -421,20 +451,54 @@ void ejecutar_io_fs_delete(InterfazSalienteFsDelete* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
 
-    //TODO
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_DELETE;
+    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);
+
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso);
 }
 
 void io_fs_delete(t_pcb *proceso,char **parametros){
     InterfazSalienteFsDelete* args=malloc(sizeof(InterfazSalienteFsDelete));
-
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_FS_DELETE");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_DELETE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_DELETE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
 
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_delete, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
 }
 
 //IO_FS_TRUNCATE (Interfaz, Nombre Archivo, Registro Tamaño)
@@ -449,21 +513,57 @@ void ejecutar_io_fs_truncate(InterfazSalienteFsTruncate* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
-    char* tamanio=args->tamanio;
+    int tamanio=atoi(args->tamanio);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
 
-    //TODO
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_TRUNCATE;
+    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);
+
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso);
 }
 
 void io_fs_truncate(t_pcb *proceso,char **parametros){
     InterfazSalienteFsTruncate* args=malloc(sizeof(InterfazSalienteFsTruncate));
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_TRUNCATE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+            args->tamanio = parametros[2];
 
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_truncate, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
 }
 
 //IO_FS_WRITE (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
@@ -480,23 +580,65 @@ void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
-    char* direccion=args->direccion;
-    char* tamanio=args->tamanio;
+    int direccion=atoi(args->direccion);
+    int tamanio=atoi(args->tamanio);
     char* punteroArchivo=args->punteroArchivo;
 
-    //TODO
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_WRITE;
+    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
+    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);
+
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso);
+    
 }
 
 void io_fs_write(t_pcb *proceso,char **parametros){
     InterfazSalienteFsWrite* args=malloc(sizeof(InterfazSalienteFsWrite));
-
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
     
-    loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_WRITE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+            args->direccion = parametros[2];
+            args->tamanio = parametros[3];
+            args->punteroArchivo = parametros[4];
 
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_write, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
 }
 
 //IO_FS_READ (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
@@ -513,23 +655,64 @@ void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
-    char* direccion=args->direccion;
-    char* tamanio=args->tamanio;
+    int direccion=atoi(args->direccion);
+    int tamanio=atoi(args->tamanio);
     char* punteroArchivo=args->punteroArchivo;
 
-    //TODO
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_READ;
+    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
+    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);
+
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso); 
 }
 
 void io_fs_read(t_pcb *proceso,char **parametros){
     InterfazSalienteFsRead* args=malloc(sizeof(InterfazSalienteFsRead));
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_FS_READ");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_READ");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_READ",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+            args->direccion = parametros[2];
+            args->tamanio = parametros[3];
+            args->punteroArchivo = parametros[4];
 
-    //TODO: falta implementar
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_read, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
 }
 
 //EXIT
