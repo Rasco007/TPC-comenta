@@ -218,12 +218,32 @@ void procesoEstado(){
 }
 
 //MULTIPROGRAMACION [VALOR]
+void ajustarTamanioSemaforo(sem_t* semaforo,int valor){
+    int valorActual;
+    sem_getvalue(semaforo,&valorActual);
+
+    //Si el valor actual es mayor al valor que le quiero setear, decremento el semaforo hasta llegar al valor
+    if(valorActual>valor){ 
+        for(int i=0;i<valorActual-valor;i++){
+            sem_wait(semaforo);
+        }
+    } else if(valorActual<valor){ //Si el valor actual es menor al valor que le quiero setear, incremento el semaforo hasta llegar al valor
+        for(int i=0;i<valor-valorActual;i++){
+            sem_post(semaforo);
+        }
+    }
+}
+
 void modificarGradoMultiprogramacion(int valor){
     if(valor<=0 || valor>=15){
         log_info(logger, "Multiprogramacion no permitida. Ingrese un valor entre 1 y 14.");
         return;
     } else{
         gradoMultiprogramacion = valor;
+        ajustarTamanioSemaforo(&semGradoMultiprogramacion,valor);
         log_info(logger, "Grado de multiprogramacion modificado a %d", valor);
+        int valorSemaforo;
+        sem_getvalue(&semGradoMultiprogramacion, &valorSemaforo);
+        log_info(logger, "Valor del semaforo: %d", valorSemaforo);
     }
 }
