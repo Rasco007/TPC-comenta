@@ -32,6 +32,8 @@ void destruirPCB(t_pcb *pcb){
     list_destroy_and_destroy_elements(pcb->instrucciones, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
     log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
+    free(pcb->recursosAsignados);
+    free(pcb->tablaDePaginas);
     free(pcb);
 }
 

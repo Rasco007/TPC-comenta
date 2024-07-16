@@ -227,13 +227,13 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_info(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "no existe la interfaz - proceso a exit");
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
@@ -299,7 +299,7 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
     }
@@ -371,7 +371,7 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
     }
@@ -451,9 +451,15 @@ void io_fs_create(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
 }
 //IO_FS_DELETE (Interfaz, Nombre Archivo)
@@ -520,9 +526,15 @@ void io_fs_delete(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
 }
 
@@ -594,9 +606,15 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
 }
 
@@ -683,9 +701,15 @@ void io_fs_write(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
 }
 
@@ -771,9 +795,15 @@ void io_fs_read(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
             exit_s(proceso,parametros);
         }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
 }
 
