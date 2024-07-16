@@ -14,6 +14,7 @@ void limpiarBuffer(int socketCliente){
     void* buffer = recibirBuffer(socketCliente, &size);
     free(buffer);
 }
+
 void recibirEnteros2(int socket, int *pid, int *indice) {
     char buffer[2048];
     // Recibir el mensaje del servidor
@@ -36,7 +37,7 @@ int ejecutarServidorCPU(int *socketCliente) {
 
         switch (peticion) {
             case READ:
-            log_info(logger, "Llegue al case READ");
+                log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
                 enviarValorObtenido(*socketCliente);
                 break;
@@ -49,7 +50,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 int pid,pag;
                 char marco[sizeof(int)];
                 recibirEnteros(*socketCliente,&pid,&pag);
-                BuscarYEnviarMarco(pid, pag, marco,*socketCliente);
+                buscarYEnviarMarco(pid, pag, marco,*socketCliente);
                 limpiarBuffer(*socketCliente);
                 break;
             case -1:
@@ -68,7 +69,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 log_info(logger, "Proc: %d",proceso->pid);
                 instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
                 log_info(logger, "Instruccion: %s",instruccion);
-                sleep(config_get_int_value(config, "RETARDO_RESPUESTA")/1000); //Agrego retardo
+                sleep(confGetInt("RETARDO_RESPUESTA")/1000); //Agrego retardo
                 enviarMensaje(instruccion,*socketCliente); 
                 // limpiarBuffer(*socketCliente);
                 break;
@@ -107,7 +108,7 @@ void recibirEnteros(int socket, int *pid, int *pagina) {
     printf("Recibido PID: %d, Página: %d\n", *pid, *pagina);
 }
 
-void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
+void buscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
     int frame=0;
     for (int i=0; i<NUM_MARCOS; i++){
         if (mf->marcos[i].pid == pid && mf->marcos[i].numero_pagina == pagina){
@@ -132,6 +133,7 @@ char* leer(int32_t direccionFisica, int tamanio) {
     return valor;
 }
 
+//TODO: ver funcs en estructura
 void recibirPeticionDeLectura(int socketCPU) {
     int size, desplazamiento = 0, pid, tamanio;
     int32_t direccionFisica;
@@ -153,6 +155,7 @@ void recibirPeticionDeLectura(int socketCPU) {
     free(buffer);
 }
 
+//TODO: ver funcs en estructura
 void recibirPeticionDeEscritura(int socketCPU) {
     int size, desplazamiento = 0, tamanio, pid;
     int32_t direccionFisica;
