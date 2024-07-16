@@ -127,7 +127,7 @@ void decode(){
     remove_newline(instruccionAEjecutar);
 
     log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
-    elementosInstruccion = string_n_split(instruccionAEjecutar, 4, " ");
+    elementosInstruccion = string_n_split(instruccionAEjecutar, 6, " ");
     log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); 
     cantParametros = string_array_size(elementosInstruccion) - 1; 
     log_info(logger, "cantParametros: %d", cantParametros);
@@ -234,6 +234,8 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    flag_bloqueante = 1;
+    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
@@ -462,6 +464,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
+    free(instruccionAEjecutar);
     log_info(logger,"Memoria liberada!");
 }
 

@@ -10,6 +10,10 @@ void io_atender_memoria(){
     	case MENSAJE: //STDOUT
    	 		char *recibido=recibirMensaje(fd_memoria);
 			log_info(logger, "valor recibido: %s", recibido);
+			if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
+				escribirCadenaEnArchivo(archivoWrite, recibido, pointerArchivo);
+
+			}
    	 		break;
 
     	case -1:

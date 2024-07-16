@@ -65,7 +65,8 @@ void* ejecutarServidor(void* socketCliente) {
                 recibirPeticionDeEscritura(sock);
                 enviarMensaje("OK", sock);
                 break;
-            case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
+            case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN O FS_READ) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
+                log_info(logger, "IO envía mensaje a escribir en memoria");
                 int dir;
                 char cadena[2048];
                 recibirDirYCadena(sock, &dir, cadena);
@@ -74,6 +75,7 @@ void* ejecutarServidor(void* socketCliente) {
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
                 char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
                 memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
+                datoEscrito[strlen(cadena)] = '\0';
                 printf("Dato escrito: %s\n", datoEscrito);
                 /*char *datoAEscribir= recibirMensaje(socketClienteIO);
                 log_info(logger, "Mensaje recibido: %s", datoAEscribir);
@@ -83,7 +85,8 @@ void* ejecutarServidor(void* socketCliente) {
                 memcpy(datoEscrito, (char*)mf->memoria + offset, longitud);
                 printf("Dato escrito: %s\n", datoEscrito);*/
                 break;
-            case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT)
+            case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT o FS_WRITE)
+                log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
                 int dir2,tamano;
                 recibirDireccionyTamano(sock, &dir2,&tamano);
                 printf("Direccion: %d\n", dir2);
@@ -153,7 +156,6 @@ void recibirDirYCadena(int socket, int *dir, char* cadena) {
     memcpy(cadena, buffer + sizeof(int) + sizeof(op_code), longitud_cadena);
     // Asegurarse de que la cadena esté terminada en nulo
    // cadena[longitud_cadena] = '\0';
-   // printf("Cadena recibida: %s\n", cadena);
 }
 
 void recibirDireccionyTamano(int socket, int *dir, int *tamano) {

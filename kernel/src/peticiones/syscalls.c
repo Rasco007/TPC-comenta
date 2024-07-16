@@ -402,10 +402,21 @@ void ejecutar_io_fs_create(InterfazSalienteFsCreate* args){
 
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_CREATE;
-    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
-    enviarPaquete(paquete,socketClienteIO);
-
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 2*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso);
 }
@@ -416,7 +427,7 @@ void io_fs_create(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;
@@ -462,9 +473,18 @@ void ejecutar_io_fs_delete(InterfazSalienteFsDelete* args){
 
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_DELETE;
-    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
-    enviarPaquete(paquete,socketClienteIO);
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 2*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
 
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso);
@@ -476,7 +496,7 @@ void io_fs_delete(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;
@@ -525,10 +545,19 @@ void ejecutar_io_fs_truncate(InterfazSalienteFsTruncate* args){
 
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_TRUNCATE;
-    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
-    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
-    enviarPaquete(paquete,socketClienteIO);
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 3*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len+sizeof(int), &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
 
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso);
@@ -540,7 +569,7 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;
@@ -590,17 +619,31 @@ void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
     int direccion=atoi(args->direccion);
     int tamanio=atoi(args->tamanio);
     char* punteroArchivo=args->punteroArchivo;
-
+    int punterito = atoi(punteroArchivo);
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_WRITE;
-    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    /*agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
     agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
     agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
     agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
-    enviarPaquete(paquete,socketClienteIO);
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));*/
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 5*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &punterito, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
 
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso);
@@ -613,7 +656,7 @@ void io_fs_write(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;
@@ -665,18 +708,32 @@ void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
     int direccion=atoi(args->direccion);
     int tamanio=atoi(args->tamanio);
     char* punteroArchivo=args->punteroArchivo;
-
+    int punterito = atoi(punteroArchivo);
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_READ;
-    agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    /*agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
     agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
     agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
-    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(int));
     agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
-    enviarPaquete(paquete,socketClienteIO);
-
+    enviarPaquete(paquete,socketClienteIO);*/
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 5*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &punterito, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso); 
 }
@@ -687,7 +744,7 @@ void io_fs_read(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;

@@ -1,6 +1,7 @@
 #include "../include/io_kernel.h"
 #define BUFFER_SIZE 1024
-
+char* archivoWrite;
+int pointerArchivo;
 void io_atender_kernel(){
 	bool control=1;
     //int size;
@@ -10,16 +11,12 @@ void io_atender_kernel(){
     	case MENSAJE:
    	 		recibirMensaje(fd_kernel);
 			// char mensajeConexion[BUFFER_SIZE] = {0};  
-
-			
 			// int bytes_recibidos = recv(fd_kernel, mensajeConexion, sizeof(mensajeConexion), 0);
-			
 			// if (bytes_recibidos < 0) {
 			// 	perror("Error al recibir el mensaje");
 			// 	return NULL;
 			// }
 			// mensajeConexion[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
-			
 			// log_info(logger, "valor recibido: %s", mensajeConexion);
    	 		break;
     		/*//case PAQUETE:
@@ -28,11 +25,11 @@ void io_atender_kernel(){
    	 	//list_iterate(lista, (void*) iterator);
    	  //   break;*/
 	  	case READ:
-		log_info(logger, "stdin read recibido");
-		manejarSTDINRead(fd_kernel);
-		break;
+		    log_info(logger, "stdin read recibido");
+		    manejarSTDINRead(fd_kernel);
+		    break;
    		case IO_GEN_SLEEP:
-   			
+   			log_info(logger, "sleep recibido");
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
 		case IO_STDIN_READ:
@@ -44,19 +41,24 @@ void io_atender_kernel(){
 			manejarSTDOUTRead(fd_kernel);
    			break;
 		case IO_FS_CREATE:
-			//TODO
+            log_info(logger, "fs create recibido");
+			manejarFS_CREATE(fd_kernel);
 			break;
 		case IO_FS_DELETE:
-			//TODO
+			log_info(logger, "fs delete recibido");
+            manejarFS_DELETE(fd_kernel);   
 			break;
 		case IO_FS_READ:
-			//TODO
+			log_info(logger, "fs read recibido");
+            manejarFS_READ(fd_kernel);
 			break;
 		case IO_FS_TRUNCATE:
-			//TODO
+			log_info(logger, "fs truncate recibido");
+            manejarFS_TRUNCATE(fd_kernel);
 			break;
 		case IO_FS_WRITE:
-			//TODO
+			log_info(logger, "fs write recibido");
+            manejarFS_WRITE(fd_kernel);
 			break;
     	case -1:
    			log_error(logger, "Kernel se desconectó. Terminando servidor");
@@ -68,6 +70,199 @@ void io_atender_kernel(){
     	}
 	}
 }
+
+void manejarFS_DELETE(int socketCliente){
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    int longitud1,longitud2;    
+    char nombreinterfaz[2048];
+    char nombrearchivo[2048];
+    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
+    printf("Longitud de la cadena recibida: %d\n", longitud1);
+    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
+    nombreinterfaz[longitud1] = '\0';   
+    printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&longitud2, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
+    printf("Longitud de la cadena recibida: %d\n", longitud2);
+    // Copiar la cadena recibida
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 2*sizeof(int)+longitud1, longitud2);
+    // Asegurarse de que la cadena esté terminada en nulo
+    nombrearchivo[longitud2] = '\0';
+    printf("Nombre de archivo: %s\n", nombrearchivo);
+    delete_file(nombrearchivo);
+}
+
+void manejarFS_TRUNCATE(int socketCliente){
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    int longitud1,longitud2;    
+    char nombreinterfaz[2048];
+    char nombrearchivo[2048];
+    int  nuevoTamanio;
+    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
+    printf("Longitud de la cadena recibida: %d\n", longitud1);
+    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
+    nombreinterfaz[longitud1] = '\0';   
+    printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&nuevoTamanio, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
+    printf("Nuevo tamanio: %d\n", nuevoTamanio);
+    memcpy(&longitud2, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
+    printf("Longitud de la cadena recibida: %d\n", longitud2);
+    // Copiar la cadena recibida
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 3*sizeof(int)+longitud1, longitud2);
+    // Asegurarse de que la cadena esté terminada en nulo
+    nombrearchivo[longitud2] = '\0';
+    printf("Nombre de archivo: %s\n", nombrearchivo);
+    truncarArchivo2(nombrearchivo,nuevoTamanio);
+}
+void manejarFS_READ(int socketCliente){
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    int longitud1,longitud2, direccion, tamanio, punteroArchivo;    
+    char nombreinterfaz[2048];
+    char nombrearchivo[2048];
+    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
+    printf("Longitud de la cadena recibida: %d\n", longitud1);
+    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
+    nombreinterfaz[longitud1] = '\0';   
+    printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&direccion, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
+    printf("direccion: %d\n", direccion);
+    memcpy(&tamanio, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
+    printf("tamanio: %d\n", tamanio);
+    memcpy(&punteroArchivo, buffer + sizeof(op_code)+3*sizeof(int)+longitud1, sizeof(int));
+    printf("pointer: %d\n", punteroArchivo);
+    memcpy(&longitud2, buffer + sizeof(op_code) + 4*sizeof(int)+longitud1, sizeof(int));
+    printf("Longitud de la cadena recibida: %d\n", longitud2);
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 5*sizeof(int)+longitud1, longitud2);
+    nombrearchivo[longitud2] = '\0';
+    printf("Nombre de archivo: %s\n", nombrearchivo);
+    archivoWrite=nombrearchivo;
+    pointerArchivo=punteroArchivo;
+    char *datosLeidos= leerDatosDesdeArchivo(nombrearchivo, punteroArchivo, tamanio);
+    printf("Datos leidos: %s\n", datosLeidos);
+    direccion=16;
+    enviarAImprimirAMemoria(datosLeidos,direccion,fd_memoria);
+}
+
+void manejarFS_WRITE(int socketCliente){
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    int longitud1,longitud2, direccion, tamanio, punteroArchivo;    
+    char nombreinterfaz[2048];
+    char nombrearchivo[2048];
+    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
+    printf("Longitud de la cadena recibida: %d\n", longitud1);
+    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
+    nombreinterfaz[longitud1] = '\0';   
+    printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&direccion, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
+    printf("direccion: %d\n", direccion);
+    memcpy(&tamanio, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
+    printf("tamanio: %d\n", tamanio);
+    memcpy(&punteroArchivo, buffer + sizeof(op_code)+3*sizeof(int)+longitud1, sizeof(int));
+    printf("pointer: %d\n", punteroArchivo);
+    memcpy(&longitud2, buffer + sizeof(op_code) + 4*sizeof(int)+longitud1, sizeof(int));
+    printf("Longitud de la cadena recibida: %d\n", longitud2);
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 5*sizeof(int)+longitud1, longitud2);
+    nombrearchivo[longitud2] = '\0';
+    printf("Nombre de archivo: %s\n", nombrearchivo);
+    archivoWrite=nombrearchivo;
+    pointerArchivo=punteroArchivo;
+    enviarDireccionTamano(direccion,tamanio,fd_memoria);
+}
+
+void manejarFS_CREATE(int socketCliente) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    int longitud1,longitud2;    
+    char nombreinterfaz[2048];
+    char nombrearchivo[2048];
+    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
+    printf("Longitud de la cadena recibida: %d\n", longitud1);
+    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
+    nombreinterfaz[longitud1] = '\0';   
+    printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&longitud2, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
+    printf("Longitud de la cadena recibida: %d\n", longitud2);
+    // Copiar la cadena recibida
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 2*sizeof(int)+longitud1, longitud2);
+    // Asegurarse de que la cadena esté terminada en nulo
+    nombrearchivo[longitud2] = '\0';
+    printf("Nombre de archivo: %s\n", nombrearchivo);
+    crearArchivo2(nombrearchivo);
+}
+
 void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket) {
     t_paquete *paquete = malloc(sizeof(t_paquete));
     paquete->codigo_operacion = 100;
@@ -81,7 +276,7 @@ void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket) {
     void *a_enviar = serializarPaquete(paquete, bytes);
     if (send(socket, a_enviar, bytes, 0) != bytes) {
         perror("Error al enviar datos al servidor");
-        exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
+        exit(EXIT_FAILURE); // Manejo de error
     }
     free(paquete->buffer->stream);
     free(paquete->buffer);

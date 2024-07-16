@@ -37,7 +37,10 @@ int main(int argc, char** argv) {
 
 	conexionIOMemoria(argv);
 	conexionKernel(argv);
-
+	if (strcmp(TIPO_INTERFAZ, "DialFS") == 0){
+    	create_bitmap_file("bitmap.dat", BLOCK_COUNT/8);
+    	create_bloques_file("bloques.dat", BLOCK_COUNT*BLOCK_SIZE);
+	}
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
 
