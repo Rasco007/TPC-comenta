@@ -256,11 +256,12 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
     char* direccionFisica=args->direccionFisica;
     char* tamanio=args->tamanio;
     int socketClienteIO = obtener_socket(&kernel, interfaz);
-    
+    int tamanioInt = atoi(tamanio);
+    int direccionFisicaInt = atoi(direccionFisica);
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_STDIN_READ;
-    agregarAPaquete(paquete,(void*)&direccionFisica,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&tamanio,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&direccionFisicaInt,sizeof(int));
+    agregarAPaquete(paquete,(void*)&tamanioInt,sizeof(int));
     enviarPaquete(paquete,socketClienteIO);
 
     recibirMensaje(socketClienteIO);
@@ -273,7 +274,7 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDIN");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;
@@ -326,11 +327,17 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     char* direccionFisica=args->direccionFisica;
     char* tamanio=args->tamanio;
     int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int tamanioInt = atoi(tamanio);
+    int direccionFisicaInt = atoi(direccionFisica);
 
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_STDOUT_WRITE;
-    agregarAPaquete(paquete,(void*)&direccionFisica,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&tamanio,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&direccionFisicaInt,sizeof(int));
+    agregarAPaquete(paquete,(void*)&tamanioInt,sizeof(int));
+    enviarPaquete(paquete,socketClienteIO);
+    recibirMensaje(socketClienteIO);
+    pasarAReady(proceso);
+
 }
 
 void io_stdout_write(t_pcb *proceso,char **parametros){
@@ -339,7 +346,7 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1)
     {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDOUT");
         
         if (esValida == 1){
             estadoAnterior = proceso->estado;

@@ -36,11 +36,11 @@ void io_atender_kernel(){
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
 		case IO_STDIN_READ:
-   			
-			recibir_mensaje_y_dormir(fd_kernel);
+   			log_info(logger, "stdin write recibido");
+			manejarSTDINRead(fd_kernel);
    			break;
 		case IO_STDOUT_WRITE:
-   			
+   			log_info(logger, "stdout write recibido");
 			manejarSTDOUTRead(fd_kernel);
    			break;
 		case IO_FS_CREATE:
@@ -108,57 +108,55 @@ void enviarDireccionTamano(int direccion,int tamano, int socket) {
     free(a_enviar);
     free(paquete);
 }
-
-void manejarSTDINRead(int socketCliente) {
-      t_list* lista = recibirPaquete(socketCliente);
-    if (lista == NULL) {
-        log_error(logger, "Error al recibir paquete");
+void recibirEnteros3(int socket, int *pid, int *indice) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
         return;
     }
-    // Procesar la lista de valores según tu lógica
-    char* direccion = list_get(lista, 0); // Por ejemplo, obtener el primer parámetro
-    char* tamanioTexto = list_get(lista, 1); // Por ejemplo, obtener el segundo parámetro
+    memcpy(pid ,buffer+sizeof(op_code), sizeof(int));
+    memcpy(indice, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+}
+
+void manejarSTDINRead(int socketCliente) {
+    int tamanioTexto;
+    int direccion;
+    recibirEnteros3(socketCliente, &tamanioTexto, &direccion);
     // Loguear los parámetros recibidos
-    log_info(logger, "Tamanio recibido: %s", tamanioTexto);
-    log_info(logger, "Direccion recibida: %s", direccion);
+    log_info(logger, "Tamanio recibido: %d", tamanioTexto);
+    log_info(logger, "Direccion recibida: %d", direccion);
     // Leer una línea de texto usando readline
     char* texto = readline("Ingrese el texto: ");
-	char *datosLeidos = (char *)malloc(atoi(tamanioTexto) + 1); // +1 para el terminador nulo
+	char *datosLeidos = (char *)malloc(tamanioTexto ); // +1 para el terminador nulo
+    datosLeidos[tamanioTexto] = '\0'; // Asegurar el terminador nulo
     if (datosLeidos == NULL) {
         perror("Error al reservar memoria para los datos leídos");
         return ;
     }
     // Copiar los datos desde el archivo mapeado al buffer de datos leídos
-    memcpy(datosLeidos, texto, atoi(tamanioTexto));
+    memcpy(datosLeidos, texto, tamanioTexto);
 	printf("Texto a enviar: %s\n", datosLeidos);
-	enviarAImprimirAMemoria(datosLeidos,atoi(direccion), fd_memoria); //estos datos se deben escribir en la direccion de memoria
+	enviarAImprimirAMemoria(datosLeidos,direccion, fd_memoria); //estos datos se deben escribir en la direccion de memoria
 	//UNA FUNCION QUE MANDE "datosLeidos" A MEMORIA Y LO ESCRIBA EN "direccion"
 	// Liberar la memoria reservada
 	free(texto);
 	free(datosLeidos);
-    // Liberar memoria del paquete
-    list_destroy_and_destroy_elements(lista, free);
 }
 
 void manejarSTDOUTRead(int socketCliente) {
-    t_list* lista = recibirPaquete(socketCliente);
-    if (lista == NULL) {
-        log_error(logger, "Error al recibir paquete");
-        return;
-    }
-    // Procesar la lista de valores según tu lógica
-    char* nombre = list_get(lista, 0);
-	char* direccion = list_get(lista, 1);
-    char* tamanioTexto = list_get(lista, 2);
+    int tamanioTexto;
+    int direccion;
+    recibirEnteros3(socketCliente, &tamanioTexto, &direccion);
     // Loguear los parámetros recibidos
-    log_info(logger, "Tamanio recibido: %s", tamanioTexto);
-    log_info(logger, "Direccion recibida: %s", direccion);
-	log_info(logger, "nombre: %s", nombre);
-	direccion="1"; //VER CUANDO SE TRADUCE DE DL A DF
-	tamanioTexto="2";
-	enviarDireccionTamano(atoi(direccion), atoi(tamanioTexto),fd_memoria);
-    // Liberar memoria del paquete
-    list_destroy_and_destroy_elements(lista, free);
+    log_info(logger, "Tamanio recibido: %d", tamanioTexto);
+    log_info(logger, "Direccion recibida: %d", direccion);
+	//log_info(logger, "nombre: %s", nombre);
+	//direccion="1"; //VER CUANDO SE TRADUCE DE DL A DF
+	//tamanioTexto="2";
+	enviarDireccionTamano(direccion, tamanioTexto,fd_memoria);
 }
 
 void recibir_mensaje_y_dormir(int socket_cliente) {
