@@ -33,7 +33,6 @@ void destruirPCB(t_pcb *pcb){
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
     log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
     free(pcb);
-    
 }
 
 t_dictionary *crearDiccionarioDeRegistros(){

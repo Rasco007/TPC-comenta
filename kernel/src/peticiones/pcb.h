@@ -28,8 +28,8 @@ typedef struct {
 
 typedef struct {
     uint32_t pid; 
-    int socketPCB; 
-    t_list* instrucciones; 
+    int socketPCB; //Sacar
+    t_list* instrucciones; //Sacar
     uint32_t programCounter;
     uint32_t SI;
     uint32_t DI;   
@@ -37,7 +37,7 @@ typedef struct {
     t_dictionary* registrosCPU;
     int64_t tiempoDeUsoCPU; 
     t_list* recursosAsignados;
-    t_list* tablaDePaginas;
+    t_list* tablaDePaginas; //Sacar
     int64_t quantum;
     t_algoritmo algoritmo;
 } t_pcb; 

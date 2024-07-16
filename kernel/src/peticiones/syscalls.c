@@ -3,10 +3,7 @@
 t_list *recursos;
 char **nombresRecursos;
 char* invalidResource = "INVALID_RESOURCE";
-char* outOfMemory = "OUT_OF_MEMORY";
 estadoProceso estadoAnterior; 
-int tiempoIO;
-bool hayOpFS;
 
 void pasarAReady(t_pcb *proceso)
 {
@@ -125,15 +122,10 @@ void wait_s(t_pcb *proceso,char **parametros){
         loggearBloqueoDeProcesos(proceso, recurso);
     } else {//Si no, vuelve a cpu
         list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
-        volverACPU(proceso);
+        pasarAReady(proceso);
     }
 }
 
-void volverACPU(t_pcb* proceso) {
-    contextoEjecucion = procesarPCB(proceso);
-    rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
-    retornoContexto(proceso, contextoEjecucion); 
-}
 //SIGNAL [Recurso]
 void signal_s(t_pcb *proceso,char **parametros){
     char *recurso = parametros[0];
@@ -141,8 +133,12 @@ void signal_s(t_pcb *proceso,char **parametros){
 
     //Verifico que exista el recurso. Si no existe, va a EXIT
     if (indexRecurso == -1){
-        exit_s(proceso, &invalidResource); 
+        if(!strncmp(parametros[2],"EXIT",4)){
         return;
+        } else{
+            exit_s(proceso, &invalidResource); 
+            return;
+        } 
     }
 
     //Sumo 1 instancia del recurso que se especifica
@@ -160,17 +156,19 @@ void signal_s(t_pcb *proceso,char **parametros){
 
         list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
 
-        //estimacionNuevaRafaga(pcbDesbloqueado); 
-
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
         loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado); 
-        ingresarAReady(pcbDesbloqueado); 
+        pasarAReady(pcbDesbloqueado); 
     }
     
-    list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
-    volverACPU(proceso);
-    //if (strncmp (parametros[2], "EXIT", 4)) volverACPU(proceso);
+    //Si invoco signal para liberar los recursos, termino la funcion. Si no, paso el proceso a ready
+    if(!strncmp(parametros[2],"EXIT",4)){
+        return;
+    } else{
+        list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+        pasarAReady(proceso);
+    }
 }
 
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
