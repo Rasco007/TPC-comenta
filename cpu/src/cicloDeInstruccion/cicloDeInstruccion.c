@@ -242,6 +242,7 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+    // FALTA OBTENER LOS REGISTROS!!!!!!
     modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;

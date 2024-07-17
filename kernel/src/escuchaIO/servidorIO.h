@@ -34,6 +34,6 @@ int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz);
 int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido);
 void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo);
 extern t_contexto* contextoEjecucion;
-
+void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[256], char tipoInterfaz[256], int socketClienteIO);
 extern Kernel_io kernel;
 #endif

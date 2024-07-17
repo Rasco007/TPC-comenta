@@ -204,12 +204,12 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
 
 
 void ejecutarServidorKernel(int socketClienteIO){
-     char * tamaño_max = "5";
-     char * direc_memoria = "1234";
+    // char * tamaño_max = "5";
+     //char * direc_memoria = "1234";
     //dormirIO(NULL,nombre,"5");
     //mandar_ejecutar_stdin(nombre,direc_memoria, tamaño_max);//IR COMENTANDO Y DESCOMENTANDO 
     //mandar_ejecutar_stdout(NULL, nombre,direc_memoria, tamaño_max);//IR COMENTANDO Y DESCOMENTANDO
-    return 0;
+    return;
      /*while (1) {//ver de solamente poner un recv en vez de while 1 aunque en realidad recibe la operacion en syscalls
         instruccionActual = -1; //habria que importar el ciclo de instrucciones para que la reconozca
 		int codOP = recibirOperacion(socketClienteIO);
@@ -235,10 +235,10 @@ void ejecutarServidorKernel(int socketClienteIO){
 
 int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
     for (size_t i = 0; i < kernel->cantidad; i++) {
-        log_info(logger, "nombre interfaz: %s", kernel->interfaces[i].nombre_interfaz);
+        /*log_info(logger, "nombre interfaz: %s", kernel->interfaces[i].nombre_interfaz);
         log_info(logger, "tipo interfaz: %s", kernel->interfaces[i].tipo_interfaz);
         log_info(logger, "tipo requerido: %s", tipoRequerido);
-        log_info(logger, "nombre requerido: %s", tipoRequerido);
+        log_info(logger, "nombre requerido: %s", tipoRequerido);*/
         if (strcmp(kernel->interfaces[i].nombre_interfaz, nombreInterfaz) == 0) {
             if (strcmp(kernel->interfaces[i].tipo_interfaz, tipoRequerido) == 0) {
                 return 1;

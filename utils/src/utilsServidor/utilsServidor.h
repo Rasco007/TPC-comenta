@@ -26,7 +26,7 @@ t_list * recibirPaquete(int socketCliente);
 char * recibirMensaje(int socketCliente);
 int alistarServidor(char * puerto);
 void elementDestroyer(void * palabra);
-
+int alistarServidorMulti(char * puerto);
 
 
 #endif /* UTILS_SERVIDOR_H */ 

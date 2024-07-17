@@ -93,8 +93,7 @@ void manejarFS_DELETE(int socketCliente){
         return;
     }
     int longitud1,longitud2;    
-    char nombreinterfaz[2048];
-    char nombrearchivo[2048];
+    char nombreinterfaz[2048], nombrearchivo[2048];
     memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
     printf("Longitud de la cadena recibida: %d\n", longitud1);
     memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
@@ -127,10 +126,8 @@ void manejarFS_TRUNCATE(int socketCliente){
         fprintf(stderr, "Mensaje recibido incompleto\n");
         return;
     }
-    int longitud1,longitud2;    
-    char nombreinterfaz[2048];
-    char nombrearchivo[2048];
-    int  nuevoTamanio;
+    int longitud1,longitud2, nuevoTamanio;
+    char nombreinterfaz[2048], nombrearchivo[2048];
     memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
     printf("Longitud de la cadena recibida: %d\n", longitud1);
     memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
@@ -146,7 +143,9 @@ void manejarFS_TRUNCATE(int socketCliente){
     nombrearchivo[longitud2] = '\0';
     printf("Nombre de archivo: %s\n", nombrearchivo);
     truncarArchivo2(nombrearchivo,nuevoTamanio);
+    enviarMensaje("OK", socketCliente);
 }
+
 void manejarFS_READ(int socketCliente){
     char buffer[2048];
     // Recibir el mensaje del servidor
@@ -232,7 +231,7 @@ void manejarFS_WRITE(int socketCliente){
     pointerArchivo=punteroArchivo;
     enviarDireccionTamano(direccion,tamanio,fd_memoria);
 }
-
+// INICIAR_PROCESO src/scripts_memoria/PLANI_2
 void manejarFS_CREATE(int socketCliente) {
     char buffer[2048];
     // Recibir el mensaje del servidor
@@ -310,15 +309,12 @@ void manejarSTDOUTRead(int socketCliente) {
 void recibir_mensaje_y_dormir(int socket_cliente) {
     // Buffer para almacenar el mensaje recibido
     char buffer[1024];
-    
     // Recibir el mensaje del servidor
     int bytes_recibidos = recv(socket_cliente, buffer, sizeof(buffer), 0);
-    
     if (bytes_recibidos < 0) {
         perror("Error al recibir el mensaje");
         return;
     }
-
     // Interpretar el mensaje recibido como un entero
     int unidades;
     memcpy(&unidades, buffer, sizeof(int));
@@ -326,7 +322,6 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
     char* nombre = buffer + sizeof(int);
     // Asegurarse de que el nombre esté correctamente terminado por un carácter nulo
     nombre[bytes_recibidos - sizeof(int)] = '\0';
-	
 	log_info(logger, "Nombre recibido: %s", nombre);
 	log_info(logger, "Tiempo a dormir recibido: %d", unidades ); 
 	log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
