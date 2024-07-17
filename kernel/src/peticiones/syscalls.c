@@ -258,10 +258,17 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
     int direccionFisicaInt = atoi(direccionFisica);
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_STDIN_READ;
-    agregarAPaquete(paquete,(void*)&direccionFisicaInt,sizeof(int));
-    agregarAPaquete(paquete,(void*)&tamanioInt,sizeof(int));
-    enviarPaquete(paquete,socketClienteIO);
-
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 2*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccionFisicaInt, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamanioInt, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso);
 }
@@ -330,9 +337,17 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
 
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_STDOUT_WRITE;
-    agregarAPaquete(paquete,(void*)&direccionFisicaInt,sizeof(int));
-    agregarAPaquete(paquete,(void*)&tamanioInt,sizeof(int));
-    enviarPaquete(paquete,socketClienteIO);
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 2*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccionFisicaInt, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamanioInt, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
     recibirMensaje(socketClienteIO);
     pasarAReady(proceso);
 

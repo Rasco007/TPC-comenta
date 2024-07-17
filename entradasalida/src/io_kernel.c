@@ -10,14 +10,14 @@ void io_atender_kernel(){
     	switch (cod_op) {
     	case MENSAJE:
    	 		recibirMensaje(fd_kernel);
-			// char mensajeConexion[BUFFER_SIZE] = {0};  
+			/* char mensajeConexion[BUFFER_SIZE] = {0};  
 			// int bytes_recibidos = recv(fd_kernel, mensajeConexion, sizeof(mensajeConexion), 0);
 			// if (bytes_recibidos < 0) {
 			// 	perror("Error al recibir el mensaje");
 			// 	return NULL;
 			// }
 			// mensajeConexion[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
-			// log_info(logger, "valor recibido: %s", mensajeConexion);
+			// log_info(logger, "valor recibido: %s", mensajeConexion);*/
    	 		break;
     		/*//case PAQUETE:
    		 lista = recibir_paquete(fd_io);
@@ -29,39 +29,39 @@ void io_atender_kernel(){
 		    manejarSTDINRead(fd_kernel);
 		    break;
    		case IO_GEN_SLEEP:
-   			log_info(logger, "sleep recibido");
+   			log_info(logger, "GEN SLEEP recibido");
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
 		case IO_STDIN_READ:
-   			log_info(logger, "stdin write recibido");
+   			log_info(logger, "STDIN READ recibido");
 			manejarSTDINRead(fd_kernel);
    			break;
 		case IO_STDOUT_WRITE:
-   			log_info(logger, "stdout write recibido");
+   			log_info(logger, "STDOUT WRITE recibido");
 			manejarSTDOUTRead(fd_kernel);
    			break;
 		case IO_FS_CREATE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-            log_info(logger, "fs create recibido");
+            log_info(logger, "FS CREATE recibido");
 			manejarFS_CREATE(fd_kernel);
 			break;
 		case IO_FS_DELETE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "fs delete recibido");
+			log_info(logger, "FS DELETE recibido");
             manejarFS_DELETE(fd_kernel);   
 			break;
 		case IO_FS_READ:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "fs read recibido");
+			log_info(logger, "FS READ recibido");
             manejarFS_READ(fd_kernel);
 			break;
 		case IO_FS_TRUNCATE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "fs truncate recibido");
+			log_info(logger, "FS TRUNCATE recibido");
             manejarFS_TRUNCATE(fd_kernel);
 			break;
 		case IO_FS_WRITE:
-			log_info(logger, "fs write recibido");
+			log_info(logger, "FS WRITE recibido");
             manejarFS_WRITE(fd_kernel);
 			break;
     	case -1:
@@ -270,8 +270,7 @@ void manejarFS_CREATE(int socketCliente) {
 }
 
 void manejarSTDINRead(int socketCliente) {
-    int tamanioTexto;
-    int direccion;
+    int tamanioTexto, direccion;
     recibirEnteros3(socketCliente, &tamanioTexto, &direccion);
     // Loguear los parámetros recibidos
     log_info(logger, "Tamanio recibido: %d", tamanioTexto);
@@ -296,8 +295,7 @@ void manejarSTDINRead(int socketCliente) {
 }
 
 void manejarSTDOUTRead(int socketCliente) {
-    int tamanioTexto;
-    int direccion;
+    int tamanioTexto, direccion;
     recibirEnteros3(socketCliente, &tamanioTexto, &direccion);
     // Loguear los parámetros recibidos
     log_info(logger, "Tamanio recibido: %d", tamanioTexto);
@@ -306,6 +304,7 @@ void manejarSTDOUTRead(int socketCliente) {
 	//direccion="1"; //VER CUANDO SE TRADUCE DE DL A DF
 	//tamanioTexto="2";
 	enviarDireccionTamano(direccion, tamanioTexto,fd_memoria);
+   // enviarMensaje("OK", socketCliente);
 }
 
 void recibir_mensaje_y_dormir(int socket_cliente) {
@@ -384,13 +383,11 @@ void enviarDireccionTamano(int direccion,int tamano, int socket) {
 
 void recibirEnteros3(int socket, int *tamanio, int *direccion) {
     char buffer[2048];
-    // Recibir el mensaje del servidor
     int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
-    
     if (bytes_recibidos < 0) {
         perror("Error al recibir el mensaje");
         return;
     }
-    memcpy(tamanio,buffer+sizeof(op_code), sizeof(int));
-    memcpy(direccion, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+    memcpy(direccion, buffer+sizeof(op_code), sizeof(int));
+    memcpy(tamanio, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
 }
