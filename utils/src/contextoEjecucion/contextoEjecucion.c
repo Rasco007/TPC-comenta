@@ -156,7 +156,7 @@ void recibirContextoBeta(int socket) {
         snprintf(nombreRegistro, 3, "%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
         log_info(logger, "Registro %s: %s", nombreRegistro, registro);
-        free(registro);
+        //free(registro);
     }
 
     // EAX, EBX, ECX, EDX (4 bytes cada uno)
@@ -169,7 +169,7 @@ void recibirContextoBeta(int socket) {
         snprintf(nombreRegistro, 4, "E%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
         log_info(logger, "Registro %s: %s", nombreRegistro, registro);
-        free(registro);
+        //free(registro);
     }
 
     // Deserializar SI y DI

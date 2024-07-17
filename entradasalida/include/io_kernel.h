@@ -22,4 +22,5 @@ void manejarFS_WRITE(int socketCliente);
 void manejarFS_READ(int socketCliente);
 void enviarDireccionTamano(int direccion,int tamano, int socket); 
 void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket);
+void recibirEnteros3(int socket, int *tamanio, int *direccion);
 #endif

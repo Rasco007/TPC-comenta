@@ -14,6 +14,7 @@ void io_atender_memoria(){
 				escribirCadenaEnArchivo(archivoWrite, recibido, pointerArchivo);
 
 			}
+			enviarMensaje(fd_kernel, "Recibido");
    	 		break;
 
     	case -1:

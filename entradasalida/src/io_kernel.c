@@ -41,18 +41,22 @@ void io_atender_kernel(){
 			manejarSTDOUTRead(fd_kernel);
    			break;
 		case IO_FS_CREATE:
+            usleep(TIEMPO_UNIDAD_TRABAJO*1000);
             log_info(logger, "fs create recibido");
 			manejarFS_CREATE(fd_kernel);
 			break;
 		case IO_FS_DELETE:
+            usleep(TIEMPO_UNIDAD_TRABAJO*1000);
 			log_info(logger, "fs delete recibido");
             manejarFS_DELETE(fd_kernel);   
 			break;
 		case IO_FS_READ:
+            usleep(TIEMPO_UNIDAD_TRABAJO*1000);
 			log_info(logger, "fs read recibido");
             manejarFS_READ(fd_kernel);
 			break;
 		case IO_FS_TRUNCATE:
+            usleep(TIEMPO_UNIDAD_TRABAJO*1000);
 			log_info(logger, "fs truncate recibido");
             manejarFS_TRUNCATE(fd_kernel);
 			break;
@@ -185,6 +189,7 @@ void manejarFS_READ(int socketCliente){
     printf("Datos leidos: %s\n", datosLeidos);
     direccion=16;
     enviarAImprimirAMemoria(datosLeidos,direccion,fd_memoria);
+    enviarMensaje("OK", socketCliente);
 }
 
 void manejarFS_WRITE(int socketCliente){
@@ -261,59 +266,7 @@ void manejarFS_CREATE(int socketCliente) {
     nombrearchivo[longitud2] = '\0';
     printf("Nombre de archivo: %s\n", nombrearchivo);
     crearArchivo2(nombrearchivo);
-}
-
-void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket) {
-    t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = 100;
-    paquete->buffer = malloc(sizeof(t_buffer));
-    size_t mensaje_len = strlen(mensaje) ; // +1 para el terminador nulo??????
-    paquete->buffer->size = sizeof(int) + mensaje_len;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), mensaje, mensaje_len);
-    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-    void *a_enviar = serializarPaquete(paquete, bytes);
-    if (send(socket, a_enviar, bytes, 0) != bytes) {
-        perror("Error al enviar datos al servidor");
-        exit(EXIT_FAILURE); // Manejo de error
-    }
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(a_enviar);
-    free(paquete);
-}
-
-void enviarDireccionTamano(int direccion,int tamano, int socket) {
-   t_paquete *paquete = malloc(sizeof(t_paquete));
-    paquete->codigo_operacion = 101;
-    paquete->buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->size = 2 * sizeof(int);
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), &tamano, sizeof(int));
-    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-    void *a_enviar = serializarPaquete(paquete, bytes);
-    if (send(socket, a_enviar, bytes, 0) != bytes) {
-        perror("Error al enviar datos al servidor");
-        exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
-    }
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(a_enviar);
-    free(paquete);
-}
-void recibirEnteros3(int socket, int *pid, int *indice) {
-    char buffer[2048];
-    // Recibir el mensaje del servidor
-    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
-    
-    if (bytes_recibidos < 0) {
-        perror("Error al recibir el mensaje");
-        return;
-    }
-    memcpy(pid ,buffer+sizeof(op_code), sizeof(int));
-    memcpy(indice, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+    enviarMensaje("OK", socketCliente);
 }
 
 void manejarSTDINRead(int socketCliente) {
@@ -337,6 +290,7 @@ void manejarSTDINRead(int socketCliente) {
 	enviarAImprimirAMemoria(datosLeidos,direccion, fd_memoria); //estos datos se deben escribir en la direccion de memoria
 	//UNA FUNCION QUE MANDE "datosLeidos" A MEMORIA Y LO ESCRIBA EN "direccion"
 	// Liberar la memoria reservada
+    enviarMensaje("OK", socketCliente);
 	free(texto);
 	free(datosLeidos);
 }
@@ -385,4 +339,58 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
     send(socket_cliente, "OK", 2, 0);
 	//enviarMensaje("OK", socket_cliente);
 	return;
+}
+
+void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket) {
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = 100;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    size_t mensaje_len = strlen(mensaje) ; // +1 para el terminador nulo??????
+    paquete->buffer->size = sizeof(int) + mensaje_len;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), mensaje, mensaje_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
+}
+
+void enviarDireccionTamano(int direccion,int tamano, int socket) {
+   t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = 101;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 2 * sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamano, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
+}
+
+void recibirEnteros3(int socket, int *tamanio, int *direccion) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    memcpy(tamanio,buffer+sizeof(op_code), sizeof(int));
+    memcpy(direccion, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
 }
