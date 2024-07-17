@@ -19,6 +19,6 @@ void recibirPeticionDeEscritura(int socketCPU);
 void enviarValorObtenido(int socketCPU);
 void escribir(char* valor, int32_t direccionFisica, int tamanio);
 void hacerHandshake(int socketClienteIO);
-void recibirDirYCadena(int socket, int *dir, char* cadena);
-void recibirDireccionyTamano(int socket, int *dir, int *tamano);
+void recibirDirYCadena(int socket, int *dir, int *pid, char* cadena);
+void recibirDireccionyTamano(int socket, int *dir, int *pid, int *tamano);
 #endif 

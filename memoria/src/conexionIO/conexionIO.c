@@ -67,11 +67,10 @@ void* ejecutarServidor(void* socketCliente) {
                 break;
             case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN O FS_READ) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
                 log_info(logger, "IO envía mensaje a escribir en memoria");
-                int dir;
+                int dir, pid;
                 char cadena[2048];
-                recibirDirYCadena(sock, &dir, cadena);
-                printf("Direccion: %d\n", dir);
-                printf("Cadena: %s\n", cadena);
+                recibirDirYCadena(sock, &dir, &pid, cadena);
+                log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid, dir, cadena); 
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
                 char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
                 memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
@@ -87,13 +86,12 @@ void* ejecutarServidor(void* socketCliente) {
                 break;
             case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT o FS_WRITE)
                 log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
-                int dir2,tamano;
-                recibirDireccionyTamano(sock, &dir2,&tamano);
-                printf("Direccion: %d\n", dir2);
+                int dir2, tamano, pid2;
+                recibirDireccionyTamano(sock, &dir2, &pid2, &tamano);
                 printf("Tamaño: %d\n", tamano);
                 char* datosLeidos = malloc(2048);
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
-                printf("Texto leído: %s\n", datosLeidos);
+                log_info(logger, "PID: <%d> - Accion: <LEER> - Direccion Física: <%d> - Valor: <%s>", pid2, dir2, datosLeidos);
                 enviarMensaje(datosLeidos, sock);
                 break;
             case -1:
@@ -105,7 +103,6 @@ void* ejecutarServidor(void* socketCliente) {
                 break;
         }
     }
-
     close(sock);
     return NULL;
 }
@@ -128,7 +125,7 @@ void hacerHandshake(int socketClienteIO){
    
 }
 
-void recibirDirYCadena(int socket, int *dir, char* cadena) {
+void recibirDirYCadena(int socket, int *dir, int *pid, char* cadena) {
     char buffer[2048];
     // Recibir el mensaje del servidor
     int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
@@ -146,20 +143,21 @@ void recibirDirYCadena(int socket, int *dir, char* cadena) {
         return;
     }
     memcpy(dir, buffer + sizeof(op_code), sizeof(int));
+    memcpy(pid, buffer + sizeof(op_code) + sizeof(int), sizeof(int));
     // Calcular la longitud de la cadena recibida
-    int longitud_cadena = bytes_recibidos - sizeof(int) - sizeof(op_code);
+    int longitud_cadena = bytes_recibidos - 2*sizeof(int) - sizeof(op_code);
     // Asegurarse de no exceder el tamaño del buffer
     if (longitud_cadena > 2047) {
         longitud_cadena = 2047;
     }
     // Copiar la cadena recibida
-    memcpy(cadena, buffer + sizeof(int) + sizeof(op_code), longitud_cadena);
+    memcpy(cadena, buffer + 2*sizeof(int) + sizeof(op_code), longitud_cadena);
     // Asegurarse de que la cadena esté terminada en nulo
    // cadena[longitud_cadena] = '\0';
 }
 
-void recibirDireccionyTamano(int socket, int *dir, int *tamano) {
-    char buffer[sizeof(op_code) + 2 * sizeof(int)];
+void recibirDireccionyTamano(int socket, int *dir, int *pid, int *tamano) {
+    char buffer[sizeof(op_code) + 3 * sizeof(int)];
     // Recibir el mensaje del servidor
     int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
     if (bytes_recibidos < 0) {
@@ -171,10 +169,11 @@ void recibirDireccionyTamano(int socket, int *dir, int *tamano) {
         return;
     }
     // Asegurarse de que tenemos suficientes datos para los campos esperados
-    if (bytes_recibidos < sizeof(op_code) + 2 * sizeof(int)) {
+    if (bytes_recibidos < sizeof(op_code) + 3 * sizeof(int)) {
         fprintf(stderr, "Mensaje recibido incompleto\n");
         return;
     }
     memcpy(dir, buffer + sizeof(op_code), sizeof(int));
     memcpy(tamano, buffer + sizeof(op_code) + sizeof(int), sizeof(int));
+    memcpy(pid, buffer + sizeof(op_code) + 2*sizeof(int), sizeof(int));
 }
