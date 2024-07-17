@@ -1,9 +1,6 @@
 #include <estructura/estructura.h>
 #include <commons/log.h>
 
-//extern t_log* logger;
-//extern t_log* loggerError;
-
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina) {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
@@ -86,32 +83,6 @@ char *obtener_instruccion(Proceso *proceso, int program_counter) {
     }
     return proceso->instrucciones[program_counter];
 }
-
-// Asigna una página en la memoria física
-/*bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
-    if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
-        return false;
-    }
-    // Encuentra un marco libre
-    int numero_marco = -1;
-    for (int i = 0; i < NUM_MARCOS; i++) {
-        if (mf->marcos[i].libre) {
-            numero_marco = i;
-            break;
-        }
-    }
-    if (numero_marco == -1) {
-        return false; // No hay marcos libres
-    }
-    mf->marcos[numero_marco].libre = false;
-    mf->marcos[numero_marco].numero_pagina = numero_pagina;
-    mf->marcos[numero_marco].pid = proceso->pid;
-    proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
-    proceso->tabla_paginas->entradas[numero_pagina].numero_marco = numero_marco;
-    proceso->tabla_paginas->paginas_asignadas++;  // Incrementa el contador de páginas asignadas
-
-    return true;
-}*/
 
 // Traduce una dirección lógica a una dirección física
 void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {

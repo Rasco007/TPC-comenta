@@ -51,16 +51,6 @@ int main() {
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
     mf = inicializar_memoria_fisica(tam_pagina);
     
-   /*sem_init(&path, 0, 0);
-    sem_wait(&path);
-    Proceso *proceso = inicializar_proceso(PID, pathInstrucciones); //TODO: esto debería estar en el NEWPCB
-    mf->marcos[0].proceso=proceso;
-
-    if (!proceso) {
-        printf("Error al inicializar el procesos.\n");
-        liberar_memoria_fisica(mf);
-        return 1;
-    }*/
 
     //PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
     char *prueba = "hola";
