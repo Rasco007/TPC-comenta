@@ -1,7 +1,7 @@
 #include <conexionMemoria/conexionMemoria.h>
 
 void conexionIOMemoria(char **argv) {
-    char* nombreInterfaz = argv[1];
+    //char* nombreInterfaz = argv[1];
     while(1){
          fd_memoria = conexion("MEMORIA");
 

@@ -22,7 +22,7 @@ char* PUERTO_MEMORIA ;
 char* PATH_BASE_DIALFS ;
 int BLOCK_SIZE ;
 int BLOCK_COUNT ;
-
+int RETRASO_COMPACTACION;
 // yo lo corro con: ./bin/entradasalida IntX entradasalida.config
 int main(int argc, char** argv) {
 

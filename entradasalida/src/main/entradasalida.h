@@ -34,5 +34,5 @@ extern char* PUERTO_MEMORIA;
 extern char* PATH_BASE_DIALFS;
 extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
-
+extern int RETRASO_COMPACTACION;
 #endif

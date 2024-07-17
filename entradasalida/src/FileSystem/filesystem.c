@@ -1,13 +1,11 @@
 #include <FileSystem/filesystem.h>
 
-#define RETRASO_COMPACTACION 50000
-#define PATH_BASE_DIALFS "src/archivosFS"
-
 //una funcion que reciba un nombre de archivo y un tamanio y lo trunque
 void truncarArchivo2(char* nombre, int tamanio){
     usleep(TIEMPO_UNIDAD_TRABAJO*1000);
     log_info(logger, "Truncar archivo: <%s> Tamaño: %d bytes", nombre, tamanio); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO TRUNCO
-    char pathArchivo[256] = PATH_BASE_DIALFS;
+    char pathArchivo[256];
+    strcpy(pathArchivo, PATH_BASE_DIALFS);
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
     /*FILE *file = fopen(pathArchivo, "r+"); // Abrir el archivo en modo lectura-escritura ('r+')
     if (file == NULL) {
@@ -288,6 +286,7 @@ void crearArchivo2(char* nombre) {
 
 void create_bitmap_file(const char *filename, size_t size) {
     char pathBitmap[256];
+    strcpy(pathBitmap, PATH_BASE_DIALFS);
     sprintf(pathBitmap, "%s/%s", PATH_BASE_DIALFS, filename);
     int fd = open(pathBitmap, O_RDWR);
     if (fd == -1) {// El archivo no existe, lo creamos
@@ -348,11 +347,11 @@ void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo) {
 }
 
 void create_bloques_file(const char *filename, size_t size) {
-    char pathBloques[256] = PATH_BASE_DIALFS;
+    char pathBloques[256];
+    strcpy(pathBloques, PATH_BASE_DIALFS);
     sprintf(pathBloques, "%s/%s", PATH_BASE_DIALFS, filename);
     int fd = open(pathBloques, O_RDWR);
-    if (fd == -1) {
-        // El archivo no existe, lo creamos
+    if (fd == -1) { // El archivo no existe, lo creamos
         fd = open(pathBloques, O_RDWR | O_CREAT, 0666);
         if (fd == -1) {
             perror("Error al crear el archivo bitmap.dat");
@@ -395,7 +394,8 @@ void crearMetadata(char *nombre, int bloqueInicial){
 }
 
 char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t registroPunteroArchivo, size_t registroTamanio) { //FALTA LOGGER
-    char pathArchivo[256] = PATH_BASE_DIALFS;
+    char pathArchivo[256];
+    strcpy(pathArchivo, PATH_BASE_DIALFS);
     sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
     // Abrir el archivo
     int fd = open(pathArchivo, O_RDONLY);
@@ -444,7 +444,8 @@ char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t registroPunteroArch
 }
 
 void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_t registroPunteroArchivo) { //FALTA LOGGER
-    char pathArchivo[256] = PATH_BASE_DIALFS;
+    char pathArchivo[256];
+    strcpy(pathArchivo, PATH_BASE_DIALFS);
     sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
     size_t tamanioCadena = strlen(cadena); // Longitud de la cadena (NO VA +1)
     // Abrir el archivo
@@ -479,7 +480,8 @@ void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_
 }
 
 void escribirIntEnArchivo(const char *nombreArchivo, int dato, off_t registroPunteroArchivo) { //FALTA LOGGER
-    char pathArchivo[256] = PATH_BASE_DIALFS;
+    char pathArchivo[256];
+    strcpy(pathArchivo, PATH_BASE_DIALFS);
     sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
     size_t tamanioInt = sizeof(int); // Tamaño del entero
     // Abrir el archivo

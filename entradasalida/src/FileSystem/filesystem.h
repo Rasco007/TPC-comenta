@@ -44,7 +44,7 @@ extern char* PUERTO_MEMORIA;
 extern char* PATH_BASE_DIALFS;
 extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
-
+extern int RETRASO_COMPACTACION;
 //fs
 void delete_file(const char *filename);
 void crearArchivo2(char* nombre);

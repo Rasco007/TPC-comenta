@@ -43,6 +43,7 @@ void iniciar_configs(char* arg){
     PATH_BASE_DIALFS = config_get_string_value(config, "PATH_BASE_DIALFS");
     BLOCK_SIZE = config_get_int_value(config, "BLOCK_SIZE");
     BLOCK_COUNT = config_get_int_value(config, "BLOCK_COUNT");
+    RETRASO_COMPACTACION = config_get_int_value(config, "RETRASO_COMPACTACION");
 }
 
 void mostrar_configs(){
