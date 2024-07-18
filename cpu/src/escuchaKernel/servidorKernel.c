@@ -64,7 +64,7 @@ int ejecutarServidorCPU(int socketCliente){
 					 flag_bloqueante = 0;
 					 while(contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength && flag_bloqueante == 0) {
 					 	
-						log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
+						//log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
 					 } 
 					//temporal_destroy (rafagaCPU);

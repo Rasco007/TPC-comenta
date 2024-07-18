@@ -4,8 +4,8 @@
 #include <math.h>
 #include <string.h>
 
-extern TLB tlb;
-extern uint64_t tiempo_actual; // Contador de tiempo para LRU
+TLB tlb;
+uint64_t tiempo_actual=0; // Contador de tiempo para LRU
 
 void limpiarBuffer(int socketCliente){
     int size;
@@ -105,6 +105,7 @@ void inicializar_tlb(char* algoritmoTLB) {
         tlb.entries[i].frame_number = 0;
         tlb.entries[i].valid = false;
         tlb.entries[i].last_used = 0;
+        tlb.entries[i].time_added = 0;
     }
     log_info(logger,"TLB inicializada con algoritmo %s. Primer entrada: %d\n", algoritmoTLB, tlb.entries[0].valid);
 }
@@ -130,7 +131,9 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
             tlb.entries[i].page_number = page_number;
             tlb.entries[i].frame_number = frame_number;
             tlb.entries[i].valid = true;
-            tlb.entries[i].last_used = tiempo_actual++;
+            tlb.entries[i].last_used = tiempo_actual;
+            tlb.entries[i].time_added = tiempo_actual;
+            tiempo_actual++;
             return;
         }
     }
@@ -141,17 +144,15 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
         // Reemplazo FIFO: Encuentra la entrada más antigua
         reemplazo = 0;
         for (size_t i = 1; i < tlb.size; i++) {
-            if (tlb.entries[i].last_used < tlb.entries[reemplazo].last_used) {
+            if (tlb.entries[i].time_added < tlb.entries[reemplazo].time_added)
                 reemplazo = i;
-            }
         }
     } else if (strcmp(tlb.algoritmo, "LRU") == 0) {
         // Reemplazo LRU: Encuentra la entrada menos recientemente usada
         reemplazo = 0;
         for (size_t i = 1; i < tlb.size; i++) {
-            if (tlb.entries[i].last_used < tlb.entries[reemplazo].last_used) {
+            if (tlb.entries[i].last_used < tlb.entries[reemplazo].last_used)
                 reemplazo = i;
-            }
         }
     }
 
@@ -160,5 +161,7 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
     tlb.entries[reemplazo].page_number = page_number;
     tlb.entries[reemplazo].frame_number = frame_number;
     tlb.entries[reemplazo].valid = true;
-    tlb.entries[reemplazo].last_used = tiempo_actual++;
+    tlb.entries[reemplazo].last_used = tiempo_actual;
+    tlb.entries[reemplazo].time_added = tiempo_actual;
+    tiempo_actual++;
 }

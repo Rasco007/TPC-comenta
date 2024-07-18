@@ -8,8 +8,8 @@ solicitar una llamada al Kernel, o deber ser desalojado (interrupción).*/
 
 #include <main/cpu.h>
 
-TLB tlb;
-uint64_t tiempo_actual = 0; // Contador de tiempo para LRU
+//TLB tlb;
+//uint64_t tiempo_actual = 0; // Contador de tiempo para LRU
 int flag_bloqueante;
 
 int main(void){

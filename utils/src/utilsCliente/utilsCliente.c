@@ -106,7 +106,7 @@ void eliminarPaquete(t_paquete *paquete)
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
-	log_info(logger, "Paquete eliminado");
+	//log_info(logger, "Paquete eliminado");
 }
 
 void enviarCodOp (op_code codigoDeOperacion, int socket) {

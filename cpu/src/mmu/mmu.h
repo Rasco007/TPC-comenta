@@ -18,6 +18,7 @@
         uint32_t frame_number;// Número de marco
         bool valid;           // Validez de la entrada
         uint64_t last_used;   // Timestamp para LRU (Opcional, para el manejo de LRU)
+        uint64_t time_added;   // Timestamp para FIFO
     } TLBEntry;
 
     typedef struct {
