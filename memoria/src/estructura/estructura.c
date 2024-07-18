@@ -3,6 +3,8 @@
 
 //extern t_log* logger;
 //extern t_log* loggerError;
+int tamano_memoria_total = 0;
+int memoria_usada = 0;
 
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina) {
@@ -114,7 +116,8 @@ char *obtener_instruccion(Proceso *proceso, int program_counter) {
 }*/
 
 // Traduce una dirección lógica a una dirección física
-void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
+// Ya se encarga la mmu
+/*void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
     int tam_pagina = confGetInt("TAM_PAGINA");
     unsigned long dir = (unsigned long)direccion_logica;
     int numero_pagina = dir / tam_pagina;
@@ -127,67 +130,82 @@ void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_lo
     int numero_marco = proceso->tabla_paginas->entradas[numero_pagina].numero_marco;
     //return (char*)mf->memoria + numero_marco * tam_pagina + desplazamiento;
     return mf->memoria + numero_marco * tam_pagina + desplazamiento;
+}*/
+
+bool hay_memoria_disponible(int tamano_requerido) {
+    return (memoria_usada + tamano_requerido <= tamano_memoria_total);
 }
 
-void *leer_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_virtual, size_t size) {
-    int tam_pagina = confGetInt("TAM_PAGINA");
-    void *buffer = malloc(size);
-    size_t bytes_leidos = 0;
-    
-    while (bytes_leidos < size) {
-        void *direccion_fisica = traducir_direccion(mf, proceso, (void *)(direccion_virtual + bytes_leidos));
-        if (direccion_fisica == NULL) {
-            free(buffer);
-            return NULL; // Página inválida
-        }
-        size_t bytes_por_leer = tam_pagina - ((direccion_virtual + bytes_leidos) % tam_pagina);
-        if (bytes_leidos + bytes_por_leer > size) {
-            bytes_por_leer = size - bytes_leidos;
-        }
-        memcpy((char *)buffer + bytes_leidos, (char *)direccion_fisica, bytes_por_leer);
-        bytes_leidos += bytes_por_leer;
+bool hay_espacio_en_tabla_paginas(Proceso *proceso) {
+    return (proceso->tabla_paginas->paginas_asignadas < NUM_PAGINAS);
+}
+
+void *leer_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, size_t size) {
+    if (direccion_fisica < 0 || direccion_fisica + size > tamano_memoria_total) {
+        log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
+        return NULL;
     }
+
+    void *buffer = malloc(size);
+    if (!buffer) {
+        log_error(loggerError, "Error: No se pudo asignar memoria para el buffer de lectura.");
+        return NULL;
+    }
+
+    memcpy(buffer, (char *)mf->memoria + direccion_fisica, size);
+
+    // Log del acceso de lectura
+    log_info(logger, "PID: %d - Acción: LEER - Dirección física: %d - Tamaño: %zu",
+             proceso->pid, direccion_fisica, size);
+
     return buffer;
 }
 
-void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_virtual, const void *data, size_t size) {
-    int tam_pagina = confGetInt("TAM_PAGINA");
-    size_t bytes_escritos = 0;
-
-    while (bytes_escritos < size) {
-        void *direccion_fisica = traducir_direccion(mf, proceso, (void *)(direccion_virtual + bytes_escritos));
-        if (direccion_fisica == NULL) {
-            log_error(loggerError, "Dirección virtual inválida");
-            return;
-        }
-        size_t bytes_por_escribir = tam_pagina - ((direccion_virtual + bytes_escritos) % tam_pagina);
-        if (bytes_escritos + bytes_por_escribir > size) {
-            bytes_por_escribir = size - bytes_escritos;
-        }
-        memcpy(direccion_fisica, (char *)data + bytes_escritos, bytes_por_escribir);
-        bytes_escritos += bytes_por_escribir;
+void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, const void *data, size_t size) {
+    if (direccion_fisica < 0 || direccion_fisica + size > tamano_memoria_total) {
+        log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
+        return;
     }
+
+    memcpy((char *)mf->memoria + direccion_fisica, data, size);
+
+    // Log del acceso de escritura
+    log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección física: %d - Tamaño: %zu",
+             proceso->pid, direccion_fisica, size);
+    
     log_info(logger, "Escritura en memoria EXITOSA");
 }
 
 bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
-    if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
-        return false; // Número de página fuera de rango
+    int tam_pagina = confGetInt("TAM_PAGINA");
+
+    if (!hay_memoria_disponible(tam_pagina)) {
+        log_error(loggerError, "Error: No hay suficiente memoria para asignar una nueva página.");
+        return false;
     }
-    // Busca un marco libre disponible para asignar la página
+
+    if (!hay_espacio_en_tabla_paginas(proceso)) {
+        log_error(loggerError, "Error: No hay suficiente espacio en la tabla de páginas para asignar una nueva página.");
+        return false;
+    }
+
     for (int i = 0; i < NUM_MARCOS; i++) {
         if (mf->marcos[i].libre) {
-            // Se encontró un marco libre, asigna la página
-            mf->marcos[i].libre = false;
+            mf->marcos[i].libre = 0;
             mf->marcos[i].numero_pagina = numero_pagina;
             mf->marcos[i].pid = proceso->pid;
-            mf->marcos[i].proceso = proceso; //va?
+            mf->marcos[i].proceso = proceso;
+
             proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
             proceso->tabla_paginas->entradas[numero_pagina].numero_marco = i;
-            proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas
+            proceso->tabla_paginas->paginas_asignadas++;
+
+            memoria_usada += tam_pagina;
+
             return true;
         }
     }
-    // Si no se encontró ningún marco libre
+
+    log_error(loggerError, "Error: No hay marcos libres para asignar.");
     return false;
 }

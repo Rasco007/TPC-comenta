@@ -52,7 +52,7 @@ char *obtener_instruccion(Proceso *proceso, int program_counter);
 
 bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina);
 
-void *leer_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_virtual, size_t size);
-void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_virtual, const void *data, size_t size);
+void *leer_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, size_t size);
+void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, const void *data, size_t size);
 
 #endif // ESTRUCTURA_H
