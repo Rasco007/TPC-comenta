@@ -2,6 +2,7 @@
 
 int socketClienteDispatch;
 int socketClienteInterrupt;
+t_temporal* tiempoDeUsoCPU;
 
 void escucharAlKernel() {
     char *puertoEscuchaDispatch = confGet("PUERTO_ESCUCHA_DISPATCH");
@@ -50,15 +51,11 @@ int ejecutarServidorCPU(int socketCliente){
 					}
 					return EXIT_FAILURE;
 				case CONTEXTOEJECUCION:
-					if (contextoEjecucion != NULL){
-						list_clean_and_destroy_elements (contextoEjecucion->instrucciones, free);
-						list_clean_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
-					}
 					log_info(logger,"APAREZCO DESDE CPU");
 					recibirContextoBeta(socketCliente);
 					//Inicio el cronometro del tiempo de uso de CPU
 					log_info(logger,"luego de recibir contexto de kernel");
-					contextoEjecucion->tiempoDeUsoCPU=temporal_create(); //CREO EL CRONOMETRO
+					tiempoDeUsoCPU=temporal_create(); //Inicio y creo el CRONOMETRO
 					/*log_info(logger,"-*-*- Antes del while, programCounter: %d",contextoEjecucion->programCounter);
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);*/
 					log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);

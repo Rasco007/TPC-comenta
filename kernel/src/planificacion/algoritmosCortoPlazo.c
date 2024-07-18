@@ -6,20 +6,17 @@ void detenerYDestruirCronometro(t_temporal *cronometroReady){
 }
 
 void planificarACortoPlazoSegunAlgoritmo(){
-    log_info(logger, "Planificadior a corto plazo");
     char *algoritmoPlanificador = obtenerAlgoritmoPlanificacion();
-     log_info(logger, "algoritmo : %s", algoritmoPlanificador);
+     
     if (!strcmp(algoritmoPlanificador, "FIFO"))
     {
-        log_info(logger, "Ejecutando FIFO");
         planificarACortoPlazo(proximoAEjecutarFIFO);
     } else if(!strcmp(algoritmoPlanificador, "RR")){
-        log_info(logger, "Ejecutando RR");
         planificarACortoPlazo(proximoAEjecutarRR);
     } else if(!strcmp(algoritmoPlanificador, "VRR")){
-        log_info(logger, "Ejecutando VRR");
         planificarACortoPlazo(proximoAEjecutarVRR);
     } else {
+        loggerError=cambiarNombre(loggerError,"Errores Kernel-Algoritmos CP");
         log_error(loggerError, "Algoritmo invalido");
         abort();
     }
@@ -49,6 +46,7 @@ t_pcb *proximoAEjecutarRR(){
 //La llegada de los procesos a las colas se delega a syscalls
 t_pcb *proximoAEjecutarVRR(){
     int64_t quantumConfig = obtenerQuantum();
+    
     if(list_is_empty(pcbsREADYaux)){
         t_pcb *pcbActual = desencolar(pcbsREADY);
         pcbActual->quantum = quantumConfig;
@@ -57,7 +55,7 @@ t_pcb *proximoAEjecutarVRR(){
     }
     else{
         t_pcb *pcbActual = desencolar(pcbsREADYaux);
-        int64_t quantumConsumido=temporal_gettime(pcbActual->tiempoDeUsoCPU);
+        int64_t quantumConsumido=contextoEjecucion->tiempoDeUsoCPU;
         pcbActual->quantum = quantumConfig-quantumConsumido;
         pcbActual->algoritmo=VRR;
         return pcbActual;

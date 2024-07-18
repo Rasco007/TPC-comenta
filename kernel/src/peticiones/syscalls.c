@@ -3,30 +3,50 @@
 t_list *recursos;
 char **nombresRecursos;
 char* invalidResource = "INVALID_RESOURCE";
-char* outOfMemory = "OUT_OF_MEMORY";
 estadoProceso estadoAnterior; 
-int tiempoIO;
-bool hayOpFS;
 
+void pasarAReady(t_pcb *proceso)
+{
+    estadoAnterior = proceso->estado;
+    proceso->estado = READY;
+    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+    if(proceso->algoritmo==VRR){ //Para los procesos que vuelven de hacer IO
+        encolar(pcbsREADYaux,proceso);
+        pidsInvolucrados = string_new();
+        listarPIDS(pcbsREADYaux);
+        log_info(logger, "Cola Ready AUX <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
+        free(pidsInvolucrados);
+        sem_post(&hayProcesosReady);
+    } else ingresarAReady(proceso);
+}
 
+void recibirMsjIO(int socketClienteIO){
+    char buffer[1024];
+    int bytes_recibidos = recv(socketClienteIO, buffer, sizeof(buffer), 0);
+    
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        
+    }
+    buffer[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
+    
+    log_info(logger, "valor recibido: %s", buffer);
+}
 
 
 //FUNCIONES GENERALES
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
+    logger=cambiarNombre(logger,"Kernel-Retorno Contexto");
     //Aca trato las instrucciones bloqueantes
     switch (contextoEjecucion->motivoDesalojo->motivo){
         case WAIT:
             wait_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
-        case RESIZE:
-            //resize_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
-            break;
         case SIGNAL:
             signal_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_GEN_SLEEP:
-            prc_io_gen_sleep(contextoEjecucion, proceso);
-
+            io_gen_sleep(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case IO_STDIN_READ:
             io_stdin_read(proceso, contextoEjecucion->motivoDesalojo->parametros);
@@ -53,11 +73,10 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             exit_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
             break;
         case FIN_DE_QUANTUM:
-            log_info(logger,"LOGGER DE LA VERDAD");
             finDeQuantum(proceso);
         default:
             log_error(loggerError, "Comando incorrecto");
-            break; //falta un case para el FIN_DE_QUANTUM
+            break;
     }
 }
 
@@ -72,37 +91,12 @@ void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
     log_info(logger,"Finaliza el proceso <%d> - Motivo: <%s>", proceso->pid, motivo); //log obligatorio
 }
 
-void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso)
-{
-    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
-    if (existeInterfaz == 1)
-    {
-        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
-        
-        if (esValida == 1)
-        {
-            // en caso de validar() sea 1, hacemos io_gen_sleep
-            ejecutar_io_gen_sleep(proceso, contextoEjecucion->motivoDesalojo->parametros, &kernel);
-        }
-        else
-        {
-            // mandar proceso a exit porque devuelve -1
-            log_info(logger, "tipo de interfaz invalido - proceso a exit");
-        }
-    }
-    else
-    {
-        log_info(logger, "no existe la interfaz - proceso a exit");
-        // mandar proceso a exit
-    }
-}
-
 //FUNCIONES RETORNO CONTEXTO
 //WAIT [Recurso]
 void wait_s(t_pcb *proceso,char **parametros){
     char* recurso=parametros[0];
     int indexRecurso = indiceRecurso(recurso);
-
+    
     if(indexRecurso==-1){ //Verifico que exista el recurso
         exit_s(proceso,&invalidResource); //Si no existe, va a EXIT
         return;
@@ -128,15 +122,10 @@ void wait_s(t_pcb *proceso,char **parametros){
         loggearBloqueoDeProcesos(proceso, recurso);
     } else {//Si no, vuelve a cpu
         list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
-        volverACPU(proceso);
+        pasarAReady(proceso);
     }
 }
 
-void volverACPU(t_pcb* proceso) {
-    contextoEjecucion = procesarPCB(proceso);
-    rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
-    retornoContexto(proceso, contextoEjecucion); 
-}
 //SIGNAL [Recurso]
 void signal_s(t_pcb *proceso,char **parametros){
     char *recurso = parametros[0];
@@ -144,8 +133,12 @@ void signal_s(t_pcb *proceso,char **parametros){
 
     //Verifico que exista el recurso. Si no existe, va a EXIT
     if (indexRecurso == -1){
-        exit_s(proceso, &invalidResource); 
+        if(!strncmp(parametros[2],"EXIT",4)){
         return;
+        } else{
+            exit_s(proceso, &invalidResource); 
+            return;
+        } 
     }
 
     //Sumo 1 instancia del recurso que se especifica
@@ -163,96 +156,708 @@ void signal_s(t_pcb *proceso,char **parametros){
 
         list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
 
-        //estimacionNuevaRafaga(pcbDesbloqueado); 
-
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
         loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado); 
-        ingresarAReady(pcbDesbloqueado); 
+        pasarAReady(pcbDesbloqueado); 
     }
     
-    list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
-    volverACPU(proceso);
-    //if (strncmp (parametros[2], "EXIT", 4)) volverACPU(proceso);
+    //Si invoco signal para liberar los recursos, termino la funcion. Si no, paso el proceso a ready
+    if(!strncmp(parametros[2],"EXIT",4)){
+        return;
+    } else{
+        list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+        pasarAReady(proceso);
+    }
 }
 
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
-void ejecutar_io_gen_sleep(t_pcb *proceso, char **parametros,  Kernel_io *kernel)
-{
-    
+typedef struct{
+    t_pcb* proceso;
+    char* tiempo;
+    char* interfaz;
+}InterfazSalienteGenSleep;
 
-    estadoAnterior = proceso->estado;
-    proceso->estado = BLOCKED;
-    
-    loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+void dormir_IO(InterfazSalienteGenSleep* args){  
+    char* interfaz=args->interfaz;
+    char* tiempo=args->tiempo;
+    t_pcb* proceso=args->proceso;
+    int pid = proceso->pid;
+    log_info(logger, "tiempo recibido %s", tiempo);
+    log_info(logger, "interfaz recibida %s", interfaz);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    log_info(logger, "se recibio el socket %d", socketClienteIO);
+    enviarMensajeGen(socketClienteIO, interfaz, tiempo, pid);
+    log_info(logger, "antes de recibir msj");
+    //Recibir mensaje de confirmacion de IO
+    recibirMsjIO( socketClienteIO);
+    log_info(logger, "luego e recobor msj");
+    pasarAReady(proceso);
+}
 
-    log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
-
-   
-   
-    pthread_t pcb_bloqueado;
-     if (!pthread_create(&pcb_bloqueado, NULL, dormirIO(proceso, parametros[0], parametros[1]), proceso))
+void io_gen_sleep(t_pcb *proceso, char **parametros){
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
     {
-        pthread_detach(pcb_bloqueado);
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
+        
+        if (esValida == 1){
+            // en caso de validar() sea 1, hacemos io_gen_sleep
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
+            
+            InterfazSalienteGenSleep* args = malloc(sizeof(InterfazSalienteGenSleep));
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->tiempo = parametros[1];
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo para dormir IO");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
     }
     else
     {
-        log_error(loggerError, "Error al crear hilo para dormir IO");
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
     }
 }
 
-void* dormirIO(t_pcb * proceso, char* interfaz,char* tiempo){  
-     log_info(logger, "tiempo recibido %s", tiempo);
-     log_info(logger, "interfaz recibida %s", interfaz);
-   int socketClienteIO = obtener_socket(&kernel, interfaz);
-   log_info(logger, "se recibio el socket %d", socketClienteIO);
-    enviarMensajeGen(socketClienteIO, interfaz, tiempo);
-    
-     log_info(logger, "antes de recibir msj");
-   // Recibir mensaje de confirmacion de IO
-    recibirMsjIO( socketClienteIO);
-     log_info(logger, "luego e recobor msj");
+
+//IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* direccionFisica;
+    char* tamanio;
+}InterfazSalienteStdinRead;
+
+void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* direccionFisica=args->direccionFisica;
+    char* tamanio=args->tamanio;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int tamanioInt = atoi(tamanio);
+    int direccionFisicaInt = atoi(direccionFisica);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_STDIN_READ;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 3*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccionFisicaInt, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamanioInt, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), &pid, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
     pasarAReady(proceso);
-     
-   
-    return; // Add this line to fix the issue
 }
 
-
-
 void io_stdin_read(t_pcb *proceso,char **parametros){
+    InterfazSalienteStdinRead* args=malloc(sizeof(InterfazSalienteStdinRead));
+
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDIN");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->direccionFisica = parametros[1];
+            args->tamanio = parametros[2];
+
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdin_read, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_info(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
+}
+
+//IO_STDOUT_WRITE (Interfaz, Registro Dirección, Registro Tamaño)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* direccionFisica;
+    char* tamanio;
+}InterfazSalienteStdoutWrite;
+
+void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* direccionFisica=args->direccionFisica;
+    char* tamanio=args->tamanio;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int tamanioInt = atoi(tamanio);
+    int direccionFisicaInt = atoi(direccionFisica);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_STDOUT_WRITE;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 3*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccionFisicaInt, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamanioInt, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), &pid, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+    pasarAReady(proceso);
 
 }
 
 void io_stdout_write(t_pcb *proceso,char **parametros){
+    InterfazSalienteStdoutWrite* args=malloc(sizeof(InterfazSalienteStdoutWrite));
 
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDOUT");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_STDOUT_WRITE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->direccionFisica = parametros[1];
+            args->tamanio = parametros[2];
+
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdout_write, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_info(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
+}
+
+
+
+//IO_FS_CREATE (Interfaz, Nombre Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+}InterfazSalienteFsCreate;
+
+void ejecutar_io_fs_create(InterfazSalienteFsCreate* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_CREATE;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 3*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+    pasarAReady(proceso);
 }
 
 void io_fs_create(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsCreate* args=malloc(sizeof(InterfazSalienteFsCreate));
 
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_CREATE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_create, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
+}
+//IO_FS_DELETE (Interfaz, Nombre Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+}InterfazSalienteFsDelete;
+
+void ejecutar_io_fs_delete(InterfazSalienteFsDelete* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_DELETE;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 3*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &pid, sizeof(int)); 
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+    pasarAReady(proceso);
 }
 
 void io_fs_delete(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsDelete* args=malloc(sizeof(InterfazSalienteFsDelete));
+    
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_DELETE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_DELETE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
 
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_delete, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
+}
+
+//IO_FS_TRUNCATE (Interfaz, Nombre Archivo, Registro Tamaño)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+    char* tamanio;
+}InterfazSalienteFsTruncate;
+
+void ejecutar_io_fs_truncate(InterfazSalienteFsTruncate* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    int tamanio=atoi(args->tamanio);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_TRUNCATE;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 4*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+    pasarAReady(proceso);
 }
 
 void io_fs_truncate(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsTruncate* args=malloc(sizeof(InterfazSalienteFsTruncate));
 
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_TRUNCATE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+            args->tamanio = parametros[2];
+
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_truncate, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
+}
+
+//IO_FS_WRITE (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+    char* direccion; //logica o fisica?
+    char* tamanio;
+    char* punteroArchivo;
+}InterfazSalienteFsWrite;
+
+void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    int direccion=atoi(args->direccion);
+    int tamanio=atoi(args->tamanio);
+    char* punteroArchivo=args->punteroArchivo;
+    int punterito = atoi(punteroArchivo);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_WRITE;
+    /*agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
+    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));*/
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 6*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &punterito, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 6*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+    pasarAReady(proceso);
+    
 }
 
 void io_fs_write(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsWrite* args=malloc(sizeof(InterfazSalienteFsWrite));
+    
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_WRITE",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+            args->direccion = parametros[2];
+            args->tamanio = parametros[3];
+            args->punteroArchivo = parametros[4];
 
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_write, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
+}
+
+//IO_FS_READ (Interfaz, Nombre Archivo, Registro Dirección, Registro Tamaño, Registro Puntero Archivo)
+typedef struct{
+    t_pcb* proceso;
+    char* interfaz;
+    char* nombreArchivo;
+    char* direccion; //logica o fisica?
+    char* tamanio;
+    char* punteroArchivo;
+}InterfazSalienteFsRead;
+
+void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
+    t_pcb* proceso=args->proceso;
+    char* interfaz=args->interfaz;
+    char* nombreArchivo=args->nombreArchivo;
+    int direccion=atoi(args->direccion);
+    int tamanio=atoi(args->tamanio);
+    char* punteroArchivo=args->punteroArchivo;
+    int punterito = atoi(punteroArchivo);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int pid = proceso->pid;
+    t_paquete* paquete=crearPaquete();
+    paquete->codigo_operacion=IO_FS_READ;
+    /*agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
+    agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
+    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
+    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(int));
+    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
+    enviarPaquete(paquete,socketClienteIO);*/
+    paquete->buffer = malloc(sizeof(t_buffer));
+    int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
+    int archivo_len = strlen(nombreArchivo);
+    paquete->buffer->size = interfaz_len + archivo_len+ 6*sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &punterito, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 6*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    send(socketClienteIO, a_enviar, bytes, 0); 
+    recibirMensaje(socketClienteIO);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
+    pasarAReady(proceso); 
 }
 
 void io_fs_read(t_pcb *proceso,char **parametros){
+    InterfazSalienteFsRead* args=malloc(sizeof(InterfazSalienteFsRead));
 
+    int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
+    if (existeInterfaz == 1)
+    {
+        int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
+        
+        if (esValida == 1){
+            estadoAnterior = proceso->estado;
+            proceso->estado = BLOCKED;
+            loggearBloqueoDeProcesos(proceso, "IO_FS_READ");
+            loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+            log_info(logger, "PID <%d>-Ejecuta IO_FS_READ",proceso->pid);
+        
+            args->proceso = proceso;
+            args->interfaz = parametros[0];
+            args->nombreArchivo = parametros[1];
+            args->direccion = parametros[2];
+            args->tamanio = parametros[3];
+            args->punteroArchivo = parametros[4];
+
+            pthread_t pcb_bloqueado;
+            if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_read, (void*)args))
+            {
+                pthread_detach(pcb_bloqueado);
+            }
+            else
+            {
+                log_error(loggerError, "Error al crear hilo");
+            }        
+        }
+        else
+        {
+            // mandar proceso a exit porque devuelve -1
+            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            exit_s(proceso,parametros);
+        }
+    }
+    else
+    {
+        log_warning(logger, "no existe la interfaz - proceso a exit");
+        // mandar proceso a exit
+        exit_s(proceso,parametros);
+    }
 }
 
 //EXIT
 void exit_s(t_pcb *proceso,char **parametros){
     estadoAnterior = proceso->estado;
-    proceso->estado = EXIT;
+    proceso->estado = SALIDA;
     log_info(logger, "llego al exit");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
@@ -261,45 +866,39 @@ void exit_s(t_pcb *proceso,char **parametros){
         liberarRecursosAsignados(proceso);
     }
 
+    flag_exit=1;
     liberarMemoriaPCB(proceso);
     list_remove_element(pcbsEnMemoria, proceso);
     destruirPCB(proceso); 
     destroyContextoUnico();
     sem_post(&semGradoMultiprogramacion);
     log_info(logger, "finalizo el exit");
+    //TODO: ver de encolar en pcbsParaExit
 }
 
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){
-    t_algoritmo algoritmo=contextoEjecucion->algoritmo;
-    
+    log_info(logger,"PID: <%d> - Desalojado por fin de Quantum",proceso->pid); //Log obligatorio
+
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
 
-    if(algoritmo==RR){ //Si es RR, encolo el proceso en READY
-        ingresarAReady(proceso); //TODO: VER POR QUE TIRA LA OPERACION DESCONOCIDA
-    } 
-    if(algoritmo==VRR){//Si es VRR, encolo el proceso en READYaux
-        //encolar(pcbsREADYaux,proceso); //TODO: Ingresar a auxiliar
-    }
+    //No importa si es RR o VRR, siempre se encola en READY
+    ingresarAReady(proceso); 
 }
 
-void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
-{
+void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int pid){
     // Convertir el entero de string a int
     int entero = atoi(entero_str);
-
     // Asignar memoria para el paquete
-    t_paquetebeta *paquete = malloc(sizeof(t_paquetebeta));
+    /*t_paquetebeta *paquete = malloc(sizeof(t_paquetebeta));
     if (paquete == NULL) {
         perror("Error al asignar memoria para el paquete");
         return;
     }
-
     // Asignar el código de operación al paquete
     paquete->codigo_operacion = IO_GEN_SLEEP;
-
     // Asignar memoria para el buffer
     paquete->buffer = malloc(sizeof(t_buffer));
     if (paquete->buffer == NULL) {
@@ -307,7 +906,6 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
         free(paquete);
         return;
     }
-
     // Copiar el mensaje al buffer
     paquete->buffer->size = strlen(mensaje) + 1;
     paquete->buffer->stream = malloc(paquete->buffer->size);
@@ -318,13 +916,10 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
         return;
     }
     memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
-
     // Asignar el entero al paquete
     paquete->entero = entero;
-
     // Calcular el tamaño total del paquete
     int bytes = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
-
     // Serializar el paquete
     void *a_enviar = malloc(bytes);
     if (a_enviar == NULL) {
@@ -337,10 +932,9 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
     memcpy(a_enviar, &(paquete->codigo_operacion), sizeof(op_code));
     memcpy(a_enviar + sizeof(op_code), &(paquete->entero), sizeof(int));
     memcpy(a_enviar + sizeof(op_code) + sizeof(int), paquete->buffer->stream, paquete->buffer->size);
-
+    memcpy(a_enviar + sizeof(op_code) + sizeof(int) + paquete->buffer->size, &pid, sizeof(int));
     // Log antes de enviar
     log_info(logger, "antes de mandar paquete");
-
     // Enviar el paquete a través del socket
     int sent_bytes = send(socket_cliente, a_enviar, bytes, 0);
     if (sent_bytes == -1) {
@@ -351,35 +945,30 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str)
         free(a_enviar);
         return;
     }
-
     // Log después de enviar
     log_info(logger, "La interfaz '%s' dormirá durante %s unidades de tiempo", mensaje, entero_str);
-
     // Liberar la memoria asignada
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
-    free(a_enviar);
-}
-
-//READY
-void pasarAReady(t_pcb *proceso)
-{
-    estadoAnterior = proceso->estado;
-    proceso->estado = READY;
-    loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    ingresarAReady(proceso);
-}
-
-void recibirMsjIO(int socketClienteIO){
-    char buffer[1024];
-    int bytes_recibidos = recv(socketClienteIO, buffer, sizeof(buffer), 0);
-    
-    if (bytes_recibidos < 0) {
-        perror("Error al recibir el mensaje");
-        
+    free(a_enviar);*/
+    t_paquete* paquete=crearPaquete();
+    int length = strlen(mensaje);
+    paquete->codigo_operacion=IO_GEN_SLEEP;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 2*sizeof(int) + length;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &entero, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), &mensaje, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket_cliente, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
     }
-    buffer[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
-    
-    log_info(logger, "valor recibido: %s", buffer);
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(paquete);
+    free(a_enviar);
 }

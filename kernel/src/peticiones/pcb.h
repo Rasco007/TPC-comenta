@@ -28,22 +28,23 @@ typedef struct {
 
 typedef struct {
     uint32_t pid; 
-    int socketPCB; 
-    t_list* instrucciones; 
+    int socketPCB; //Sacar
+    t_list* instrucciones; //Sacar
     uint32_t programCounter;
     uint32_t SI;
     uint32_t DI;   
     estadoProceso estado; 
     t_dictionary* registrosCPU;
-    t_temporal* tiempoDeUsoCPU; 
+    int64_t tiempoDeUsoCPU; 
     t_list* recursosAsignados;
-    t_list* tablaDePaginas;
+    t_list* tablaDePaginas; //Sacar
     int64_t quantum;
     t_algoritmo algoritmo;
 } t_pcb; 
 
 extern t_list *pcbsNEW;
 extern t_list *pcbsREADY;
+extern t_list *pcbsREADYaux;
 extern t_list *pcbsEnMemoria;
 extern t_list *pcbsBloqueados;
 extern t_list *pcbsParaExit;

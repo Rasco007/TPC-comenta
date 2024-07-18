@@ -26,7 +26,7 @@ void liberar_memoria_fisica(MemoriaFisica *mf) {
 // Implementación de la tabla de páginas
 TablaPaginas *inicializar_tabla_paginas() {
     TablaPaginas *tp = malloc(sizeof(TablaPaginas));
-    for (int i = 0; i < NUM_PAGINAS; i++) {
+    for (int i = 0; i < CANT_PAGINAS; i++) {
         tp->entradas[i].valido = 0;
         tp->entradas[i].numero_marco = -1;
     }
@@ -89,32 +89,6 @@ char *obtener_instruccion(Proceso *proceso, int program_counter) {
     return proceso->instrucciones[program_counter];
 }
 
-// Asigna una página en la memoria física
-/*bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
-    if (numero_pagina < 0 || numero_pagina >= NUM_PAGINAS) {
-        return false;
-    }
-    // Encuentra un marco libre
-    int numero_marco = -1;
-    for (int i = 0; i < NUM_MARCOS; i++) {
-        if (mf->marcos[i].libre) {
-            numero_marco = i;
-            break;
-        }
-    }
-    if (numero_marco == -1) {
-        return false; // No hay marcos libres
-    }
-    mf->marcos[numero_marco].libre = false;
-    mf->marcos[numero_marco].numero_pagina = numero_pagina;
-    mf->marcos[numero_marco].pid = proceso->pid;
-    proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
-    proceso->tabla_paginas->entradas[numero_pagina].numero_marco = numero_marco;
-    proceso->tabla_paginas->paginas_asignadas++;  // Incrementa el contador de páginas asignadas
-
-    return true;
-}*/
-
 // Traduce una dirección lógica a una dirección física
 // Ya se encarga la mmu
 /*void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
@@ -137,7 +111,7 @@ bool hay_memoria_disponible(int tamano_requerido) {
 }
 
 bool hay_espacio_en_tabla_paginas(Proceso *proceso) {
-    return (proceso->tabla_paginas->paginas_asignadas < NUM_PAGINAS);
+    return (proceso->tabla_paginas->paginas_asignadas < CANT_PAGINAS);
 }
 
 void *leer_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, size_t size) {

@@ -8,35 +8,30 @@
 #include <configuraciones/configuraciones.h>
 
 // Definiciones para la memoria física
-#define NUM_MARCOS 64      // Número total de marcos en la memoria física
+#define TAM_MEMORIA confGetInt("TAM_MEMORIA")
+#define TAM_PAGINA confGetInt("TAM_PAGINA")
+#define CANT_PAGINAS TAM_MEMORIA / TAM_PAGINA
 
-// Definiciones para la tabla de páginas
-#define NUM_PAGINAS 256 // Número total de páginas en la memoria
 typedef struct {
-    int valido;        // Indica si la entrada de la tabla de páginas es válida
-    int numero_marco;   // Número de marco en la memoria física
+    int valido;        
+    int numero_marco;  
+    int numero_pagina;
 } EntradaTablaPaginas;
 
 typedef struct {
-    EntradaTablaPaginas entradas[NUM_PAGINAS];
-    int paginas_asignadas;  // Número de páginas actualmente asignadas
+    EntradaTablaPaginas entradas[CANT_PAGINAS];
+    int paginas_asignadas; 
 } TablaPaginas;
 
 typedef struct {
     int pid;
-    TablaPaginas *tabla_paginas;
+    TablaPaginas tabla_paginas;
     char **instrucciones;
     int numero_instrucciones;
 } Proceso;
+
 typedef struct {
-    int libre;         // Indica si el marco está libre
-    int numero_pagina;  // Página asignada a este marco
-    int pid;     // Proceso al que pertenece este marco
-    Proceso* proceso;
-} Marco;
-typedef struct {
-    void *memoria;      // Memoria física simulada
-    Marco marcos[NUM_MARCOS]; // Arreglo de marcos
+    void* memoria;
 } MemoriaFisica;
 
 MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina);

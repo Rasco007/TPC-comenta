@@ -32,6 +32,7 @@ extern sem_t semGradoMultiprogramacion;
 extern int gradoMultiprogramacion; 
 extern int *instanciasRecursos;
 extern bool pausaPlanificacion;
+extern int flag_exit;
 
 extern char *estadosProcesos[5];
 

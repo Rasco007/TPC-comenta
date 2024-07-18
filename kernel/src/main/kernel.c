@@ -16,8 +16,8 @@ void escucharAlIO();
 
 int main () {
     //Inicializar variables
-    logger = iniciarLogger("kernel.log", "Kernel");
-	loggerError = iniciarLogger("errores.log", "Errores - Kernel"); 
+    logger = iniciarLogger("kernel.log", "Main-Kernel");
+	loggerError = iniciarLogger("errores.log", "Errores - Main-Kernel"); 
     config = iniciarConfiguracion("kernel.config");
 	atexit (terminarPrograma);
 

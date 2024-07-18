@@ -21,6 +21,6 @@ int noEsBloqueante(t_comando instruccionActual);
 extern int socketClienteDispatch;
 extern int socketClienteInterrupt;
 extern t_contexto* contextoEjecucion;
-extern t_temporal* rafagaCPU;
 extern int flag_bloqueante;
+extern t_temporal* tiempoDeUsoCPU;
 #endif

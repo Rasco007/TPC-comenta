@@ -14,18 +14,21 @@ pthread_mutex_t mutexListaReady;
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 bool pausaPlanificacion =false; //Flag para manejar el pausado de la planificacion desde consola
+int flag_exit=0;
 
 int gradoMultiprogramacion; 
 char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"}; 
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
-   
-    //log_info(logger, "Planificador a largo plazo iniciado");
+    logger=cambiarNombre(logger,"Kernel-Planificador LP");
     while (!pausaPlanificacion) //Mientras no este pausado...
     {
         log_info(logger, "------comienza while largo plazo");
         sem_wait(&hayProcesosNuevos);
+        int semValue;
+        sem_getvalue(&semGradoMultiprogramacion, &semValue);
+        log_info(logger,"Valor del semáforo de multiprogramación: %d", semValue);
         sem_wait(&semGradoMultiprogramacion);
         //log_info(logger, "------obtenerSiguienteAReady");
         t_pcb *pcb = obtenerSiguienteAReady(); //Agarro un pcb de la cola de new
@@ -43,18 +46,15 @@ void planificarALargoPlazo(){
 
 
 void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
-
-    //crearColasBloqueo();
+    
+    crearColasBloqueo();
 
     while (1)
     {
-         
-        int sval;
-         log_info(logger, "sem ready antes de wait %d",  sem_getvalue(&hayProcesosReady, &sval));
-       
+        flag_exit=0;
+        logger=cambiarNombre(logger,"Kernel-Planificador CP");
         sem_wait(&hayProcesosReady);
          
-        log_info(logger, "hay proceso en ready");
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
         
@@ -67,12 +67,12 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         //Mando el contexto de ejecucion a la CPU por dispatch
         contextoEjecucion = procesarPCB(aEjecutar); 
 
-        rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
+        //rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
        
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
-         log_info(logger, "APAREZCO KERNEL");
-         
+        log_info(logger, "APAREZCO KERNEL");
+        if(flag_exit==1) continue;
     }
 }
 
@@ -86,6 +86,7 @@ void inicializarSemaforos(){
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
+    sem_init(&memoriaOK,0,0);
 }
 
 void destruirSemaforos () {
@@ -94,6 +95,7 @@ void destruirSemaforos () {
     sem_close(&hayProcesosNuevos);
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);
+    sem_close(&memoriaOK);
 }
 
 //Manejo de colas

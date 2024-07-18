@@ -12,8 +12,11 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     paquete->buffer->size = sizeof(contexto->pid) + sizeof(contexto->programCounter) + sizeof(contexto->instruccionesLength) ;
 
      // Calcular el tamaño de los registros
-    paquete->buffer->size  += 4 * (4 + 8); // AX, BX, CX, DX (4 bytes cada uno) + EAX, EBX, ECX, EDX (8 bytes cada uno)
+    paquete->buffer->size  += 4 * (1 + 4); // AX, BX, CX, DX (1 bytes cada uno) + EAX, EBX, ECX, EDX (4 bytes cada uno)
     
+    //Calculo para SI y DI
+    paquete->buffer->size+=sizeof(contexto->SI)+sizeof(contexto->DI);
+
     //calcula tamaño del motivo
     paquete->buffer->size  += sizeof(contextoEjecucion->motivoDesalojo->motivo) +
                    sizeof(contextoEjecucion->motivoDesalojo->parametrosLength);
@@ -21,16 +24,11 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
         paquete->buffer->size  += strlen(contextoEjecucion->motivoDesalojo->parametros[i]) + 1; // +1 para el terminador nulo
     }
 
-    //calculo tamaño de tabla de paginas
-     
-    paquete->buffer->size += sizeof(uint32_t); // Tamaño de tablaDePaginasSize
-    for (int i = 0; i < list_size(contexto->tablaDePaginas); i++) {
-        paquete->buffer->size += sizeof(t_pagina);
-    }
-
     //calculo tamaño de tiempo de cpu
     paquete->buffer->size  += sizeof(contextoEjecucion->tiempoDeUsoCPU);
 
+    //calculo para quantum y algoritmo
+    paquete->buffer->size+=sizeof(contexto->quantum)+sizeof(contexto->algoritmo);
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
@@ -56,6 +54,12 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
         desplazamiento += registro_length;
     }
 
+    // Serializar SI y DI
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->SI), sizeof(contexto->SI));
+    desplazamiento += sizeof(contexto->SI);
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->DI), sizeof(contexto->DI));
+    desplazamiento += sizeof(contexto->DI);
+
      // Serializar el motivo
     memcpy(paquete->buffer->stream + desplazamiento, &(contextoEjecucion->motivoDesalojo->motivo), sizeof(contextoEjecucion->motivoDesalojo->motivo));
     desplazamiento += sizeof(contextoEjecucion->motivoDesalojo->motivo);
@@ -71,17 +75,6 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
         desplazamiento += parametro_length;
     }
 
- // Serializar la tabla de páginas
-    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tablaDePaginasSize), sizeof(contexto->tablaDePaginasSize));
-    desplazamiento += sizeof(contexto->tablaDePaginasSize);
-log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
-    for (int i = 0; i < list_size(contexto->tablaDePaginas); i++) {
-        t_pagina* pagina = list_get(contexto->tablaDePaginas, i);
-        memcpy(paquete->buffer->stream + desplazamiento, pagina, sizeof(t_pagina));
-        desplazamiento += sizeof(t_pagina);
-         log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
-    }
-
     //Serializacion de quantum
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->quantum), sizeof(contexto->quantum));
     desplazamiento += sizeof(contexto->quantum);
@@ -92,9 +85,8 @@ log_info(logger, "tamaño tabla %d", contexto->tablaDePaginasSize);
     log_info(logger,"ALGORITMO: %d", contexto->algoritmo);
 
     //serializo el tiempo de cpu
-    /*memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
     desplazamiento += sizeof(contexto->tiempoDeUsoCPU);
-    log_info(logger,"ALGORITMO: %d", contexto->tiempoDeUsoCPU);*/
 
 log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
@@ -163,7 +155,8 @@ void recibirContextoBeta(int socket) {
 
         snprintf(nombreRegistro, 3, "%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
-         log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        //free(registro);
     }
 
     // EAX, EBX, ECX, EDX (4 bytes cada uno)
@@ -175,9 +168,15 @@ void recibirContextoBeta(int socket) {
 
         snprintf(nombreRegistro, 4, "E%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
-         log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        //free(registro);
     }
 
+    // Deserializar SI y DI
+    memcpy(&(contextoEjecucion->SI), buffer + desplazamiento, sizeof(contextoEjecucion->SI));
+    desplazamiento += sizeof(contextoEjecucion->SI);
+    memcpy(&(contextoEjecucion->DI), buffer + desplazamiento, sizeof(contextoEjecucion->DI));
+    desplazamiento += sizeof(contextoEjecucion->DI);
 
       // Deserializar el motivo
     memcpy(&(contextoEjecucion->motivoDesalojo->motivo), buffer + desplazamiento, sizeof(contextoEjecucion->motivoDesalojo->motivo));
@@ -195,22 +194,6 @@ void recibirContextoBeta(int socket) {
         desplazamiento += parametro_length;
         log_info(logger, "param %s",contextoEjecucion->motivoDesalojo->parametros[i]);
     }
-
-
-     // Deserializar la tabla de páginas
-    memcpy(&(contextoEjecucion->tablaDePaginasSize), buffer + desplazamiento, sizeof(contextoEjecucion->tablaDePaginasSize));
-    desplazamiento += sizeof(contextoEjecucion->tablaDePaginasSize);
-log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
-    for (int i = 0; i < contextoEjecucion->tablaDePaginasSize; i++) {
-        log_info(logger, "llega hasta aqui x2");
-        t_pagina* pagina = malloc(sizeof(t_pagina));
-        memcpy(pagina, buffer + desplazamiento, sizeof(t_pagina));
-        desplazamiento += sizeof(t_pagina);
-        list_add(contextoEjecucion->tablaDePaginas, pagina);
-
-        // Loguear detalles de la página
-        log_info(logger, "Pagina %d: IdPagina: %d, idFrame: %d, Bit de validez: %d", i, pagina->idPagina, pagina->idFrame, pagina->bitDeValidez);
-    }
     
     //Deserializar quantum
     memcpy(&(contextoEjecucion->quantum), buffer + desplazamiento, sizeof(contextoEjecucion->quantum));
@@ -222,8 +205,8 @@ log_info(logger, "tamaño tabla %d", contextoEjecucion->tablaDePaginasSize);
     log_info(logger,"ALGORITMO: %d", contextoEjecucion->algoritmo);
 
     //Deserializar tiempoDeUsoCPU
-    /*memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
-    desplazamiento += sizeof(contextoEjecucion->tiempoDeUsoCPU);*/
+    memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
+    desplazamiento += sizeof(contextoEjecucion->tiempoDeUsoCPU);
 
     log_info(logger, "termino de recibir todo");
     
@@ -251,9 +234,9 @@ void iniciarContextoBeta(){
 }
 
 void destroyContexto() {
-    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
+    //list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    list_destroy_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
+    //list_destroy_and_destroy_elements(contextoEjecucion->tablaDePaginas, free);
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
         if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
     free(contextoEjecucion->motivoDesalojo);
@@ -262,13 +245,14 @@ void destroyContexto() {
 }
 
 void destroyContextoUnico () {
-    list_destroy(contextoEjecucion->instrucciones);
+    //list_destroy(contextoEjecucion->instrucciones);
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    list_destroy(contextoEjecucion->tablaDePaginas);
+    //list_destroy(contextoEjecucion->tablaDePaginas);
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
         if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
     free(contextoEjecucion->motivoDesalojo);
     free(contextoEjecucion);
+    
     contextoEjecucion = NULL;
 }
 
@@ -290,13 +274,15 @@ t_dictionary *crearDiccionarioDeRegistros2(){
 void iniciarContexto(){
 
     contextoEjecucion = malloc(sizeof(t_contexto));
-	contextoEjecucion->instrucciones = list_create();
+	//contextoEjecucion->instrucciones = list_create();
 	contextoEjecucion->instruccionesLength = 0;
 	contextoEjecucion->pid = 0;
+    contextoEjecucion->SI=0;
+    contextoEjecucion->DI=0;
 	contextoEjecucion->programCounter = 0;
 	contextoEjecucion->registrosCPU = dictionary_create();
-	contextoEjecucion->tablaDePaginas = list_create();
-	contextoEjecucion->tablaDePaginasSize = 0;
+	//contextoEjecucion->tablaDePaginas = list_create();
+	//contextoEjecucion->tablaDePaginasSize = 0;
     contextoEjecucion->tiempoDeUsoCPU = 0;
     contextoEjecucion->motivoDesalojo = (t_motivoDeDesalojo *)malloc(sizeof(t_motivoDeDesalojo));
     contextoEjecucion->motivoDesalojo->parametros[0] = "";
@@ -306,7 +292,8 @@ void iniciarContexto(){
     contextoEjecucion->motivoDesalojo->parametros[4] = "";
     contextoEjecucion->motivoDesalojo->parametrosLength = 0;
     contextoEjecucion->motivoDesalojo->motivo = 0;
-	
+	contextoEjecucion->quantum=0;
+    contextoEjecucion->algoritmo=0;
 }
 
 

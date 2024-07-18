@@ -16,8 +16,6 @@ extern int cantidadRecursos;
 void crearColasBloqueo();
 int indiceRecurso(char *recurso);
 int tamanioArrayCharDoble(char**arreglo);
-void closurePCB(void* pcbActual);
-void closureMatriz(void* colaBloqueados);
 void destruirInstanciasRecursos();
 void destruirArrayCharDoble(char**array);
 void colaBloqueadosDestroyer(void* colaBloqueados);
