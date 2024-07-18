@@ -12,6 +12,7 @@
 #define TAM_MEMORIA confGetInt("TAM_MEMORIA")
 #define TAM_PAGINA confGetInt("TAM_PAGINA")
 #define CANT_PAGINAS TAM_MEMORIA / TAM_PAGINA
+#define  CANT_FRAMES (TAM_MEMORIA + TAM_PAGINA - 1) / TAM_PAGINA
 
 typedef struct {
     int valido;        
@@ -34,10 +35,12 @@ typedef struct {
 
 typedef struct {
     void* memoria;
-    t_bitarray* tablaMarcosLibres;
+    t_list* listaMarcosLibres;
+    t_list* listaProcesos;
 } MemoriaFisica;
 
-MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina);
+extern  MemoriaFisica *mf;
+MemoriaFisica *inicializar_memoria_fisica();
 void liberar_memoria_fisica(MemoriaFisica *mf);
 
 TablaPaginas *inicializar_tabla_paginas();

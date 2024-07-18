@@ -2,14 +2,21 @@
 #include <commons/log.h>
 
 // Implementación de la memoria física
-MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina) {
+MemoriaFisica *inicializar_memoria_fisica() {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
     mf->memoria=malloc(TAM_MEMORIA);
-    mf->tablaMarcosLibres = bitarray_create(mf->memoria, TAM_MEMORIA);
+    mf->listaMarcosLibres = list_create(); 
+    mf->listaProcesos = list_create(); 
+
+    for(int i = 0; i<CANT_FRAMES; i++){
+        list_add_in_index(mf->listaMarcosLibres, i, false); //si es false essssta libreeeee
+    }
+    return mf;
 }
 
 void liberar_memoria_fisica(MemoriaFisica *mf) {
     free(mf->memoria);
+    list_destroy(mf->listaMarcosLibres);
     free(mf);
 }
 
@@ -38,8 +45,9 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     Proceso *proceso = malloc(sizeof(Proceso));
     proceso->pid = pid;
     //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
-    proceso->tabla_paginas = NULL;
-    proceso->pid=pid;
+    
+    proceso->tabla_paginas = inicializar_tabla_paginas();
+    
     // Leer archivo de pseudocódigo
     FILE *archivo = fopen(archivo_pseudocodigo, "r");
     if (!archivo) {
@@ -47,15 +55,18 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
         free(proceso);
         return NULL;
     }
-    
     proceso->numero_instrucciones = 0;
     proceso->instrucciones = NULL;
+    
     char linea[256];
     while (fgets(linea, sizeof(linea), archivo)) {
         proceso->numero_instrucciones++;
         proceso->instrucciones = realloc(proceso->instrucciones, proceso->numero_instrucciones * sizeof(char *));
         proceso->instrucciones[proceso->numero_instrucciones - 1] = string_duplicate(linea);
     }
+    
+    list_add(mf->listaProcesos,proceso);
+    
     fclose(archivo);
     //printf("tamaño del proceso %lu\n", sizeof(proceso->tabla_paginas));
     return proceso;
@@ -77,31 +88,36 @@ char *obtener_instruccion(Proceso *proceso, int program_counter) {
     return proceso->instrucciones[program_counter];
 }
 
-// Traduce una dirección lógica a una dirección física
-void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
-    int tam_pagina = confGetInt("TAM_PAGINA");
-    unsigned long dir = (unsigned long)direccion_logica;
-    int numero_pagina = dir / tam_pagina;
-    int desplazamiento = dir % tam_pagina;
-    EntradaTablaPaginas* entrada=list_get(proceso->tabla_paginas->entradas,numero_pagina);
 
-    if (numero_pagina < 0 || numero_pagina >= CANT_PAGINAS || !entrada->valido) { //VER CAMBIOS DE ESTA LINEA
-        return NULL; // Dirección no válida
+void *leer_memoria(Proceso *proceso, int direccion_fisica, size_t size) {
+    if (direccion_fisica < 0 || direccion_fisica + size > TAM_MEMORIA) {
+        log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
+        return NULL;
     }
-    
-    int numero_marco=entrada->numero_marco;
-    //int numero_marco = proceso->tabla_paginas->entradas[numero_pagina].numero_marco; ESTO ESTABA ANTES
-    return mf->memoria + numero_marco * tam_pagina + desplazamiento;
+
+    void *buffer = malloc(size);
+    if (!buffer) {
+        log_error(loggerError, "Error: No se pudo asignar memoria para el buffer de lectura.");
+        return NULL;
+    }
+    //VER CUANDO SE TERRMINAN LAS   PAAGINAAAAAASSSS
+    memcpy(buffer, (char *)mf->memoria + direccion_fisica, size);
+
+    // Log del acceso de lectura
+    log_info(logger, "PID: %d - Acción: LEER - Dirección física: %d - Tamaño: %zu",
+             proceso->pid, direccion_fisica, size);
+
+    return buffer;
 }
 
 
-/* VER DESPUES CON SANTY, CAMBIAR NUM MARCOS POR SIZE DEL BITARRAY
+///////TODOOOOO: VER DESPUES CON SANTY, CAMBIAR NUM MARCOS POR SIZE DEL BITARRAY
 bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
     if (numero_pagina < 0 || numero_pagina >= CANT_PAGINAS) {
         return false; // Número de página fuera de rango
     }
     // Busca un marco libre disponible para asignar la página
-    for (int i = 0; i < NUM_MARCOS; i++) {
+    /*for (int i = 0; i < NUM_MARCOS; i++) {
         if (mf->marcos[i].libre) {
             // Se encontró un marco libre, asigna la página
             mf->marcos[i].libre = false;
@@ -113,7 +129,7 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
             proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas
             return true;
         }
-    }
+    }*///
     // Si no se encontró ningún marco libre
     return false;
-}*/
+}

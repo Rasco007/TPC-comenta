@@ -32,12 +32,11 @@ int ejecutarServidorKernel(int *socketCliente) {
             case NEWPCB: {
                 PID = recibirPID(*socketCliente);
                 //enviarTablaPaginas(procesoNuevo);
+                
                 Proceso *proceso = inicializar_proceso(PID, pathInstrucciones);
-                mf->marcos[PID].proceso=proceso;
-                mf->marcos[PID].pid=PID;
-
+                
+                int n =proceso->numero_instrucciones;
                 //Mando el numero de instrucciones a kernel
-                int n=mf->marcos[PID].proceso->numero_instrucciones;
                 log_info(logger,"Cantidad de instrucciones: %d",n);
                 send(*socketCliente, &n, sizeof(int), 0);
                 log_info(logger,"Creacion de Proceso PID: <%d>", PID);
@@ -67,14 +66,7 @@ int ejecutarServidorKernel(int *socketCliente) {
     return EXIT_SUCCESS;
 }
 
-Proceso *crearProcesoEnMemoria(int pid) {
-    Proceso *procesoNuevo = malloc(sizeof(Proceso));
-    procesoNuevo->pid = pid;
-    procesoNuevo->tabla_paginas = inicializar_tabla_paginas();
-    // list_add(procesos, (void *)procesoNuevo); // Implementar si es necesario
 
-    return procesoNuevo;
-}
 
 void eliminarProcesoDeMemoria(int pid) {
    Proceso *proceso = buscar_proceso_por_pid(pid);
@@ -91,6 +83,16 @@ void eliminarProcesoDeMemoria(int pid) {
         // Elimina el proceso de la lista (si es necesario)
         // list_remove_element(procesos, (void *)proceso); // Implementar si es necesario
 
+        //bbusco procesoo en la lisssstaa y lo eliminoo
+        for (int i = 0; i < list_size(mf->listaProcesos); i++) {
+        proceso = list_get(mf->listaProcesos,i);
+        if (proceso->pid == pid) {
+            
+            list_remove(mf->listaProcesos,i);
+
+        }
+    }
+
         // Libera la memoria del proceso
         free(proceso);
 
@@ -103,10 +105,12 @@ void eliminarProcesoDeMemoria(int pid) {
 Proceso *buscar_proceso_por_pid(int pid) { //ver si pasar por referencia
     log_info(logger, "buscar_proceso_por_pid: %d",pid);
     Proceso *proceso = NULL;
-    for (int i = 0; i < NUM_MARCOS; i++) {
-        if (mf->marcos[i].pid == pid) {
-            proceso = mf->marcos[i].proceso;
+    for (int i = 0; i < list_size(mf->listaProcesos); i++) {
+        proceso = list_get(mf->listaProcesos,i);
+        if (proceso->pid == pid) {
+            
+            return proceso;
         }
     }
-    return proceso;
+    return NULL;
 }
