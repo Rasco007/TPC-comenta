@@ -53,7 +53,7 @@ int main() {
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
     mf = inicializar_memoria_fisica(tam_pagina);
     
-   /*sem_init(&path, 0, 0);
+    /* sem_init(&path, 0, 0);
     sem_wait(&path);
     Proceso *proceso = inicializar_proceso(PID, pathInstrucciones); //TODO: esto debería estar en el NEWPCB
     mf->marcos[0].proceso=proceso;
@@ -62,7 +62,7 @@ int main() {
         printf("Error al inicializar el procesos.\n");
         liberar_memoria_fisica(mf);
         return 1;
-    }*/
+    }
 
     // Asigna algunas páginas a los procesos
     if (!asignar_pagina(mf, proceso, 0)) {
@@ -72,15 +72,15 @@ int main() {
         printf("Error al asignar la página 1 al proceso 1.\n");
     }
     // Ajuste del tamaño del proceso
-    //int nuevo_tamano = tam_pagina*4;  // Por ejemplo, ajustar a 3 páginas
-    //printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
-    //proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
+    int nuevo_tamano = tam_pagina*4;  // Por ejemplo, ajustar a 3 páginas
+    printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
+    proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
     int nuevo_tamano = tam_pagina*10;  // Por ejemplo, ajustar a 3 páginas : tam_pagina*3
     printf("Número de páginas antes del ajuste: %d\n", proceso->tabla_paginas->paginas_asignadas);
     proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
     if (proceso == NULL) 
         log_error(loggerError, "Error: No se pudo ajustar el tamaño del proceso.");
-
+    
     // TODO: el program counter deberia venir del CPU
     int program_counter = 0;
     while (1) {
@@ -89,13 +89,15 @@ int main() {
         if (instruccion1) {
             printf("Instrucción del proceso 1: %s", instruccion1);
             escribir_memoria(mf, proceso, 1, instruccion1, strlen(instruccion1) + 1);
+            char* peticionLeida = leer_memoria(mf, proceso, 1, strlen(instruccion1) + 1);
+            log_info(logger, "Proceso leido = %s", peticionLeida);
         }
-
+    
     // Inicializa dos procesos con sus archivos de pseudocódigo
-    //Proceso *proceso1 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
-    //Proceso *proceso2 = inicializar_proceso("src/pseudocodigo/pseucodigo.pc");
+    Proceso *proceso1 = inicializar_proceso(0, "src/pseudocodigo/pseucodigo.pc");
+    Proceso *proceso2 = inicializar_proceso(1, "src/pseudocodigo/pseucodigo.pc");
 
-    /*if (!proceso1 || !proceso2) {
+    if (!proceso1 || !proceso2) {
         printf("Error al inicializar los procesos.\n");
         liberar_memoria_fisica(mf);
         return 1;
@@ -123,12 +125,12 @@ int main() {
         }
         if (instruccion2) {
             printf("Instrucción del proceso 2 en el PC %d: %s", program_counter, instruccion2);
-        }*/
+        }
 
         if (!instruccion1) { //if (!instruccion1 && !instruccion2) {
             break; // Termina si no hay más instrucciones en ambos procesos
         }
-
+    
         // Simula un retardo en la obtención de la instrucción
         sleep(5);
 
@@ -136,9 +138,8 @@ int main() {
     }
 
     // Libera memoria
-    /*liberar_proceso(proceso1);
-    liberar_proceso(proceso2);*/
     liberar_proceso(proceso);
+    */
     liberar_memoria_fisica(mf);
 
     // Espera a que los hilos terminen
