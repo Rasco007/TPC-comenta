@@ -1,9 +1,5 @@
 #include <conexionCPU/conexionCPU.h>
 
-int tiempo;
-//MemoriaFisica *mf;
-//t_log *logger;
-//t_config *config;
 char* valorLeido;
 int indice;
 int pid;

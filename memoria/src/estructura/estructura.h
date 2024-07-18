@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include <commons/string.h>
+#include <commons/bitarray.h>
 #include <configuraciones/configuraciones.h>
 
 // Definiciones para la memoria física
@@ -18,20 +19,22 @@ typedef struct {
     int numero_pagina;
 } EntradaTablaPaginas;
 
+
 typedef struct {
-    EntradaTablaPaginas entradas[CANT_PAGINAS];
+    t_list* entradas;
     int paginas_asignadas; 
 } TablaPaginas;
 
 typedef struct {
     int pid;
-    TablaPaginas tabla_paginas;
+    TablaPaginas* tabla_paginas;
     char **instrucciones;
     int numero_instrucciones;
 } Proceso;
 
 typedef struct {
     void* memoria;
+    t_bitarray* tablaMarcosLibres;
 } MemoriaFisica;
 
 MemoriaFisica *inicializar_memoria_fisica(int tamano_pagina);
