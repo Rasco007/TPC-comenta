@@ -148,7 +148,7 @@ void manejarFS_TRUNCATE(int socketCliente){
     nombrearchivo[longitud2] = '\0';
     //printf("Nombre de archivo: %s\n", nombrearchivo);
     log_info(logger, "PID: <%d> - Truncar Archivo: <%s> - Tamaño: <%d>", pid, nombrearchivo, nuevoTamanio);
-    truncarArchivo2(nombrearchivo,nuevoTamanio);
+    truncarArchivo2(nombrearchivo,nuevoTamanio, pid);
     enviarMensaje("OK", socketCliente);
 }
 

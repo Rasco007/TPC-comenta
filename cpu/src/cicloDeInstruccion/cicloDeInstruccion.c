@@ -79,7 +79,7 @@ void solicitudResize(int pid, int tamanio, int socket){
 	paquete->buffer->stream = malloc(paquete->buffer->size);
 
 	memcpy(paquete->buffer->stream, &pid, sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(tamanio), &tamanio, sizeof(tamanio));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamanio, sizeof(int));
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
 
     void *a_enviar = serializarPaquete(paquete, bytes);

@@ -75,9 +75,8 @@ int ejecutarServidorCPU(int *socketCliente) {
             case RESIZE: //VER
                 log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
                 int nuevo_tamano;
-                recv(*socketCliente, &pid, sizeof(int), 0);
-                recv(*socketCliente, &nuevo_tamano, sizeof(int), 0);
-                log_info(logger, "Nuevo tamaño: %d", nuevo_tamano);
+                recibirEnteros2(*socketCliente, &pid, &nuevo_tamano);
+                log_info(logger, "PID: %d - Nuevo tamaño: %d", pid, nuevo_tamano);
                 proceso = buscar_proceso_por_pid(pid);
                 if (proceso == NULL) {
                     log_error(loggerError, "No se encontró el proceso con PID: %d", pid);

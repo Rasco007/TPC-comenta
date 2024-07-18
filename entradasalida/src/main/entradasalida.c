@@ -38,6 +38,7 @@ int main(int argc, char** argv) {
 	conexionIOMemoria(argv);
 	conexionKernel(argv);
 	if (strcmp(TIPO_INTERFAZ, "DialFS") == 0){
+		crearCarpetaSiNoExiste(PATH_BASE_DIALFS);
     	create_bitmap_file("bitmap.dat", BLOCK_COUNT/8);
     	create_bloques_file("bloques.dat", BLOCK_COUNT*BLOCK_SIZE);
 	}
@@ -52,4 +53,20 @@ int main(int argc, char** argv) {
 
 	return EXIT_SUCCESS;
 	 
+}
+
+void crearCarpetaSiNoExiste(const char *path) {
+    struct stat st = {0};
+
+    // Verificar si la carpeta existe
+    if (stat(path, &st) == -1) {
+        // Crear la carpeta con permisos 0755
+        if (mkdir(path, 0755) == 0) {
+            printf("Carpeta creada exitosamente: %s\n", path);
+        } else {
+            perror("Error al crear la carpeta");
+        }
+    } else {
+        printf("La carpeta ya existe: %s\n", path);
+    }
 }

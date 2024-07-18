@@ -33,7 +33,6 @@ void recibirMsjIO(int socketClienteIO){
     log_info(logger, "valor recibido: %s", buffer);
 }
 
-
 //FUNCIONES GENERALES
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
     logger=cambiarNombre(logger,"Kernel-Retorno Contexto");
@@ -79,9 +78,6 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
     }
 }
-
-
-
 
 void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {
     log_info(logger,"PID: <%d> - Bloqueado por: %s", proceso->pid, motivo); //Log obligatorio
@@ -226,18 +222,17 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_warning(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
 }
-
 
 //IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
 typedef struct{
@@ -311,13 +306,13 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_info(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
@@ -396,19 +391,17 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_info(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
 }
-
-
 
 //IO_FS_CREATE (Interfaz, Nombre Archivo)
 typedef struct{
@@ -481,13 +474,13 @@ void io_fs_create(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_warning(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
@@ -560,13 +553,13 @@ void io_fs_delete(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_warning(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
@@ -644,13 +637,13 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_warning(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
@@ -743,13 +736,13 @@ void io_fs_write(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_warning(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }
@@ -842,13 +835,13 @@ void io_fs_read(t_pcb *proceso,char **parametros){
         else
         {
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "tipo de interfaz invalido - proceso a exit");
+            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
             exit_s(proceso,parametros);
         }
     }
     else
     {
-        log_warning(logger, "no existe la interfaz - proceso a exit");
+        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
         exit_s(proceso,parametros);
     }

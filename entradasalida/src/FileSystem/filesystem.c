@@ -1,7 +1,7 @@
 #include <FileSystem/filesystem.h>
 
 //una funcion que reciba un nombre de archivo y un tamanio y lo trunque
-void truncarArchivo2(char* nombre, int tamanio){
+void truncarArchivo2(char* nombre, int tamanio, int pid){
     usleep(TIEMPO_UNIDAD_TRABAJO*1000);
     //log_info(logger, "Truncar archivo: <%s> Tamaño: %d bytes", nombre, tamanio); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO TRUNCO
     char pathArchivo[256];
@@ -94,7 +94,7 @@ void truncarArchivo2(char* nombre, int tamanio){
             escribir_metadata(nombreSinExtension, bloqueInicial, tamanio);//modificar metadata
         } else { 
             char* datos=leerDatosDesdeArchivo(nombre, 0, tamanoArchivo);//printf("datos de archivo a agrandar: %s\n", datos);
-            log_info(logger, "Inicio Compactación.");
+            log_info(logger, "PID: %d - Inicio Compactación.", pid);
             borrarContenidoArchivo(nombre, tamanoArchivo);
             DIR *dir;
             struct dirent *ent;
@@ -157,7 +157,7 @@ void truncarArchivo2(char* nombre, int tamanio){
                     }
                 }
                 closedir(dir); // Cierra el directorio después de leer
-                log_info(logger, "Fin Compactación.");
+                log_info(logger, "PID: %d - Fin Compactación.", pid);
             } else {
                 perror("Error al abrir el directorio");
                 return ;

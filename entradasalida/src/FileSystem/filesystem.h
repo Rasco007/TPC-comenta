@@ -51,7 +51,7 @@ void crearArchivo2(char* nombre);
 void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo); 
 int obtenerPrimeraPosicionLibre(t_bitarray *bitmap);
 void create_bitmap_file(const char *filename, size_t size);
-void truncarArchivo2(char* nombre, int tamanio);
+void truncarArchivo2(char* nombre, int tamanio, int pid);
 void create_bloques_file(const char *filename, size_t size);
 void mostrar_tamano_archivo(const char *nombre, const char *path);
 char *obtenerNombreSinExtension(const char *nombreArchivo);
