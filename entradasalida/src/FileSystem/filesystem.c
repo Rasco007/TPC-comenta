@@ -3,7 +3,7 @@
 //una funcion que reciba un nombre de archivo y un tamanio y lo trunque
 void truncarArchivo2(char* nombre, int tamanio){
     usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-    log_info(logger, "Truncar archivo: <%s> Tamaño: %d bytes", nombre, tamanio); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO TRUNCO
+    //log_info(logger, "Truncar archivo: <%s> Tamaño: %d bytes", nombre, tamanio); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO TRUNCO
     char pathArchivo[256];
     strcpy(pathArchivo, PATH_BASE_DIALFS);
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
@@ -185,7 +185,7 @@ void truncarArchivo2(char* nombre, int tamanio){
 
 void delete_file(const char *nombre) {
     usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-    log_info(logger, "Borrar archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO ELIMINO
+   // log_info(logger, "Borrar archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO ELIMINO
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
     //NO hace falta borrar el contenido en bloques.dat
@@ -247,7 +247,7 @@ void delete_file(const char *nombre) {
 
 void crearArchivo2(char* nombre) {
     usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-    log_info(logger, "Crear archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO CREO
+   // log_info(logger, "Crear archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO CREO
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
     /*FILE *file = fopen(pathArchivo, "w"); // Abrir el archivo en modo escritura ('w')

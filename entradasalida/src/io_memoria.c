@@ -13,7 +13,7 @@ void io_atender_memoria(){
 			if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
 				escribirCadenaEnArchivo(archivoWrite, recibido, pointerArchivo);
 			}
-			enviarMensaje("OK", fd_kernel);
+			enviarMensaje("OK", fd_kernel); // para continuar el proceso 
    	 		break;
 
     	case -1:
