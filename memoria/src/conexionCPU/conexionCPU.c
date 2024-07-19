@@ -228,14 +228,12 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
              EntradaTablaPaginas *entrada = list_get(proceso->tabla_paginas->entradas, i);
              int marco = entrada->numero_marco;
 
-            //TODDDDO: PONERRRR   EN LISTA DE      MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS
+            //TODDDDO: PONERRRR   EN LISTA DE  MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS
 
             // Liberar la página i
-            /*list_remove(proceso->tabla_paginas->entradas,i);
-
-           
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].libre = true;
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;*/
+            list_remove(proceso->tabla_paginas->entradas,i);
+            list_replace(mf->listaMarcosLibres, marco - 1,false); //creo que se pone - 1 porque es el indice dee una lista y no existe el marco 0
+            //reemmplazaaaa vaalor marcando false como  disponible
         }
     }
     // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
