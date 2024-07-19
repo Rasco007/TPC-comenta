@@ -19,7 +19,6 @@ extern int PID;
 
 // Funciones
 int ejecutarServidorKernel(int *socketCliente);
-Proceso *crearProcesoEnMemoria(int pid);
 void eliminarProcesoDeMemoria(int pid);
 Proceso *buscar_proceso_por_pid(int pid);
 #endif // MEMORIA_CONEXION_KERNEL_H

@@ -1,9 +1,6 @@
 #include <conexionCPU/conexionCPU.h>
 
 int tiempo;
-//MemoriaFisica *mf;
-//t_log *logger;
-//t_config *config;
 char* valorLeido;
 int indice;
 int pid;
@@ -14,6 +11,7 @@ void limpiarBuffer(int socketCliente){
     void* buffer = recibirBuffer(socketCliente, &size);
     free(buffer);
 }
+
 void recibirEnteros2(int socket, int *pid, int *indice) {
     char buffer[2048];
     // Recibir el mensaje del servidor
@@ -29,6 +27,7 @@ void recibirEnteros2(int socket, int *pid, int *indice) {
 
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
+    logger = cambiarNombre(logger, "conexion con CPU - Memoria");
     tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     while (1) {
         int peticion = recibirOperacion(*socketCliente);
@@ -44,7 +43,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 recibirPeticionDeEscritura(*socketCliente);
                 enviarMensaje("OK", *socketCliente);
                 break;
-            case MMU:// recibirPeticionDeLectura(*socketCliente);
+            case MMU:
                 log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
                 int pid,pag;
                 char marco[sizeof(int)];
@@ -59,9 +58,6 @@ int ejecutarServidorCPU(int *socketCliente) {
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
                 log_info(logger, "Se recibió la peticion de CPU"); 
-                /*t_list* elementosPaquete=recibirPaquete(*socketCliente);
-                indice=(int)list_get(elementosPaquete,0);
-                pid=(int)list_get(elementosPaquete,1);*/
                 recibirEnteros2(*socketCliente, &pid, &indice);
                 log_info(logger, "Indice: %d - PID: %d",indice,pid);
                 Proceso *proceso = buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
@@ -70,7 +66,6 @@ int ejecutarServidorCPU(int *socketCliente) {
                 log_info(logger, "Instruccion: %s",instruccion);
                 sleep(config_get_int_value(config, "RETARDO_RESPUESTA")/1000); //Agrego retardo
                 enviarMensaje(instruccion,*socketCliente); 
-                // limpiarBuffer(*socketCliente);
                 break;
             case RESIZE: //VER
                 log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
@@ -108,12 +103,17 @@ void recibirEnteros(int socket, int *pid, int *pagina) {
 
 void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
     int frame=0;
-    for (int i=0; i<NUM_MARCOS; i++){
-        if (mf->marcos[i].pid == pid && mf->marcos[i].numero_pagina == pagina){
-            log_info(logger, "Marco encontrado: %d", i);
-            frame= i;
-            break;
+    for (int i=0; i<list_size(mf->listaProcesos); i++){
+        Proceso *proceso = list_get(mf->listaProcesos,i);
+
+    for (int i = 0; i < list_size(proceso->tabla_paginas->entradas); i++) {
+    EntradaTablaPaginas* entrada = list_get(proceso->tabla_paginas->entradas, i);
+        if (proceso->pid == pid && entrada->numero_pagina == pagina) {
+             log_info(logger, "Marco encontrado: %d", i);
+            frame = entrada->numero_marco;
         }
+    }
+
     }
     sprintf(marco, "%d", frame);
     log_info(logger, "PID: <%d> - Pagina: <%d> - Marco: <%s>", pid, pagina, marco);
@@ -121,7 +121,7 @@ void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
 }
 
 char* leer(int32_t direccionFisica, int tamanio) {
-    usleep(tiempo * 1000); // Simula el retardo
+    //usleep(tiempo * 1000); // Simula el retardo
 
     char* punteroDireccionFisica = (char*)mf->memoria + direccionFisica;
     char* valor = malloc(sizeof(char) * tamanio);
@@ -182,7 +182,7 @@ void enviarValorObtenido(int socketCPU) {
 }
 
 void escribir(char* valor, int32_t direccionFisica, int tamanio) {
-    usleep(tiempo * 1000); // Simula el retardo
+    //usleep(tiempo * 1000); // Simula el retardo
 
     char* punteroADirFisica = (char*)mf->memoria + direccionFisica;
     
@@ -200,7 +200,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     // Si el número de páginas es el mismo, no hay cambio necesario
     if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas)
         return proceso;
-    if (paginas_necesarias > NUM_MARCOS){
+    if (paginas_necesarias > CANT_FRAMES){
         enviarMensaje("No hay suficiente espacio en memoria para asignar más páginas", sockets[0]);
         log_error(loggerError, "Out of Memory al intentar asignar %d bytes al proceso PID: %d",nuevo_tamano,proceso->pid);
         return proceso;
@@ -222,51 +222,39 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         //int tamano_a_reducir = (proceso->tabla_paginas->paginas_asignadas - paginas_necesarias) * tam_pagina;
         int nuevoTamanio = paginas_necesarias * tam_pagina;
         log_info(logger,"Reducción de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Reducir: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, nuevoTamanio);
+       
+            
         for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
+             EntradaTablaPaginas *entrada = list_get(proceso->tabla_paginas->entradas, i);
+             int marco = entrada->numero_marco;
+
+            //TODDDDO: PONERRRR   EN LISTA DE      MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS
+
             // Liberar la página i
-            proceso->tabla_paginas->entradas[i].valido = 0;
-            proceso->tabla_paginas->entradas[i].numero_marco = -1;
+            /*list_remove(proceso->tabla_paginas->entradas,i);
+
+           
             mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].libre = true;
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;
+            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;*/
         }
     }
     // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
     proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
-    return proceso;
+    return proceso;    
 }
 
-/*Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_tamano) {
-    // Calcula el número total de páginas necesarias para el nuevo tamaño
-    int paginas_necesarias = nuevo_tamano / tam_pagina;
-    if (nuevo_tamano % tam_pagina != 0) {
-        paginas_necesarias++;
+void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
+    int tam_pagina = confGetInt("TAM_PAGINA");
+    unsigned long dir = (unsigned long)direccion_logica;
+    int numero_pagina = dir / tam_pagina;
+    int desplazamiento = dir % tam_pagina;
+    EntradaTablaPaginas* entrada=list_get(proceso->tabla_paginas->entradas,numero_pagina);
+
+    if (numero_pagina < 0 || numero_pagina >= CANT_PAGINAS || !entrada->valido) { //VER CAMBIOS DE ESTA LINEA
+        return NULL; // Dirección no válida
     }
-
-    // Si el número de páginas es el mismo, no hay cambio necesario
-    if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas) {
-        return proceso;
-    }
-
-    // Si se requieren más páginas, asignar las nuevas páginas
-    if (paginas_necesarias > proceso->tabla_paginas->paginas_asignadas) {
-        for (int i = proceso->tabla_paginas->paginas_asignadas; i < paginas_necesarias; i++) {
-            if (!asignar_paginaposta(mf, proceso, i)) {
-                log_error(loggerError, "Error al asignar página %d al proceso", i);
-                return NULL; // Abortar si no se puede asignar una página
-            }
-        }
-    } else { // Si se requieren menos páginas, liberar las páginas extras
-        for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
-            // Liberar la página i
-            proceso->tabla_paginas->entradas[i].valido = 0;
-            proceso->tabla_paginas->entradas[i].numero_marco = -1;
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].libre = true;
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;
-        }
-    }
-
-    // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
-    proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
-
-    return proceso;
-}*/
+    
+    int numero_marco=entrada->numero_marco;
+    //int numero_marco = proceso->tabla_paginas->entradas[numero_pagina].numero_marco; ESTO ESTABA ANTES
+    return mf->memoria + numero_marco * tam_pagina + desplazamiento;
+}

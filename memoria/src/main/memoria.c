@@ -15,8 +15,8 @@ t_config* config;
 MemoriaFisica *mf;
 int server_fd =0;
 int main() {
-    logger = iniciarLogger ("memoria.log", "Memoria");
-	loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
+    logger = iniciarLogger ("memoria.log", "Main-Memoria");
+	loggerError = iniciarLogger ("memoriaErrores.log","Main-Memoria (Errores)"); 
 	config = iniciarConfiguracion ("memoria.config");
   
 	atexit (terminarPrograma);
@@ -47,22 +47,11 @@ int main() {
         error("Error en iniciar el servidor a Kernel");
     }
 
-    int tam_pagina = confGetInt("TAM_PAGINA");
+
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
-    mf = inicializar_memoria_fisica(tam_pagina);
-    
-   /*sem_init(&path, 0, 0);
-    sem_wait(&path);
-    Proceso *proceso = inicializar_proceso(PID, pathInstrucciones); //TODO: esto debería estar en el NEWPCB
-    mf->marcos[0].proceso=proceso;
+    mf = inicializar_memoria_fisica(TAM_PAGINA);
 
-    if (!proceso) {
-        printf("Error al inicializar el procesos.\n");
-        liberar_memoria_fisica(mf);
-        return 1;
-    }*/
-
-    //PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
+    /*/PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
     char *prueba = "hola";
     size_t offset = 0;
     memcpy((char*)mf->memoria + offset, prueba, strlen(prueba) + 1);
@@ -72,7 +61,7 @@ int main() {
     memcpy(datosLeidos, (char*)mf->memoria + nuevoOffset, longitudSubcadena);
     datosLeidos[longitudSubcadena] = '\0';
     printf("Texto leído: %s\n", datosLeidos);
-    ////
+    *////
 
     // Espera a que los hilos terminen
     pthread_join(threadCPU, NULL);
