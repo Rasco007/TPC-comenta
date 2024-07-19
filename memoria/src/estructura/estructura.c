@@ -81,28 +81,7 @@ char *obtener_instruccion(Proceso *proceso, int program_counter) {
     return proceso->instrucciones[program_counter];
 }
 
-void *leer_memoria(Proceso *proceso, int direccion_fisica, size_t size) {
-    if (direccion_fisica < 0 || direccion_fisica + size > TAM_MEMORIA) {
-        log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
-        return NULL;
-    }
-
-    void *buffer = malloc(size);
-    if (!buffer) {
-        log_error(loggerError, "Error: No se pudo asignar memoria para el buffer de lectura.");
-        return NULL;
-    }
-    //VER CUANDO SE TERRMINAN LAS   PAAGINAAAAAASSSS
-    memcpy(buffer, (char *)mf->memoria + direccion_fisica, size);
-
-    // Log del acceso de lectura
-    log_info(logger, "PID: %d - Acción: LEER - Dirección física: %d - Tamaño: %zu",
-             proceso->pid, direccion_fisica, size);
-
-    return buffer;
-}
-
-///////TODOOOOO: VER DESPUES CON SANTY, CAMBIAR NUM MARCOS POR SIZE DEL BITARRAY
+//TODOOOOO: VER DESPUES CON SANTY, CAMBIAR NUM MARCOS POR SIZE DEL BITARRAY
 bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
     if (numero_pagina < 0 || numero_pagina >= CANT_PAGINAS) {
         return false; // Número de página fuera de rango

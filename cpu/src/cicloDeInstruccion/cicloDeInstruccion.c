@@ -403,7 +403,7 @@ void mov_in(char* registro, char* direccionLogica){
     uint32_t pid=contextoEjecucion->pid;
     char* valorAInsertar;
     char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
-    int tamRegistro = obtenerTamanioReg(registro);
+    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
     uint32_t dirFisica = UINT32_MAX;
     dirFisica = mmu(pid,dirLogica, tamRegistro); 
 
@@ -449,7 +449,7 @@ void mov_in(char* registro, char* direccionLogica){
 void mov_out(char* direccionLogica, char* registro){
     uint32_t pid=contextoEjecucion->pid;
     void * valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    int tamRegistro = obtenerTamanioReg(registro);
+    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
     char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, registro);
     uint32_t dirFisica = UINT32_MAX;
     dirFisica = mmu(pid,dirLogica, tamRegistro);
