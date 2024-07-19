@@ -2,6 +2,8 @@
 
 sem_t hayProcesosReady;
 sem_t hayProcesosNuevos;
+pthread_mutex_t pausaMutex;
+pthread_cond_t pausaCond;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
 t_list *pcbsREADYaux;
@@ -22,10 +24,23 @@ int *instanciasRecursos;
 
 void planificarALargoPlazo(){
     logger=cambiarNombre(logger,"Kernel-Planificador LP");
-    while (!pausaPlanificacion) //Mientras no este pausado...
+    while (1)
     {
+        pthread_mutex_lock(&pausaMutex);
+        while(pausaPlanificacion){
+            pthread_cond_wait(&pausaCond, &pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+
         log_info(logger, "------comienza while largo plazo");
         sem_wait(&hayProcesosNuevos);
+
+        pthread_mutex_lock(&pausaMutex);
+        if (pausaPlanificacion) {
+            pthread_cond_wait(&pausaCond,&pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+
         int semValue;
         sem_getvalue(&semGradoMultiprogramacion, &semValue);
         log_info(logger,"Valor del semáforo de multiprogramación: %d", semValue);
@@ -51,9 +66,22 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
     while (1)
     {
+        pthread_mutex_lock(&pausaMutex);
+        while(pausaPlanificacion){
+            pthread_cond_wait(&pausaCond, &pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+
+        log_info(logger, "------comienza while corto plazo");
         flag_exit=0;
         logger=cambiarNombre(logger,"Kernel-Planificador CP");
         sem_wait(&hayProcesosReady);
+
+        pthread_mutex_lock(&pausaMutex);
+        if (pausaPlanificacion) {
+            pthread_cond_wait(&pausaCond,&pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
          
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
@@ -96,6 +124,8 @@ void destruirSemaforos () {
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);
     sem_close(&memoriaOK);
+    pthread_mutex_init(&pausaMutex, NULL);
+    pthread_cond_init(&pausaCond, NULL);
 }
 
 //Manejo de colas

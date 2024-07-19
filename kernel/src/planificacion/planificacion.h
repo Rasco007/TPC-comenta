@@ -34,6 +34,9 @@ extern int *instanciasRecursos;
 extern bool pausaPlanificacion;
 extern int flag_exit;
 
+extern pthread_mutex_t pausaMutex;
+extern pthread_cond_t pausaCond;
+
 extern char *estadosProcesos[5];
 
 // Planificacion

@@ -1,6 +1,7 @@
 #include <consola/consola.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <pthread.h>
 
 void str_to_upper(char *str) {
     for(int i = 0; str[i]!= '\0'; i++) {
@@ -198,19 +199,19 @@ void finalizarProceso(int pid){
 
 //DETENER_PLANIFICACION
 void detenerPlanificacion(){
-    pausaPlanificacion=true;
+    pthread_mutex_lock(&pausaMutex);
+    pausaPlanificacion = true;
+    pthread_mutex_unlock(&pausaMutex);
     log_info(logger, "Planificacion detenida");
 }
 
 //INICIAR_PLANIFICACION
 void iniciarPlanificacion(){
-    if (pausaPlanificacion) {
-        pausaPlanificacion=false;
-        planificarALargoPlazo();
-        planificarACortoPlazoSegunAlgoritmo();
-        log_info(logger, "Planificaciones iniciadas");
-    }
-    //En caso que la planificación no se encuentre pausada, ignora el mensaje.
+    pthread_mutex_lock(&pausaMutex);
+    pausaPlanificacion = false;
+    pthread_cond_signal(&pausaCond);
+    pthread_mutex_unlock(&pausaMutex);
+    log_info(logger, "Planificaciones iniciadas");
 }
 
 //PROCESO_ESTADO
