@@ -117,19 +117,19 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
         return false; // Número de página fuera de rango
     }
     // Busca un marco libre disponible para asignar la página
-    /*for (int i = 0; i < NUM_MARCOS; i++) {
-        if (mf->marcos[i].libre) {
+    for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
+        if (list_get(mf->listaMarcosLibres,i) ==  false) {
             // Se encontró un marco libre, asigna la página
-            mf->marcos[i].libre = false;
-            mf->marcos[i].numero_pagina = numero_pagina;
-            mf->marcos[i].pid = proceso->pid;
-            mf->marcos[i].proceso = proceso; //va?
-            proceso->tabla_paginas->entradas[numero_pagina].valido = 1;
-            proceso->tabla_paginas->entradas[numero_pagina].numero_marco = i;
+              EntradaTablaPaginas *entrada = list_get(proceso->tabla_paginas->entradas, numero_pagina);
+              
+              entrada->numero_marco         = i;
+              entrada->valido =     1;
+              list_replace(proceso->tabla_paginas->entradas,numero_pagina,entrada);
+              
             proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas
             return true;
         }
-    }*///
+    }
     // Si no se encontró ningún marco libre
     return false;
 }
