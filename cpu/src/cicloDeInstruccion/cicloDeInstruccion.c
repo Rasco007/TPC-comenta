@@ -409,17 +409,31 @@ void mov_in(char* registro, char* direccionLogica){
 
     log_info(logger, "Direccion fisica: %d", dirFisica);
 
-    if(dirFisica!=UINT32_MAX){//VER
-        t_paquete* peticion = crearPaquete();
-        peticion->codigo_operacion = READ;
-        agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
-        agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
-        agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
-        enviarPaquete(peticion, conexionAMemoria);    
-        eliminarPaquete (peticion);
+    //Mando pid, dirFisica y tamanio de registro a memoria
+    if(dirFisica!=UINT32_MAX){
+        t_paquete* paquete=crearPaquete();
+        paquete->codigo_operacion=READ;
+        paquete->buffer = malloc(sizeof(t_buffer));
 
-        recibirOperacion(conexionAMemoria);
-        valorAInsertar = recibirMensaje(conexionAMemoria);
+        paquete->buffer->size = sizeof(uint32_t)*3;
+        paquete->buffer->stream = malloc(paquete->buffer->size);
+        memcpy(paquete->buffer->stream, &pid, sizeof(uint32_t));
+        memcpy(paquete->buffer->stream + sizeof(uint32_t), &dirFisica, sizeof(uint32_t));
+        memcpy(paquete->buffer->stream + sizeof(uint32_t)*2, &tamRegistro, sizeof(uint32_t));
+
+        int bytes=sizeof(op_code)+sizeof(paquete->buffer->size)+paquete->buffer->size;
+        void *a_enviar = serializarPaquete(paquete, bytes);
+        if (send(conexionAMemoria, a_enviar, bytes, 0) != bytes) {
+            perror("Error al enviar datos al servidor");
+            exit(EXIT_FAILURE); 
+        }
+        
+        free(paquete->buffer->stream);
+        free(paquete->buffer);
+        free(paquete);
+        free(a_enviar);    
+        
+        valorAInsertar=recibirMensaje(conexionAMemoria);
 
         dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
@@ -440,22 +454,34 @@ void mov_out(char* direccionLogica, char* registro){
     uint32_t dirFisica = UINT32_MAX;
     dirFisica = mmu(pid,dirLogica, tamRegistro);
 
-    if(dirFisica != UINT32_MAX){  //VER  
-    t_paquete* peticion = crearPaquete();
-    peticion->codigo_operacion = WRITE;
+    //Mando pid, dirFisica y tamanio de registro a memoria
+    if(dirFisica != UINT32_MAX){ 
+        t_paquete* paquete=crearPaquete();
+        paquete->codigo_operacion=READ;
+        paquete->buffer = malloc(sizeof(t_buffer));
 
-    agregarAPaquete(peticion, &(contextoEjecucion->pid), sizeof(uint32_t));
-    agregarAPaquete(peticion, &(dirFisica), sizeof(int));
-    agregarAPaquete(peticion, valor, sizeof(char) * tamRegistro + 1); 
+        paquete->buffer->size = sizeof(uint32_t)*3;
+        paquete->buffer->stream = malloc(paquete->buffer->size);
+        memcpy(paquete->buffer->stream, &pid, sizeof(uint32_t));
+        memcpy(paquete->buffer->stream + sizeof(uint32_t), &dirFisica, sizeof(uint32_t));
+        memcpy(paquete->buffer->stream + sizeof(uint32_t)*2, &tamRegistro, sizeof(uint32_t));
 
-    enviarPaquete(peticion, conexionAMemoria);
-    eliminarPaquete (peticion);
+        int bytes=sizeof(op_code)+sizeof(paquete->buffer->size)+paquete->buffer->size;
+        void *a_enviar = serializarPaquete(paquete, bytes);
+        if (send(conexionAMemoria, a_enviar, bytes, 0) != bytes) {
+            perror("Error al enviar datos al servidor");
+            exit(EXIT_FAILURE); 
+        }
+        
+        free(paquete->buffer->stream);
+        free(paquete->buffer);
+        free(paquete);
+        free(a_enviar);
 
-    recibirOperacion(conexionAMemoria);
-    char * respuesta = recibirMensaje(conexionAMemoria);
-    free (respuesta);
+        char* respuesta=recibirMensaje(conexionAMemoria);
+        free(respuesta);
 
-    log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", dirFisica, (char *)valor);
+        log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", dirFisica, (char *)valor);
     }
 };
 
