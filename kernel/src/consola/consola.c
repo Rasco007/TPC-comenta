@@ -14,7 +14,7 @@ void str_to_upper(char *str) {
 int ejecutarConsola () {
     char *linea;
     pcbsParaExit = list_create();
-    logger=cambiarNombre(logger,"Consola-Kernel");
+    //logger=cambiarNombre(logger,"Consola-Kernel");
     //log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
     while (1) {
         linea = readline(">");

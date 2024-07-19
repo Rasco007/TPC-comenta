@@ -18,11 +18,11 @@ extern int indice;
 
 // Funciones
 int ejecutarServidorCPU(int *socketCliente);
-char* leer(int32_t direccionFisica, int tamanio);
+char* leer(uint32_t pid,uint32_t direccionFisica, uint32_t tamanio);
 void recibirPeticionDeLectura(int socketCPU);
 void recibirPeticionDeEscritura(int socketCPU);
 void enviarValorObtenido(int socketCPU);
-void escribir(char* valor, int32_t direccionFisica, int tamanio);
+void escribir(char* valor, uint32_t direccionFisica, uint32_t tamanio);
 
 Proceso *ajustar_tamano_proceso(MemoriaFisica *mf,Proceso *proceso, int nuevo_tamano);
 

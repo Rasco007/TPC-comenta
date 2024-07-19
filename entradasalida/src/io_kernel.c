@@ -10,20 +10,7 @@ void io_atender_kernel(){
     	switch (cod_op) {
     	case MENSAJE:
    	 		recibirMensaje(fd_kernel);
-			/* char mensajeConexion[BUFFER_SIZE] = {0};  
-			// int bytes_recibidos = recv(fd_kernel, mensajeConexion, sizeof(mensajeConexion), 0);
-			// if (bytes_recibidos < 0) {
-			// 	perror("Error al recibir el mensaje");
-			// 	return NULL;
-			// }
-			// mensajeConexion[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
-			// log_info(logger, "valor recibido: %s", mensajeConexion);*/
    	 		break;
-    		/*//case PAQUETE:
-   		 lista = recibir_paquete(fd_io);
-   		 //log_info(memoria_logger, "Me llegaron los siguientes valores:\n");
-   	 	//list_iterate(lista, (void*) iterator);
-   	  //   break;*/
 	  	case READ:
 		    log_info(logger, "stdin read recibido");
 		    manejarSTDINREAD(fd_kernel);

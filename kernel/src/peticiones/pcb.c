@@ -6,7 +6,7 @@ char* pidsInvolucrados;
 //Básicos PCB
 
 t_pcb *crearPCB(){
-    logger=cambiarNombre(logger,"Kernel-Creacion PCB");
+    //logger=cambiarNombre(logger,"Kernel-Creacion PCB");
     procesosCreados++;
 
     t_pcb *nuevoPCB = malloc(sizeof(t_pcb));
@@ -26,7 +26,7 @@ t_pcb *crearPCB(){
 }
 
 void destruirPCB(t_pcb *pcb){
-    logger=cambiarNombre(logger,"Kernel-Destruccion PCB");
+    //logger=cambiarNombre(logger,"Kernel-Destruccion PCB");
     int pid_copia = pcb->pid;
     list_add(pcbsParaExit, (void*)(uintptr_t)pid_copia);
     list_destroy_and_destroy_elements(pcb->instrucciones, free);

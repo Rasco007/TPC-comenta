@@ -24,7 +24,7 @@ uint32_t recibirPID(int socketCliente) {
 }
 
 int ejecutarServidorKernel(int *socketCliente) {
-    logger=cambiarNombre(logger,"conexion con kernel - Memoria");
+    //logger=cambiarNombre(logger,"conexion con kernel - Memoria");
     cantidadMaximaPaginas = confGetInt("TAM_PAGINA");
     while (1) {
         int peticionRealizada = recibirOperacion(*socketCliente);

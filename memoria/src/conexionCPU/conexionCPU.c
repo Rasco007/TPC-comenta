@@ -27,7 +27,7 @@ void recibirEnteros2(int socket, int *pid, int *indice) {
 
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
-    logger = cambiarNombre(logger, "conexion con CPU - Memoria");
+   // logger = cambiarNombre(logger, "conexion con CPU - Memoria");
     tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     while (1) {
         int peticion = recibirOperacion(*socketCliente);

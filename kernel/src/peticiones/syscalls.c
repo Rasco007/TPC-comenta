@@ -32,7 +32,7 @@ void recibirMsjIO(int socketClienteIO){
 
 //FUNCIONES GENERALES
 void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
-    logger=cambiarNombre(logger,"Kernel-Retorno Contexto");
+    //logger=cambiarNombre(logger,"Kernel-Retorno Contexto");
     //Aca trato las instrucciones bloqueantes
     switch (contextoEjecucion->motivoDesalojo->motivo){
         case WAIT:
@@ -653,11 +653,6 @@ void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
     int pid = proceso->pid;
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_WRITE;
-    /*agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
-    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
-    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));*/
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
     int archivo_len = strlen(nombreArchivo);
@@ -749,12 +744,6 @@ void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
     int pid = proceso->pid;
     t_paquete* paquete=crearPaquete();
     paquete->codigo_operacion=IO_FS_READ;
-    /*agregarAPaquete(paquete,(void*)&nombreArchivo,sizeof(char*));
-    agregarAPaquete(paquete,(void*)&direccion,sizeof(int));
-    agregarAPaquete(paquete,(void*)&tamanio,sizeof(int));
-    agregarAPaquete(paquete,(void*)&punteroArchivo,sizeof(int));
-    agregarAPaquete(paquete,(void*)&interfaz,sizeof(char*));
-    enviarPaquete(paquete,socketClienteIO);*/
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
     int archivo_len = strlen(nombreArchivo);
@@ -857,67 +846,6 @@ void finDeQuantum(t_pcb *proceso){
 void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int pid){
     // Convertir el entero de string a int
     int entero = atoi(entero_str);
-    // Asignar memoria para el paquete
-    /*t_paquetebeta *paquete = malloc(sizeof(t_paquetebeta));
-    if (paquete == NULL) {
-        perror("Error al asignar memoria para el paquete");
-        return;
-    }
-    // Asignar el código de operación al paquete
-    paquete->codigo_operacion = IO_GEN_SLEEP;
-    // Asignar memoria para el buffer
-    paquete->buffer = malloc(sizeof(t_buffer));
-    if (paquete->buffer == NULL) {
-        perror("Error al asignar memoria para el buffer");
-        free(paquete);
-        return;
-    }
-    // Copiar el mensaje al buffer
-    paquete->buffer->size = strlen(mensaje) + 1;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    if (paquete->buffer->stream == NULL) {
-        perror("Error al asignar memoria para el stream del buffer");
-        free(paquete->buffer);
-        free(paquete);
-        return;
-    }
-    memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
-    // Asignar el entero al paquete
-    paquete->entero = entero;
-    // Calcular el tamaño total del paquete
-    int bytes = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
-    // Serializar el paquete
-    void *a_enviar = malloc(bytes);
-    if (a_enviar == NULL) {
-        perror("Error al asignar memoria para a_enviar");
-        free(paquete->buffer->stream);
-        free(paquete->buffer);
-        free(paquete);
-        return;
-    }
-    memcpy(a_enviar, &(paquete->codigo_operacion), sizeof(op_code));
-    memcpy(a_enviar + sizeof(op_code), &(paquete->entero), sizeof(int));
-    memcpy(a_enviar + sizeof(op_code) + sizeof(int), paquete->buffer->stream, paquete->buffer->size);
-    memcpy(a_enviar + sizeof(op_code) + sizeof(int) + paquete->buffer->size, &pid, sizeof(int));
-    // Log antes de enviar
-    log_info(logger, "antes de mandar paquete");
-    // Enviar el paquete a través del socket
-    int sent_bytes = send(socket_cliente, a_enviar, bytes, 0);
-    if (sent_bytes == -1) {
-        perror("Error al enviar paquete");
-        free(paquete->buffer->stream);
-        free(paquete->buffer);
-        free(paquete);
-        free(a_enviar);
-        return;
-    }
-    // Log después de enviar
-    log_info(logger, "La interfaz '%s' dormirá durante %s unidades de tiempo", mensaje, entero_str);
-    // Liberar la memoria asignada
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(paquete);
-    free(a_enviar);*/
     t_paquete* paquete=crearPaquete();
     int length = strlen(mensaje);
     paquete->codigo_operacion=IO_GEN_SLEEP;
@@ -926,7 +854,7 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int p
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &entero, sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), &pid, sizeof(int));
-    memcpy(paquete->buffer->stream + 2*sizeof(int), mensaje, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), mensaje, length);
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
     if (send(socket_cliente, a_enviar, bytes, 0) != bytes) {

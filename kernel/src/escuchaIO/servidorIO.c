@@ -16,7 +16,7 @@ void escucharAlIO() {
 
     while (1) {
         log_info(logger,"Esperando conexiones con IO...");
-        pthread_t thread;
+        //pthread_t thread;
         
         int *socketClienteIO = malloc(sizeof(int));
         *socketClienteIO = esperarCliente(socketKernel);
@@ -25,11 +25,11 @@ void escucharAlIO() {
         hacerHandshake(*socketClienteIO);
         recibirNombreInterfaz(*socketClienteIO, &kernel);
 
-        pthread_create(&thread,
+        /*pthread_create(&thread,
                         NULL,
                         (void*) ejecutarServidorKernel,
                         socketClienteIO);
-        pthread_detach(thread);
+        pthread_detach(thread);*/
     }
     
 }

@@ -32,7 +32,7 @@ int main () {
 	conexionCPU();
 	
     char * nombre = string_duplicate("CPU-KERNEL");
-	cambiarNombre(logger, nombre);
+	//cambiarNombre(logger, nombre);
 	free (nombre);
 
     //ejecutarConsola();

@@ -9,7 +9,7 @@ sem_t memoriaOK;
 
 void conexionCPU() {
     //CONEXION CPU DISPATCH
-    logger = cambiarNombre(logger, "Kernel-CPU");
+    //logger = cambiarNombre(logger, "Kernel-CPU");
     loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU");
 
     while(1){
@@ -51,7 +51,7 @@ int recibirOperacionDeCPU(){
 
 //Enviar proceso a CPU
 t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
-    logger= cambiarNombre(logger, "Kernel-Enviado de contexto");
+    //logger= cambiarNombre(logger, "Kernel-Enviado de contexto");
     if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
     

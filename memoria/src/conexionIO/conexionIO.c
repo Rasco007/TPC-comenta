@@ -76,13 +76,6 @@ void* ejecutarServidor(void* socketCliente) {
                 memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
                 datoEscrito[strlen(cadena)] = '\0';
                 printf("Dato escrito: %s\n", datoEscrito);
-                /*char *datoAEscribir= recibirMensaje(socketClienteIO);
-                log_info(logger, "Mensaje recibido: %s", datoAEscribir);
-                int longitud = strlen(datoAEscribir);size_t offset = 0;
-                memcpy((char*)mf->memoria + offset, datoAEscribir, strlen(datoAEscribir));
-                char *datoEscrito= malloc(longitud);
-                memcpy(datoEscrito, (char*)mf->memoria + offset, longitud);
-                printf("Dato escrito: %s\n", datoEscrito);*/
                 break;
             case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT o FS_WRITE)
                 log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");

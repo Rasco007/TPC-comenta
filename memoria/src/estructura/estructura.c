@@ -25,7 +25,7 @@ TablaPaginas *inicializar_tabla_paginas() {
 }
 
 void liberar_tabla_paginas(TablaPaginas *tp) {
-    logger=cambiarNombre(logger,"Liberacion tabla de paginas-Memoria");
+    //logger=cambiarNombre(logger,"Liberacion tabla de paginas-Memoria");
     if (tp != NULL) {
         // No es necesario liberar cada entrada individualmente ya que es un array estático
         // Solo liberamos la estructura TablaPaginas

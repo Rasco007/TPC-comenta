@@ -23,7 +23,7 @@ char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"};
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
-    logger=cambiarNombre(logger,"Kernel-Planificador LP");
+    //logger=cambiarNombre(logger,"Kernel-Planificador LP");
     while (1)
     {
         pthread_mutex_lock(&pausaMutex);
@@ -74,7 +74,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
         log_info(logger, "------comienza while corto plazo");
         flag_exit=0;
-        logger=cambiarNombre(logger,"Kernel-Planificador CP");
+        //logger=cambiarNombre(logger,"Kernel-Planificador CP");
         sem_wait(&hayProcesosReady);
 
         pthread_mutex_lock(&pausaMutex);
