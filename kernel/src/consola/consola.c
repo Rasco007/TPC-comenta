@@ -246,8 +246,8 @@ void ajustarTamanioSemaforo(sem_t* semaforo,int valor){
 }
 
 void modificarGradoMultiprogramacion(int valor){
-    if(valor<=0 || valor>=15){
-        log_info(logger, "Multiprogramacion no permitida. Ingrese un valor entre 1 y 14.");
+    if(valor<=0){
+        log_info(logger, "Multiprogramacion no permitida. Ingrese un valor entero mayor o igual a 1.");
         return;
     } else{
         gradoMultiprogramacion = valor;
