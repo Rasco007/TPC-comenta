@@ -28,7 +28,7 @@ void enviarHandshakeMemoria() {
 
 
     bytes = recv(fd_memoria, &result, sizeof(int32_t), MSG_WAITALL);
-    log_info(logger, "Handshake recibido: %d", result);
+    //log_info(logger, "Handshake recibido: %d", result);
     if (result == 0) {
         log_info(logger, "Handshake OK");
     } else {

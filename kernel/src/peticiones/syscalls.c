@@ -180,9 +180,10 @@ void dormir_IO(InterfazSalienteGenSleep* args){
     //Recibir mensaje de confirmacion de IO
     recibirMsjIO( socketClienteIO);
     //log_info(logger, "luego e recobor msj");
+    log_warning(logger, "Proceso <%d> desbloqueado por IO_GEN_SLEEP", proceso->pid);
     queue_pop(args->colaBloqueados);
-    free(args);
     pasarAReady(proceso);
+    //free(args);
 }
 
 //     INICIAR_PROCESO /home/utnso/tp-2024-1c-Silver-Crime/memoria/src/scripts_memoria/PLANI_1

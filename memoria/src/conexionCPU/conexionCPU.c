@@ -31,7 +31,7 @@ int ejecutarServidorCPU(int *socketCliente) {
     tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     while (1) {
         int peticion = recibirOperacion(*socketCliente);
-        log_info(logger, "Se recibió petición %d del CPU", peticion);
+        //log_info(logger, "Se recibió petición %d del CPU", peticion);
 
         switch (peticion) {
             case READ:

@@ -43,7 +43,7 @@ int ejecutarServidorKernel(int *socketCliente) {
             }
             case ENDPCB: {
                 PID = recibirPID(*socketCliente);
-                eliminarProcesoDeMemoria(PID);
+                //eliminarProcesoDeMemoria(PID);
                 log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
                 break;
             }

@@ -54,5 +54,5 @@ void envioNombreInterfaz(char *nombreInterfaz, int fd_kernel)
 
     // Enviar mensaje al servidor
     send(fd_kernel, nombreInterfaz, strlen(nombreInterfaz), 0);
-    printf("Message sent: %s\n", nombreInterfaz);
+    //printf("Message sent: %s\n", nombreInterfaz);
 }

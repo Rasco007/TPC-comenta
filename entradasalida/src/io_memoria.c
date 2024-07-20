@@ -2,7 +2,7 @@
 
 
 void io_atender_memoria(){
-	bool control=1;
+	//bool control=1;
     //int size;
 //while (control) {
     	int cod_op = recibirOperacion(fd_memoria);
@@ -18,7 +18,7 @@ void io_atender_memoria(){
 
     	case -1:
    			log_error(logger, "Memoria se desconectó. Terminando servidor");
-   			control = 0;
+   			//control = 0;
    			break;
     	default:
    		 	log_warning(logger,"Operacion desconocida. No quieras meter la pata");

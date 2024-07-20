@@ -313,19 +313,6 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
         perror("Error al recibir el mensaje");
         return;
     }
-    // Interpretar el mensaje recibido como un entero
-    /*int unidades, pid;
-    memcpy(&unidades, buffer, sizeof(int));
-	// Extraer el nombre del inicio del buffer
-    char* nombre = buffer + sizeof(int);
-    // Asegurarse de que el nombre esté correctamente terminado por un carácter nulo
-    nombre[bytes_recibidos - sizeof(int)] = '\0';
-	log_info(logger, "Nombre recibido: %s", nombre);
-	log_info(logger, "Tiempo a dormir recibido: %d", unidades); 
-	log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
-	log_info(logger, "antes de dormir");
-	sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
-	log_info(logger, "Despues de dormir");*/
     int unidades, pid;
     memcpy(&unidades, buffer+sizeof(op_code), sizeof(int));
     memcpy(&pid, buffer+sizeof(op_code)+sizeof(int), sizeof(int));
