@@ -7,7 +7,7 @@ int conexionAMemoria;
 int numeroInstrucciones;
 
 void conexionMemoria() {
-    logger = cambiarNombre (logger,"Kernel-Memoria");
+    //logger = cambiarNombre (logger,"Kernel-Memoria");
     loggerError = cambiarNombre (loggerError, "Errores Kernel-Memoria");
 
     while(1){

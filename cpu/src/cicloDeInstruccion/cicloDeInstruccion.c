@@ -133,7 +133,7 @@ void decode(){
     log_info(logger, "cantParametros: %d", cantParametros);
     instruccionActual = buscar(elementosInstruccion[0], listaComandos); 
     log_info(logger, "instruccion Actual: %d", instruccionActual);
-    
+    free(instruccionAEjecutar); // creo que va aca
 }
 
 // Función para eliminar el salto de línea al final de la cadena

@@ -248,8 +248,9 @@ void destroyContextoUnico () {
     //list_destroy(contextoEjecucion->instrucciones);
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
     //list_destroy(contextoEjecucion->tablaDePaginas);
-    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
-        if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) free(contextoEjecucion->motivoDesalojo->parametros[i]);
+    /*for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
+        if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) 
+            free(contextoEjecucion->motivoDesalojo->parametros[i]);*/
     free(contextoEjecucion->motivoDesalojo);
     free(contextoEjecucion);
     

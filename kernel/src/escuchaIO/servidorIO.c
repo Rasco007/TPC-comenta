@@ -13,9 +13,9 @@ void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], 
 void escucharAlIO() {
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
-
+    //log_info(logger,"Esperando conexiones con IO...");
     while (1) {
-        log_info(logger,"Esperando conexiones con IO...");
+        
         //pthread_t thread;
         
         int *socketClienteIO = malloc(sizeof(int));

@@ -214,7 +214,7 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
                 else
                     log_error(loggerError, "Error al crear hilo para dormir IO");*/
                 pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void *) args);
-                pthread_join(pcb_bloqueado,NULL);
+                pthread_detach(pcb_bloqueado);
             }
         }
         else{
@@ -293,7 +293,7 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
                 args->tamanio = parametros[2];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdin_read, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
             }
@@ -375,7 +375,7 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
                 args->tamanio = parametros[2];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdout_write, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
             }
@@ -455,7 +455,7 @@ void io_fs_create(t_pcb *proceso,char **parametros){
                 args->nombreArchivo = parametros[1];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_create, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
             }
@@ -531,7 +531,7 @@ void io_fs_delete(t_pcb *proceso,char **parametros){
                 args->nombreArchivo = parametros[1];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_delete, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
             }
@@ -612,7 +612,7 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
                 args->tamanio = parametros[2];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_truncate, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
             }
@@ -703,7 +703,7 @@ void io_fs_write(t_pcb *proceso,char **parametros){
                 args->punteroArchivo = parametros[4];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_write, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                 log_error(loggerError, "Error al crear hilo");
             }
@@ -793,7 +793,7 @@ void io_fs_read(t_pcb *proceso,char **parametros){
                 args->punteroArchivo = parametros[4];
                 pthread_t pcb_bloqueado;
                 if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_read, (void*)args))
-                    pthread_join(pcb_bloqueado,NULL);
+                    pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
             }
@@ -849,7 +849,6 @@ void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int p
     t_paquete* paquete=crearPaquete();
     int length = strlen(mensaje);
     paquete->codigo_operacion=IO_GEN_SLEEP;
-    paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->size = 2*sizeof(int) + length;
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &entero, sizeof(int));

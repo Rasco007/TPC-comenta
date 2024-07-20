@@ -4,7 +4,7 @@ int conexionAMemoria;
 
 int conexionMemoria() {
 
-    logger = cambiarNombre(logger, "CPU - MEMORIA");
+    //logger = cambiarNombre(logger, "CPU - MEMORIA");
     loggerError = cambiarNombre(loggerError,"Errores CPU- Memoria");
 
     while(1) {

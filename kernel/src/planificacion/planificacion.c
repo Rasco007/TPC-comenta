@@ -32,7 +32,7 @@ void planificarALargoPlazo(){
         }
         pthread_mutex_unlock(&pausaMutex);
 
-        log_info(logger, "------comienza while largo plazo");
+       // log_info(logger, "------comienza while largo plazo");
         sem_wait(&hayProcesosNuevos);
 
         pthread_mutex_lock(&pausaMutex);
@@ -72,7 +72,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         }
         pthread_mutex_unlock(&pausaMutex);
 
-        log_info(logger, "------comienza while corto plazo");
+        //log_info(logger, "------comienza while corto plazo");
         flag_exit=0;
         //logger=cambiarNombre(logger,"Kernel-Planificador CP");
         sem_wait(&hayProcesosReady);

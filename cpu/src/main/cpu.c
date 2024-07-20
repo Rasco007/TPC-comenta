@@ -24,7 +24,7 @@ int main(void){
 	conexionMemoria(); 
 
 	char * nombre = string_duplicate("CPU-KERNEL");
-	cambiarNombre(logger, nombre);
+	//cambiarNombre(logger, nombre);
 
     char *algoritmoTLB = obtenerAlgoritmoTLB();
 	inicializar_tlb(algoritmoTLB); 
