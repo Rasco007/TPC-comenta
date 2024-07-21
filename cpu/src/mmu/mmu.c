@@ -72,6 +72,7 @@ uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor) {
 
         //return UINT32_MAX; // Indica que no se encontró
     }
+    log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame_number);
 }
 
 void solicitarDireccion(int pid, int pagina, int socket){

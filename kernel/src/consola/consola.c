@@ -194,7 +194,7 @@ void finalizarProceso(int pid){
     t_pcb* pcb = buscarPID(pcbsParaExit,pid); //TODO: esto deberia ser la cola de pcbsParaExit ! 
     log_info(logger, "Destruyo");   
     destruirPCB(pcb);
-    log_info(logger, "Se finaliza el proceso <%d>", pid);    
+    log_info(logger, "Finaliza el proceso <%d> - Motivo: < INVALID_RESOURCE / OUT_OF_MEMORY / INTERRUPTED_BY_USER>", pid); //TODO: Poner Motivo    
 }
 
 //DETENER_PLANIFICACION
