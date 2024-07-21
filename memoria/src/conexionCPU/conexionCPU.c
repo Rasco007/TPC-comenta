@@ -1,9 +1,6 @@
 #include <conexionCPU/conexionCPU.h>
 
-int tiempo;
-//MemoriaFisica *mf;
-//t_log *logger;
-//t_config *config;
+int tiempo; //agregggado ahora
 char* valorLeido;
 int indice;
 int pid;
@@ -110,12 +107,17 @@ void recibirEnteros(int socket, int *pid, int *pagina) {
 
 void buscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
     int frame=0;
-    for (int i=0; i<NUM_MARCOS; i++){
-        if (mf->marcos[i].pid == pid && mf->marcos[i].numero_pagina == pagina){
-            log_info(logger, "Marco encontrado: %d", i);
-            frame= i;
-            break;
+    for (int i=0; i<list_size(mf->listaProcesos); i++){
+        Proceso *proceso = list_get(mf->listaProcesos,i);
+
+    for (int i = 0; i < list_size(proceso->tabla_paginas->entradas); i++) {
+    EntradaTablaPaginas* entrada = list_get(proceso->tabla_paginas->entradas, i);
+        if (proceso->pid == pid && entrada->numero_pagina == pagina) {
+             log_info(logger, "Marco encontrado: %d", i);
+            frame = entrada->numero_marco;
         }
+    }
+        
     }
     sprintf(marco, "%d", frame);
     log_info(logger, "PID: <%d> - Pagina: <%d> - Marco: <%s>", pid, pagina, marco);
@@ -123,7 +125,7 @@ void buscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
 }
 
 char* leer(int32_t direccionFisica, int tamanio) {
-    usleep(tiempo * 1000); // Simula el retardo
+    //usleep(tiempo * 1000); // Simula el retardo
 
     char* punteroDireccionFisica = (char*)mf->memoria + direccionFisica;
     char* valor = malloc(sizeof(char) * tamanio);
@@ -186,7 +188,7 @@ void enviarValorObtenido(int socketCPU) {
 }
 
 void escribir(char* valor, int32_t direccionFisica, int tamanio) {
-    usleep(tiempo * 1000); // Simula el retardo
+    //usleep(tiempo * 1000); // Simula el retardo
 
     char* punteroADirFisica = (char*)mf->memoria + direccionFisica;
     
@@ -204,7 +206,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     // Si el número de páginas es el mismo, no hay cambio necesario
     if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas)
         return proceso;
-    if (paginas_necesarias > NUM_MARCOS){
+    if (paginas_necesarias > CANT_FRAMES){
         enviarMensaje("No hay suficiente espacio en memoria para asignar más páginas", sockets[0]);
         log_error(loggerError, "Out of Memory al intentar asignar %d bytes al proceso PID: %d",nuevo_tamano,proceso->pid);
         return proceso;
@@ -226,17 +228,41 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         //int tamano_a_reducir = (proceso->tabla_paginas->paginas_asignadas - paginas_necesarias) * tam_pagina;
         int nuevoTamanio = paginas_necesarias * tam_pagina;
         log_info(logger,"Reducción de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Reducir: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, nuevoTamanio);
+       
+            
         for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
+             EntradaTablaPaginas *entrada = list_get(proceso->tabla_paginas->entradas, i);
+             int marco = entrada->numero_marco;
+
+            //TODDDDO: PONERRRR   EN LISTA DE  MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS
+
             // Liberar la página i
-            proceso->tabla_paginas->entradas[i].valido = 0;
-            proceso->tabla_paginas->entradas[i].numero_marco = -1;
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].libre = true;
-            mf->marcos[proceso->tabla_paginas->entradas[i].numero_marco].proceso = NULL;
+            list_remove(proceso->tabla_paginas->entradas,i);
+            list_replace(mf->listaMarcosLibres, marco - 1,false); //creo que se pone - 1 porque es el indice dee una lista y no existe el marco 0
+            //reemmplazaaaa vaalor marcando false como  disponible
+            
         }
     }
     // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
     proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
     return proceso;
+}
+
+// Traduce una dirección lógica a una dirección física
+void *traducir_direccion(MemoriaFisica *mf, Proceso *proceso, void *direccion_logica) {
+    int tam_pagina = confGetInt("TAM_PAGINA");
+    unsigned long dir = (unsigned long)direccion_logica;
+    int numero_pagina = dir / tam_pagina;
+    int desplazamiento = dir % tam_pagina;
+    EntradaTablaPaginas* entrada=list_get(proceso->tabla_paginas->entradas,numero_pagina);
+
+    if (numero_pagina < 0 || numero_pagina >= CANT_PAGINAS || !entrada->valido) { //VER CAMBIOS DE ESTA LINEA
+        return NULL; // Dirección no válida
+    }
+    
+    int numero_marco=entrada->numero_marco;
+    //int numero_marco = proceso->tabla_paginas->entradas[numero_pagina].numero_marco; ESTO ESTABA ANTES
+    return mf->memoria + numero_marco * tam_pagina + desplazamiento;
 }
 
 /*Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_tamano) {

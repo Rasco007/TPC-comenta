@@ -47,9 +47,9 @@ int main() {
         error("Error en iniciar el servidor a Kernel");
     }
 
-    int tam_pagina = confGetInt("TAM_PAGINA");
+    
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
-    mf = inicializar_memoria_fisica(tam_pagina);
+    mf = inicializar_memoria_fisica();
     
     /* sem_init(&path, 0, 0);
     sem_wait(&path);
@@ -141,7 +141,7 @@ int main() {
     liberar_memoria_fisica(mf);
 
     //PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
-    char *prueba = "hola";
+    /*char *prueba = "hola";
     size_t offset = 0;
     memcpy((char*)mf->memoria + offset, prueba, strlen(prueba) + 1);
     size_t nuevoOffset = 1;
@@ -149,7 +149,7 @@ int main() {
     char *datosLeidos = malloc(longitudSubcadena + 1);
     memcpy(datosLeidos, (char*)mf->memoria + nuevoOffset, longitudSubcadena);
     datosLeidos[longitudSubcadena] = '\0';
-    printf("Texto leído: %s\n", datosLeidos);
+    printf("Texto leído: %s\n", datosLeidos);*/
     ////
 
     // Espera a que los hilos terminen
