@@ -134,7 +134,7 @@ int conexion(char *SERVIDOR)
 			sleep (SEGS_ANTES_DE_REINTENTO);
 		}
 	}
-	log_info(logger, "Conectado a %s, en socket %d", SERVIDOR, conexion);
+	//log_info(logger, "Conectado a %s, en socket %d", SERVIDOR, conexion);
 
 	return conexion;
 }

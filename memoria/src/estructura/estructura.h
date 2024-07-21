@@ -6,7 +6,7 @@
 
 #include <commons/string.h>
 #include <configuraciones/configuraciones.h>
-
+#include <pthread.h>
 // Definiciones para la memoria física
 #define TAM_MEMORIA confGetInt("TAM_MEMORIA")
 #define TAM_PAGINA confGetInt("TAM_PAGINA")

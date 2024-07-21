@@ -1,8 +1,8 @@
 #include <peticiones/pcb.h>
 #include "../conexiones/conexionMemoria.h"
-
+#include <pthread.h>
 char* pidsInvolucrados; 
-
+pthread_mutex_t list_mutex;
 //Básicos PCB
 
 t_pcb *crearPCB(){
@@ -82,7 +82,10 @@ void encolar(t_list *pcbs, t_pcb *pcb){
 }
 
 t_pcb *desencolar(t_list *pcbs){
-    return (t_pcb *)list_remove(pcbs, 0);
+    pthread_mutex_lock(&list_mutex);
+    t_pcb *pcb = (t_pcb *)list_remove(pcbs, 0);
+    pthread_mutex_unlock(&list_mutex);
+    return pcb;
 }
 
 void agregarPID(void *value){
@@ -93,7 +96,9 @@ void agregarPID(void *value){
 }
 
 void listarPIDS(t_list *pcbs) {
+    pthread_mutex_lock(&list_mutex);
     list_iterate(pcbs, agregarPID);
+    pthread_mutex_unlock(&list_mutex);
 }
 
 void imprimirListaPCBs(t_list *pcbs){

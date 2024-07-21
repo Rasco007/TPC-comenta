@@ -44,7 +44,7 @@ int ejecutarServidorKernel(int *socketCliente) {
             case ENDPCB: {
                 PID = recibirPID(*socketCliente);
                 log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
-                log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, cantidadMaximaPaginas);
+                log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
                 //eliminarProcesoDeMemoria(PID);
                 break;
             }
@@ -94,14 +94,16 @@ void eliminarProcesoDeMemoria(int pid) {
 }
 
 Proceso *buscar_proceso_por_pid(int pid) {
+    pthread_mutex_lock(&mutex);
     //log_info(logger, "buscar_proceso_por_pid: %d",pid);
     Proceso *proceso = NULL;
     for (int i = 0; i < list_size(mf->listaProcesos); i++) {
         proceso = list_get(mf->listaProcesos,i);
         if (proceso->pid == pid) {
-
+            pthread_mutex_unlock(&mutex);
             return proceso;
         }
     }
+    pthread_mutex_unlock(&mutex);
     return NULL;
 }

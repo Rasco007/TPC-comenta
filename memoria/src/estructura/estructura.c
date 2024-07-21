@@ -1,6 +1,6 @@
 #include <estructura/estructura.h>
 #include <commons/log.h>
-
+pthread_mutex_t mutex;
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica() {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
@@ -41,11 +41,12 @@ void liberar_tabla_paginas(TablaPaginas *tp) {
 
 // Implementación del proceso
 Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
+    pthread_mutex_lock(&mutex);
     Proceso *proceso = malloc(sizeof(Proceso));
     proceso->pid = pid;
 
     proceso->tabla_paginas = inicializar_tabla_paginas();
-    log_info(logger, "Creacion de tabla de paginas para proceso PID: <%d> - Tamaño: <%d> Páginas", pid, CANT_PAGINAS);
+    log_info(logger, "Creacion de tabla de paginas para proceso PID: <%d> - Tamaño: <%d> Páginas", pid, proceso->tabla_paginas->paginas_asignadas);
     // Leer archivo de pseudocódigo
     FILE *archivo = fopen(archivo_pseudocodigo, "r");
     if (!archivo) {
@@ -64,7 +65,7 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     }
     fclose(archivo);
     list_add(mf->listaProcesos,proceso);
-    
+    pthread_mutex_unlock(&mutex);
     return proceso;
 }
 

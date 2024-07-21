@@ -22,7 +22,8 @@ uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor) {
     char* valorAInsertar;
 
     uint32_t frame_number;
-    if (consultar_tlb(pid, page_number, &frame_number)) {
+    int consulta=consultar_tlb(pid, page_number, &frame_number);
+    if (consulta==1) {
         // TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, page_number);
         return frame_number * PAGE_SIZE + offset;
@@ -100,19 +101,20 @@ void inicializar_tlb(char* algoritmoTLB) {
     tlb.size = CANTIDAD_ENTRADAS_TLB;
     tlb.algoritmo = algoritmoTLB; // Establece el algoritmo de reemplazo
     for (size_t i = 0; i < CANTIDAD_ENTRADAS_TLB; i++) {
-        tlb.entries[i].pid = 0;
-        tlb.entries[i].page_number = 0;
-        tlb.entries[i].frame_number = 0;
+        tlb.entries[i].pid = -1;
+        tlb.entries[i].page_number = -1;
+        tlb.entries[i].frame_number = -1;
         tlb.entries[i].valid = false;
-        tlb.entries[i].last_used = 0;
-        tlb.entries[i].time_added = 0;
+        tlb.entries[i].last_used = -1;
+        tlb.entries[i].time_added = -1;
     }
     log_info(logger,"TLB inicializada con algoritmo %s. Primer entrada: %d\n", algoritmoTLB, tlb.entries[0].valid);
 }
 
 int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
     for (size_t i = 0; i < tlb.size; i++) {
-        if (tlb.entries[i].valid && tlb.entries[i].pid == pid && tlb.entries[i].page_number == page_number) {
+        //printf("TLB Entry valid: %d, TLB entry pid: %d, TLB entry page_number: %d\n", tlb.entries[i].valid, tlb.entries[i].pid, tlb.entries[i].page_number);
+        if (tlb.entries[i].valid==true && tlb.entries[i].pid == pid && tlb.entries[i].page_number == page_number) {
             // TLB Hit
             tlb.entries[i].last_used = tiempo_actual++;
             *frame_number = tlb.entries[i].frame_number;
@@ -134,6 +136,7 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
             tlb.entries[i].last_used = tiempo_actual;
             tlb.entries[i].time_added = tiempo_actual;
             tiempo_actual++;
+            log_info(logger,"se agrego la entrada %ld\n", i);
             return;
         }
     }
@@ -164,4 +167,5 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
     tlb.entries[reemplazo].last_used = tiempo_actual;
     tlb.entries[reemplazo].time_added = tiempo_actual;
     tiempo_actual++;
+    log_info(logger,"se reemplazo la entrada %ld\n", reemplazo);
 }

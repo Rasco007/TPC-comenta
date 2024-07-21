@@ -120,7 +120,7 @@ void asignarPCBAContexto(t_pcb* proceso){
     //contextoEjecucion->tablaDePaginasSize = list_size(contextoEjecucion->tablaDePaginas);
 
  
-  log_info(logger, "PID: %u", contextoEjecucion->pid);
+  /*log_info(logger, "PID: %u", contextoEjecucion->pid);
     log_info(logger, "Program Counter: %d", contextoEjecucion->programCounter);
     log_info(logger, "SI: %u", contextoEjecucion->SI);
     log_info(logger, "DI: %u", contextoEjecucion->DI);
@@ -134,7 +134,7 @@ void asignarPCBAContexto(t_pcb* proceso){
     for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
         log_info(logger, "Motivo de Desalojo Parámetro %d: %s", i, contextoEjecucion->motivoDesalojo->parametros[i]);
     }
-   log_info(logger, "--------------------------------" );
+   log_info(logger, "--------------------------------" );*/
 }
 
 void asignarPCBAContextoBeta(t_pcb* proceso){

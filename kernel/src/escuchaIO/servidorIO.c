@@ -20,7 +20,7 @@ void escucharAlIO() {
         
         int *socketClienteIO = malloc(sizeof(int));
         *socketClienteIO = esperarCliente(socketKernel);
-        log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
+       // log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
 
         hacerHandshake(*socketClienteIO);
         recibirNombreInterfaz(*socketClienteIO, &kernel);
@@ -48,8 +48,8 @@ void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
         if (valreadTipo < 0) {
             log_error(loggerError,"se recibio mal el tipo");
         }else{
-            log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
-            log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
+           // log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
+            //log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
 
             guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO);
             nombre=nombreInterfaz;
@@ -81,7 +81,7 @@ void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[256
     // Incrementar la cantidad de interfaces
     kernel->cantidad++;
     
-    log_info(logger, "Se han guardado los datos necesarios en la estructura Kernel_io");
+    //log_info(logger, "Se han guardado los datos necesarios en la estructura Kernel_io");
 }
 
 void hacerHandshake(int socketClienteIO){

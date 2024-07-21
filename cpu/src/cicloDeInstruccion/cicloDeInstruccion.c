@@ -450,14 +450,16 @@ void mov_out(char* direccionLogica, char* registro){
     uint32_t pid=contextoEjecucion->pid;
     void * valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
     uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
-    char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, registro);
+    char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
     uint32_t dirFisica = UINT32_MAX;
+    //printf("Direccion logica: %s\n", dirLogica);
+    //printf("tamRegistro: %d\n", tamRegistro); ver esto!
     dirFisica = mmu(pid,dirLogica, tamRegistro);
 
     //Mando pid, dirFisica y tamanio de registro a memoria
     if(dirFisica != UINT32_MAX){ 
         t_paquete* paquete=crearPaquete();
-        paquete->codigo_operacion=READ;
+        paquete->codigo_operacion=WRITE;
         paquete->buffer = malloc(sizeof(t_buffer));
 
         paquete->buffer->size = sizeof(uint32_t)*3;
