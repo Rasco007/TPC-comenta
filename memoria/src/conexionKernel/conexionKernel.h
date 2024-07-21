@@ -16,7 +16,7 @@
 extern MemoriaFisica *mf;
 extern char* pathInstrucciones;
 extern int PID;
-
+extern pthread_mutex_t mutex;
 // Funciones
 int ejecutarServidorKernel(int *socketCliente);
 void eliminarProcesoDeMemoria(int pid);

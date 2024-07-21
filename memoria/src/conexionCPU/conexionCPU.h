@@ -13,7 +13,7 @@
 
 // Variables globales
 extern int tiempo;
-extern MemoriaFisica *memoria;
+extern MemoriaFisica *mf;
 extern int indice;
 
 // Funciones

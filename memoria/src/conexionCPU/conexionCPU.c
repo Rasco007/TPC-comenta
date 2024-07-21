@@ -57,18 +57,18 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case PAQUETE:
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
-                log_info(logger, "Se recibió la peticion de CPU"); 
+                //log_info(logger, "Se recibió la peticion de CPU"); 
                 recibirEnteros2(*socketCliente, &pid, &indice);
-                log_info(logger, "Indice: %d - PID: %d",indice,pid);
+                //log_info(logger, "Indice: %d - PID: %d",indice,pid);
                 Proceso *proceso = buscar_proceso_por_pid(pid); //Busco el proceso correspondiente
-                log_info(logger, "Proc: %d",proceso->pid);
+                //log_info(logger, "Proc: %d",proceso->pid);
                 instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
-                log_info(logger, "Instruccion: %s",instruccion);
+                //log_info(logger, "Instruccion: %s",instruccion);
                 sleep(config_get_int_value(config, "RETARDO_RESPUESTA")/1000); //Agrego retardo
                 enviarMensaje(instruccion,*socketCliente); 
                 break;
             case RESIZE: //VER
-                log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
+                //log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
                 int nuevo_tamano;
                 recibirEnteros2(*socketCliente, &pid, &nuevo_tamano);
                 log_info(logger, "PID: %d - Nuevo tamaño: %d", pid, nuevo_tamano);
@@ -259,9 +259,9 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     // Si se requieren más páginas, asignar las nuevas páginas
     if (paginas_necesarias > proceso->tabla_paginas->paginas_asignadas) {
         // Registro de ampliación del proceso
-        //int tamano_a_ampliar = (paginas_necesarias - proceso->tabla_paginas->paginas_asignadas) * tam_pagina;
-        int nuevoTamanio = paginas_necesarias * tam_pagina;
-        log_info(logger, "Ampliación de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Ampliar: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, nuevoTamanio);
+        int tamano_a_ampliar = (paginas_necesarias - proceso->tabla_paginas->paginas_asignadas) * tam_pagina;
+        //int nuevoTamanio = paginas_necesarias * tam_pagina;
+        log_info(logger, "Ampliación de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Ampliar: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, tamano_a_ampliar);
         for (int i = proceso->tabla_paginas->paginas_asignadas; i < paginas_necesarias; i++) {
             if (!asignar_pagina(mf, proceso, i)) {
                 log_error(loggerError, "Error al asignar página %d al proceso", i);
@@ -270,13 +270,14 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         }
     } else { // Si se requieren menos páginas, liberar las páginas extras
         // Registro de reducción del proceso
-        //int tamano_a_reducir = (proceso->tabla_paginas->paginas_asignadas - paginas_necesarias) * tam_pagina;
-        int nuevoTamanio = paginas_necesarias * tam_pagina;
-        log_info(logger,"Reducción de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Reducir: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, nuevoTamanio);
+        int tamano_a_reducir = (proceso->tabla_paginas->paginas_asignadas - paginas_necesarias) * tam_pagina;
+        //int nuevoTamanio = paginas_necesarias * tam_pagina;
+        log_info(logger,"Reducción de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Reducir: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, tamano_a_reducir);
        
             
         for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
-             EntradaTablaPaginas *entrada = list_get(proceso->tabla_paginas->entradas, i);
+             EntradaTablaPaginas *entrada = malloc(sizeof(EntradaTablaPaginas));
+             entrada=list_get(proceso->tabla_paginas->entradas, i);
              int marco = entrada->numero_marco;
 
             //TODDDDO: PONERRRR   EN LISTA DE  MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS

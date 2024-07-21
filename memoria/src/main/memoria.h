@@ -25,5 +25,5 @@
 extern t_log* loggerError; 
 extern int sockets[2];
 extern int server_fd;
-extern MemoriaFisica *mf;
+//extern MemoriaFisica *mf;
 #endif

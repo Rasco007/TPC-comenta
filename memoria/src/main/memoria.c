@@ -18,7 +18,7 @@ int main() {
     logger = iniciarLogger ("memoria.log", "Main-Memoria");
 	loggerError = iniciarLogger ("memoriaErrores.log","Main-Memoria (Errores)"); 
 	config = iniciarConfiguracion ("memoria.config");
-  
+    mf = inicializar_memoria_fisica(TAM_PAGINA);
 	atexit (terminarPrograma);
 	log_info (logger, "Memoria lista para recibir conexiones.");
   
@@ -49,7 +49,6 @@ int main() {
 
 
     //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
-    mf = inicializar_memoria_fisica(TAM_PAGINA);
 
     /*/PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
     char *prueba = "hola";

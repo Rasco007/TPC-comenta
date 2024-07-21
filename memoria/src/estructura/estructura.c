@@ -1,12 +1,15 @@
 #include <estructura/estructura.h>
 #include <commons/log.h>
-
+pthread_mutex_t mutex;
 // Implementación de la memoria física
 MemoriaFisica *inicializar_memoria_fisica() {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
     mf->memoria = malloc(TAM_MEMORIA);
     mf->listaMarcosLibres = list_create();
     mf->listaProcesos = list_create();
+    for(int i=0;i<TAM_MEMORIA/TAM_PAGINA;i++){
+        list_add(mf->listaMarcosLibres,false);
+    }
     return mf;
 }
 
@@ -38,11 +41,12 @@ void liberar_tabla_paginas(TablaPaginas *tp) {
 
 // Implementación del proceso
 Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
+    pthread_mutex_lock(&mutex);
     Proceso *proceso = malloc(sizeof(Proceso));
     proceso->pid = pid;
 
     proceso->tabla_paginas = inicializar_tabla_paginas();
-
+    log_info(logger, "Creacion de tabla de paginas para proceso PID: <%d> - Tamaño: <%d> Páginas", pid, proceso->tabla_paginas->paginas_asignadas);
     // Leer archivo de pseudocódigo
     FILE *archivo = fopen(archivo_pseudocodigo, "r");
     if (!archivo) {
@@ -61,7 +65,7 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     }
     fclose(archivo);
     list_add(mf->listaProcesos,proceso);
-    
+    pthread_mutex_unlock(&mutex);
     return proceso;
 }
 
@@ -90,12 +94,12 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
     for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
         if (list_get(mf->listaMarcosLibres,i) ==  false) {
             // Se encontró un marco libre, asigna la página
-            EntradaTablaPaginas *entrada = list_get(proceso->tabla_paginas->entradas, numero_pagina);
+            EntradaTablaPaginas *entrada = malloc(sizeof(EntradaTablaPaginas));
             entrada->numero_marco= i;
             entrada->valido =1;
-            list_replace(proceso->tabla_paginas->entradas,numero_pagina,entrada);
-              
+            list_add(proceso->tabla_paginas->entradas, entrada);
             proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas
+            list_replace(mf->listaMarcosLibres,i,true);
             return true;
         }
     }

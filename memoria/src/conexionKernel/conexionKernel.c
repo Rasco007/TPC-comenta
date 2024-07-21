@@ -36,20 +36,21 @@ int ejecutarServidorKernel(int *socketCliente) {
 
                 //Mando el numero de instrucciones a kernel
                 int n=proceso->numero_instrucciones;
-                log_info(logger,"Cantidad de instrucciones: %d",n);
+                //log_info(logger,"Cantidad de instrucciones: %d",n);
                 send(*socketCliente, &n, sizeof(int), 0);
-                log_info(logger,"Creacion de Proceso PID: <%d>", PID);
+                //log_info(logger,"Creacion de Proceso PID: <%d>", PID);
                 break;
             }
             case ENDPCB: {
                 PID = recibirPID(*socketCliente);
-                //eliminarProcesoDeMemoria(PID);
                 log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
+                log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
+                //eliminarProcesoDeMemoria(PID);
                 break;
             }
             case MENSAJE:{
                 pathInstrucciones=recibirMensaje(*socketCliente); //Recibo el path
-                log_info(logger,"Path de instrucciones recibido: %s",pathInstrucciones);
+                //log_info(logger,"Path de instrucciones recibido: %s",pathInstrucciones);
                 break;
             }
             case -1:
@@ -93,14 +94,16 @@ void eliminarProcesoDeMemoria(int pid) {
 }
 
 Proceso *buscar_proceso_por_pid(int pid) {
-    log_info(logger, "buscar_proceso_por_pid: %d",pid);
+    pthread_mutex_lock(&mutex);
+    //log_info(logger, "buscar_proceso_por_pid: %d",pid);
     Proceso *proceso = NULL;
     for (int i = 0; i < list_size(mf->listaProcesos); i++) {
         proceso = list_get(mf->listaProcesos,i);
         if (proceso->pid == pid) {
-
+            pthread_mutex_unlock(&mutex);
             return proceso;
         }
     }
+    pthread_mutex_unlock(&mutex);
     return NULL;
 }
