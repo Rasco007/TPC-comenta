@@ -2,6 +2,8 @@
 #define BUFFER_SIZE 1024
 char* archivoWrite;
 int pointerArchivo;
+int tamaniosglobales[20];
+int cantidadglobal;
 void io_atender_kernel(){
 	bool control=1;
     //int size;
@@ -48,6 +50,7 @@ void io_atender_kernel(){
             manejarFS_TRUNCATE(fd_kernel);
 			break;
 		case IO_FS_WRITE:
+            usleep(TIEMPO_UNIDAD_TRABAJO*1000);
 			log_info(logger, "FS WRITE recibido");
             manejarFS_WRITE(fd_kernel);
 			break;
@@ -60,6 +63,47 @@ void io_atender_kernel(){
    	 		break;
     	}
 	}
+}
+
+void manejarFS_CREATE(int socketCliente) {
+    char buffer[2048];
+    // Recibir el mensaje del servidor
+    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
+    if (bytes_recibidos < 0) {
+        perror("Error al recibir el mensaje");
+        return;
+    }
+    if (bytes_recibidos == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    // Asegurarse de que tenemos suficientes datos para los campos esperados
+    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
+        fprintf(stderr, "Mensaje recibido incompleto\n");
+        return;
+    }
+    int longitud1,longitud2,pid;    
+    char nombreinterfaz[2048];
+    char nombrearchivo[2048];
+    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
+    //printf("Longitud de la cadena recibida: %d\n", longitud1);
+    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
+    nombreinterfaz[longitud1] = '\0';   
+    //printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&longitud2, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
+    //printf("Longitud de la cadena recibida: %d\n", longitud2);
+    memcpy(&pid, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
+    // Copiar la cadena recibida
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 3*sizeof(int)+longitud1, longitud2);
+    // Asegurarse de que la cadena esté terminada en nulo
+    nombrearchivo[longitud2] = '\0';
+    //printf("Nombre de archivo: %s\n", nombrearchivo);
+    log_info(logger, "PID: <%d> - Crear Archivo: <%s>", pid, nombrearchivo);
+    crearArchivo2(nombrearchivo);
+    //enviarMensaje("OK", socketCliente);
+    char *mensje="ok";
+    send(socketCliente, &mensje, sizeof(mensje), 0);
+    //free(mensje);
 }
 
 void manejarFS_DELETE(int socketCliente){
@@ -97,6 +141,9 @@ void manejarFS_DELETE(int socketCliente){
     //printf("Nombre de archivo: %s\n", nombrearchivo);
     log_info(logger, "PID: <%d> - Eliminar Archivo: <%s>", pid, nombrearchivo);
     delete_file(nombrearchivo);
+    char *mensje="ok";
+    send(socketCliente, &mensje, sizeof(mensje), 0);
+
 }
 
 void manejarFS_TRUNCATE(int socketCliente){
@@ -136,7 +183,9 @@ void manejarFS_TRUNCATE(int socketCliente){
     //printf("Nombre de archivo: %s\n", nombrearchivo);
     log_info(logger, "PID: <%d> - Truncar Archivo: <%s> - Tamaño: <%d>", pid, nombrearchivo, nuevoTamanio);
     truncarArchivo2(nombrearchivo,nuevoTamanio, pid);
-    enviarMensaje("OK", socketCliente);
+    //enviarMensaje("OK", socketCliente);
+    char *mensje="ok";
+    send(socketCliente, &mensje, sizeof(mensje), 0);
 }
 
 void manejarFS_READ(int socketCliente){
@@ -156,33 +205,57 @@ void manejarFS_READ(int socketCliente){
         fprintf(stderr, "Mensaje recibido incompleto\n");
         return;
     }
-    int longitud1,longitud2, direccion, tamanio, punteroArchivo, pid;
+    int longitud1,longitud2, punteroArchivo, pid;
+    int *direccion=malloc(sizeof(int)*20);
+    int *tamanio=malloc(sizeof(int)*20);
     char nombreinterfaz[2048], nombrearchivo[2048];
+    int cantidaddirec, cantidadtamanio;
+    memset(direccion, 0, 20 * sizeof(int));
+    memset(tamanio, 0, 20 * sizeof(int));
     memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
-    //printf("Longitud de la cadena recibida: %d\n", longitud1);
+    // printf("Longitud de la cadena recibida: %d\n", longitud1);
     memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
     nombreinterfaz[longitud1] = '\0';   
-    //printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
-    memcpy(&direccion, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
-    //printf("direccion: %d\n", direccion);
-    memcpy(&tamanio, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
+    // printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
+    memcpy(&cantidaddirec, buffer + sizeof(op_code) + sizeof(int)+longitud1, sizeof(int));
+    // printf("cantidad de direcciones: %d\n", cantidaddirec);
+    memcpy(direccion, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int)*cantidaddirec);
+    memcpy(&cantidadtamanio, buffer + sizeof(op_code)+2*sizeof(int)+longitud1+sizeof(int)*cantidaddirec, sizeof(int));
+    // printf("cantidad de tamanios: %d\n", cantidadtamanio);
+    memcpy(tamanio, buffer + sizeof(op_code)+3*sizeof(int)+longitud1+sizeof(int)*cantidaddirec, sizeof(int)*cantidadtamanio);
     //printf("tamanio: %d\n", tamanio);
-    memcpy(&punteroArchivo, buffer + sizeof(op_code)+3*sizeof(int)+longitud1, sizeof(int));
-    //printf("pointer: %d\n", punteroArchivo);
-    memcpy(&longitud2, buffer + sizeof(op_code) + 4*sizeof(int)+longitud1, sizeof(int));
-    //printf("Longitud de la cadena recibida: %d\n", longitud2);
-    memcpy(&pid, buffer + sizeof(op_code) + 5*sizeof(int)+longitud1, sizeof(int));
+    memcpy(&punteroArchivo, buffer + sizeof(op_code)+3*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, sizeof(int));
+    // printf("pointer: %d\n", punteroArchivo);
+    memcpy(&longitud2, buffer + sizeof(op_code) + 4*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, sizeof(int));
+    // printf("Longitud de la cadena recibida: %d\n", longitud2);
+    memcpy(&pid, buffer + sizeof(op_code) + 5*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, sizeof(int));
     //printf("PID: %d\n", pid);
-    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 6*sizeof(int)+longitud1, longitud2);
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 6*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, longitud2);
     nombrearchivo[longitud2] = '\0';
     //printf("Nombre de archivo: %s\n", nombrearchivo);
-    log_info(logger, "PID: <%d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanio, punteroArchivo);
     archivoWrite=nombrearchivo;
     pointerArchivo=punteroArchivo;
-    char *datosLeidos= leerDatosDesdeArchivo(nombrearchivo, punteroArchivo, tamanio);
-    printf("Datos leidos: %s\n", datosLeidos);
-    enviarAImprimirAMemoria(datosLeidos,direccion, fd_memoria, pid);
-    enviarMensaje("OK", socketCliente);
+    int cantidadtotal=cantidaddirec;
+    cantidadglobal=cantidadtotal;
+    int tamanioTotal=0;
+    int puntero2=0;
+    for (int i = 0; i < cantidadtotal; i++)
+        tamanioTotal += tamanio[i];
+    log_info(logger, "PID: <%d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanioTotal, punteroArchivo);
+    for(int i=0; i<cantidadtotal; i++){
+        log_info(logger, "Tamanio recibido: %d", tamanio[i]);
+        log_info(logger, "Direccion recibida: %d", direccion[i]);
+        tamaniosglobales[i]=tamanio[i];
+        char *datosLeidos= leerDatosDesdeArchivo(nombrearchivo, punteroArchivo+puntero2, tamanio[i]);
+        printf("Datos leidos: %s\n", datosLeidos);
+        puntero2+=tamanio[i];
+        enviarAImprimirAMemoria(datosLeidos,direccion[i], fd_memoria, pid);
+        usleep(1000*1000);
+    }
+    free(direccion);
+    free(tamanio);
+    char *mensje="ok";
+    send(fd_kernel, &mensje, sizeof(mensje), 0);
 }
 
 void manejarFS_WRITE(int socketCliente){
@@ -202,70 +275,54 @@ void manejarFS_WRITE(int socketCliente){
         fprintf(stderr, "Mensaje recibido incompleto\n");
         return;
     }
-    int longitud1,longitud2, direccion, tamanio, punteroArchivo, pid;
+    int longitud1,longitud2, punteroArchivo, pid;
+    int* direccion=malloc(sizeof(int)*20);
+    int* tamanio=malloc(sizeof(int)*20);
     char nombreinterfaz[2048];
     char nombrearchivo[2048];
+    int cantidaddirec, cantidadtamanio;
+    memset(direccion, 0, 20 * sizeof(int));
+    memset(tamanio, 0, 20 * sizeof(int));
     memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
-    //printf("Longitud de la cadena recibida: %d\n", longitud1);
+    // printf("Longitud de la cadena recibida: %d\n", longitud1);
     memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
     nombreinterfaz[longitud1] = '\0';   
     //printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
-    memcpy(&direccion, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
-    //printf("direccion: %d\n", direccion);
-    memcpy(&tamanio, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
+    memcpy(&cantidaddirec, buffer + sizeof(op_code) + sizeof(int)+longitud1, sizeof(int));
+    //printf("cantidad de direcciones: %d\n", cantidaddirec);
+    memcpy(direccion, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int)*cantidaddirec);
+    memcpy(&cantidadtamanio, buffer + sizeof(op_code)+2*sizeof(int)+longitud1+sizeof(int)*cantidaddirec, sizeof(int));
+    //printf("cantidad de tamanios: %d\n", cantidadtamanio);
+    memcpy(tamanio, buffer + sizeof(op_code)+3*sizeof(int)+longitud1+sizeof(int)*cantidaddirec, sizeof(int)*cantidadtamanio);
     //printf("tamanio: %d\n", tamanio);
-    memcpy(&punteroArchivo, buffer + sizeof(op_code)+3*sizeof(int)+longitud1, sizeof(int));
-    //printf("pointer: %d\n", punteroArchivo);
-    memcpy(&longitud2, buffer + sizeof(op_code) + 4*sizeof(int)+longitud1, sizeof(int));
-    //printf("Longitud de la cadena recibida: %d\n", longitud2);
-    memcpy(&pid, buffer + sizeof(op_code) + 5*sizeof(int)+longitud1, sizeof(int));
-    //printf("PID: %d\n", pid);
-    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 6*sizeof(int)+longitud1, longitud2);
+    memcpy(&punteroArchivo, buffer + sizeof(op_code)+3*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, sizeof(int));
+    // printf("pointer: %d\n", punteroArchivo);
+    memcpy(&longitud2, buffer + sizeof(op_code) + 4*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, sizeof(int));
+    // printf("Longitud de la cadena recibida: %d\n", longitud2);
+    memcpy(&pid, buffer + sizeof(op_code) + 5*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, sizeof(int));
+    // printf("PID: %d\n", pid);
+    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 6*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, longitud2);
     nombrearchivo[longitud2] = '\0';
-    //printf("Nombre de archivo: %s\n", nombrearchivo);
-    log_info(logger, "PID: <%d> - Escribir Archivo: <%s> - Tamaño a Escribir: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanio, punteroArchivo);
+    // printf("Nombre de archivo: %s\n", nombrearchivo);
     archivoWrite=nombrearchivo;
     pointerArchivo=punteroArchivo;
-    enviarDireccionTamano(direccion,tamanio,pid,fd_memoria);
+    int cantidadtotal=cantidaddirec;
+    cantidadglobal=cantidadtotal;
+    int tamanioTotal=0;
+    for(int i=0; i<cantidadtotal; i++)
+        tamanioTotal+=tamanio[i];
+    log_info(logger, "PID: <%d> - Escribir Archivo: <%s> - Tamaño a Escribir: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanioTotal, punteroArchivo);
+    for(int i=0; i<cantidadtotal; i++){
+        log_info(logger, "Tamanio recibido: %d", tamanio[i]);
+        log_info(logger, "Direccion recibida: %d", direccion[i]);
+        tamaniosglobales[i]=tamanio[i];
+        enviarDireccionTamano(direccion[i],tamanio[i],pid,fd_memoria);
+        usleep(1000*1000);
+    }
+    free(direccion);
+    free(tamanio);
 }
 
-void manejarFS_CREATE(int socketCliente) {
-    char buffer[2048];
-    // Recibir el mensaje del servidor
-    int bytes_recibidos = recv(socketCliente, buffer, sizeof(buffer), 0);
-    if (bytes_recibidos < 0) {
-        perror("Error al recibir el mensaje");
-        return;
-    }
-    if (bytes_recibidos == 0) {
-        printf("Conexión cerrada por el servidor\n");
-        return;
-    }
-    // Asegurarse de que tenemos suficientes datos para los campos esperados
-    if (bytes_recibidos < sizeof(int) + sizeof(op_code)) {
-        fprintf(stderr, "Mensaje recibido incompleto\n");
-        return;
-    }
-    int longitud1,longitud2,pid;    
-    char nombreinterfaz[2048];
-    char nombrearchivo[2048];
-    memcpy(&longitud1, buffer + sizeof(op_code), sizeof(int)); 
-    //printf("Longitud de la cadena recibida: %d\n", longitud1);
-    memcpy(&nombreinterfaz, buffer + sizeof(op_code) + sizeof(int), longitud1);
-    nombreinterfaz[longitud1] = '\0';   
-    //printf("Nombre de interfaz recibido: %s\n", nombreinterfaz);
-    memcpy(&longitud2, buffer + sizeof(op_code)+sizeof(int)+longitud1, sizeof(int));
-    //printf("Longitud de la cadena recibida: %d\n", longitud2);
-    memcpy(&pid, buffer + sizeof(op_code)+2*sizeof(int)+longitud1, sizeof(int));
-    // Copiar la cadena recibida
-    memcpy(&nombrearchivo, buffer + sizeof(op_code) + 3*sizeof(int)+longitud1, longitud2);
-    // Asegurarse de que la cadena esté terminada en nulo
-    nombrearchivo[longitud2] = '\0';
-    //printf("Nombre de archivo: %s\n", nombrearchivo);
-    log_info(logger, "PID: <%d> - Crear Archivo: <%s>", pid, nombrearchivo);
-    crearArchivo2(nombrearchivo);
-    enviarMensaje("OK", socketCliente);
-}
 //IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
 void manejarSTDINREAD(int socketCliente) {
     int  pid;
@@ -282,31 +339,53 @@ void manejarSTDINREAD(int socketCliente) {
     log_info(logger, "PID: <%d> - Operacion: <STDIN READ>", pid);
     // Leer una línea de texto usando readline
     char* texto = readline("Ingrese el texto: ");
-    //tengo que dividir el texto en partes de tamanio y enviarlo a memoria
-    /*char datosLeidos = malloc(sizeof(char)tamanios[0]);
-    memcpy(datosLeidos, texto, tamanios[0]);
-    enviarAImprimirAMemoria(datosLeidos,direcciones[0], fd_memoria, pid);
-
+    //tengo que dividir el texto ingresado en partes de tamanio maximo tamanios[0]
+    //y enviar cada parte a memoria en la direccion direcciones[i]
     // Copiar los datos desde el archivo mapeado al buffer de datos leídos
-    //memcpy(datosLeidos, texto, tamanioTexto);
-    printf("Texto a enviar: %s\n", datosLeidos);
-    enviarAImprimirAMemoria(datosLeidos,direccion, fd_memoria, pid); //estos datos se deben escribir en la direccion de memoria
-    //UNA FUNCION QUE MANDE "datosLeidos" A MEMORIA Y LO ESCRIBA EN "direccion"
+    char *datosLeidos = malloc(100);
+    int tamanotexto=0;
+    //divido el texto en partes
+    for(int i=0; i<cantidad; i++){
+        memcpy(datosLeidos, texto + tamanotexto, tamanios[i]);
+        datosLeidos[tamanios[i]] = '\0';
+        printf("Texto a enviar a memoria: %s\n", datosLeidos);
+        tamanotexto += strlen(datosLeidos);
+        enviarAImprimirAMemoria(datosLeidos,direcciones[i], fd_memoria, pid);//estos datos se deben escribir en la direccion de memoria
+        //recibir un mensaje de confirmacion de que se escribio en memoria
+        //recv(fd_memoria, NULL, 2, 0);
+        usleep(1000*1000);
+    }
+    //recv(fd_memoria, NULL, 2, 0);
     // Liberar la memoria reservada
-    enviarMensaje("OK", socketCliente);*/
     free(texto);
-    //free(datosLeidos);
+    free(datosLeidos);
+    free(tamanios);
+    free(direcciones);
+    printf("Todo liberado!\n");
+    enviarMensaje("OK", socketCliente);
 }
 
 void manejarSTDOUTWRITE(int socketCliente) {
-    int tamanioTexto, direccion, pid, cantidad;
-    recibirEnteros3(socketCliente, &tamanioTexto, &direccion, &pid, &cantidad);
+    int *tamanios=malloc(sizeof(int)*20);
+    int *direcciones=malloc(sizeof(int)*20);
+    int pid, cantidad;
+    recibirEnteros3(socketCliente, tamanios, direcciones, &pid, &cantidad);
     // Loguear los parámetros recibidos
-    log_info(logger, "Tamanio recibido: %d", tamanioTexto);
-    log_info(logger, "Direccion recibida: %d", direccion);
+    for(int i=0; i<cantidad; i++){
+        log_info(logger, "Tamanio recibido: %d", tamanios[i]);
+        log_info(logger, "Direccion recibida: %d", direcciones[i]);
+        tamaniosglobales[i]=tamanios[i];
+    }
+    cantidadglobal=cantidad;
     log_info(logger, "PID: <%d> - Operacion: <STDOUT WRITE>", pid);
-	//log_info(logger, "nombre: %s", nombre);
-	enviarDireccionTamano(direccion, tamanioTexto,pid, fd_memoria);
+    //divido el texto en partes
+    for(int i=0; i<cantidad; i++){
+        enviarDireccionTamano(direcciones[i],tamanios[i],pid,fd_memoria);
+        //recibir un mensaje de confirmacion de que se escribio en memoria
+        usleep(1000*1200);
+    }
+    free(tamanios);
+    free(direcciones);
 }
 
 void recibir_mensaje_y_dormir(int socket_cliente) {
@@ -394,6 +473,6 @@ void recibirEnteros3(int socket, int *tamanio, int *direccion, int *pid, int *ca
     memcpy(direccion, buffer+sizeof(op_code)+sizeof(int), sizeof(int)*cantidaddireciones);
     memcpy(&cantidadtamanios, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones, sizeof(int));
     memcpy(tamanio, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones+sizeof(int), sizeof(int)*cantidadtamanios);
-    memcpy(pid, buffer+2*sizeof(int)+sizeof(op_code), sizeof(int));
+    memcpy(pid, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones+sizeof(int)+sizeof(int)*cantidadtamanios, sizeof(int));
     *cantidad = cantidaddireciones;
 }

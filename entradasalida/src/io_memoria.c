@@ -1,28 +1,48 @@
 #include "../include/io_memoria.h"
-
-
+extern int tamaniosglobales[20];
+extern int cantidadglobal;
 void io_atender_memoria(){
-	//bool control=1;
+	bool control=1;
+	int i=0;
+	char* cadenaCompleta=malloc(256);
+	int longitud=0;
     //int size;
-//while (control) {
+	while (control) {
     	int cod_op = recibirOperacion(fd_memoria);
     	switch (cod_op) {
     	case MENSAJE: //STDOUT
-   	 		char *recibido=recibirMensaje(fd_memoria);
-			log_info(logger, "valor recibido: %s", recibido);
-			if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) {
-				escribirCadenaEnArchivo(archivoWrite, recibido, pointerArchivo);
+			if(strcmp(TIPO_INTERFAZ, "STDOUT") == 0 || strcmp(TIPO_INTERFAZ, "DialFS") == 0)
+   	 		{
+				char* recibido="";
+				if(i==0)
+					cadenaCompleta[0]='\0';
+				recibido= recibirMensaje(fd_memoria);
+				printf("Mensaje recibido de memoria:%s\n", recibido);
+				//ir concatenando los mensajes
+				strncat(cadenaCompleta, recibido, tamaniosglobales[i]);
+				longitud+=tamaniosglobales[i];
+				i++;
+				if(i==cantidadglobal){
+					printf("Mensaje que se va a escribir en el archivo:%s\n", cadenaCompleta);
+					if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) 
+						escribirCadenaEnArchivo(archivoWrite, cadenaCompleta, pointerArchivo);
+					i=0;
+					free(cadenaCompleta);
+					char *mensje="ok";
+    				send(fd_kernel, &mensje, sizeof(mensje), 0);
 			}
-			enviarMensaje("OK", fd_kernel); // para continuar el proceso 
+			}
+			//else
+			//	enviarMensaje("OK", fd_kernel); 
    	 		break;
 
     	case -1:
    			log_error(logger, "Memoria se desconectó. Terminando servidor");
-   			//control = 0;
+   			control = 0;
    			break;
     	default:
    		 	log_warning(logger,"Operacion desconocida. No quieras meter la pata");
    	 		break;
     	}
-//	}
+	}
 }

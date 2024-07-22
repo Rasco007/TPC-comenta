@@ -28,7 +28,20 @@ void ejecutarServidorIO(){
 }
 
 
-
+//enviarMensaje2("OK", sock);
+/*void enviarMensaje2(char* mensaje, int socket) {
+    // Enviar el mensaje al servidor
+    int bytes_enviados = send(socket, mensaje, strlen(mensaje), 0);
+    if (bytes_enviados < 0) {
+        perror("Error al enviar el mensaje");
+        return;
+    }
+    if (bytes_enviados == 0) {
+        printf("Conexión cerrada por el servidor\n");
+        return;
+    }
+    //printf("Mensaje enviado: %s\n", mensaje);
+}*/
 
 void* ejecutarServidor(void* socketCliente) {
     int sock = *(int*)socketCliente;
@@ -66,16 +79,20 @@ void* ejecutarServidor(void* socketCliente) {
                 enviarMensaje("OK", sock);
                 break;
             case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN O FS_READ) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
+                //usleep(1000*1000);
                 log_info(logger, "IO envía mensaje a escribir en memoria");
                 int dir, pid;
-                char cadena[2048];
+                char cadena[2048]="";
                 recibirDirYCadena(sock, &dir, &pid, cadena);
+                cadena[strlen(cadena)] = '\0';
                 log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid, dir, cadena); 
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
                 char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
                 memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
                 datoEscrito[strlen(cadena)] = '\0';
                 printf("Dato escrito: %s\n", datoEscrito);
+                free(datoEscrito);
+                //send(sock, "OK", 2, 0);
                 break;
             case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT o FS_WRITE)
                 log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
@@ -86,6 +103,7 @@ void* ejecutarServidor(void* socketCliente) {
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
                 log_info(logger, "PID: <%d> - Accion: <LEER> - Direccion Física: <%d> - Valor: <%s>", pid2, dir2, datosLeidos);
                 enviarMensaje(datosLeidos, sock);
+                free(datosLeidos);
                 break;
             case -1:
                 log_error(logger, "IO se desconectó");

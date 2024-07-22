@@ -30,6 +30,7 @@ int ejecutarServidorKernel(int *socketCliente) {
         int peticionRealizada = recibirOperacion(*socketCliente);
         switch (peticionRealizada) {
             case NEWPCB: {
+                usleep(1000*1000);
                 PID = recibirPID(*socketCliente);
                 //enviarTablaPaginas(procesoNuevo);
                 Proceso *proceso = inicializar_proceso(PID, pathInstrucciones);

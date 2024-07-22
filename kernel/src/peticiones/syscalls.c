@@ -292,6 +292,8 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
     free(a_enviar);
     queue_pop(args->colaBloqueados);
     free(args);
+    free(direccionesInt);
+    free(tamaniosInt);
     pasarAReady(proceso);
 }
 
@@ -349,17 +351,33 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     char* direccionFisica=args->direccionFisica;
     char* tamanio=args->tamanio;
     int socketClienteIO = obtener_socket(&kernel, interfaz);
-    int tamanioInt = atoi(tamanio);
-    int direccionFisicaInt = atoi(direccionFisica);
     int pid = proceso->pid;
+    char** direcciones = string_split(direccionFisica, ",");
+    int cantidadDirecciones = 0;
+    while(direcciones[cantidadDirecciones] != NULL)
+        cantidadDirecciones++;
+    int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
+    for(int i = 0; i < cantidadDirecciones; i++)
+        direccionesInt[i] = atoi(direcciones[i]);
     t_paquete* paquete=crearPaquete();
+    // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
+    char** tamanios = string_split(tamanio, ",");
+    int cantidadTamanios = 0;
+    while(tamanios[cantidadTamanios] != NULL)
+        cantidadTamanios++;
+    int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
+    for(int i = 0; i < cantidadTamanios; i++)
+        tamaniosInt[i] = atoi(tamanios[i]);
     paquete->codigo_operacion=IO_STDOUT_WRITE;
-    paquete->buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->size = 3*sizeof(int);
+    paquete->buffer->size = cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int) + sizeof(int)*3;
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    memcpy(paquete->buffer->stream, &direccionFisicaInt, sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), &tamanioInt, sizeof(int));
-    memcpy(paquete->buffer->stream + 2*sizeof(int), &pid, sizeof(int));
+    printf("cantidad de direcciones: %d\n", cantidadDirecciones);
+    //enviar la cantidad de direcciones, las direcciones, la cantidad de tamanios, los tamanios y el pid
+    memcpy(paquete->buffer->stream, &cantidadDirecciones, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), direccionesInt, cantidadDirecciones*sizeof(int));
+    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+sizeof(int), &cantidadTamanios, sizeof(int));
+    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+2*sizeof(int), tamaniosInt, cantidadTamanios*sizeof(int));
+    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int)+2*sizeof(int), &pid, sizeof(int));
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
     if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
@@ -373,8 +391,9 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     free(a_enviar);
     queue_pop(args->colaBloqueados);
     free(args);
+    free(direccionesInt);
+    free(tamaniosInt);
     pasarAReady(proceso);
-
 }
 
 void io_stdout_write(t_pcb *proceso,char **parametros){
@@ -448,7 +467,8 @@ void ejecutar_io_fs_create(InterfazSalienteFsCreate* args){
         perror("Error al enviar datos al servidor");
         exit(EXIT_FAILURE); 
     }
-    recibirMensaje(socketClienteIO);
+    char *buffer;
+    recv(socketClienteIO, &buffer, sizeof(buffer), 0);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -524,7 +544,8 @@ void ejecutar_io_fs_delete(InterfazSalienteFsDelete* args){
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
     send(socketClienteIO, a_enviar, bytes, 0); 
-    recibirMensaje(socketClienteIO);
+    char *buffer;
+    recv(socketClienteIO, &buffer, sizeof(buffer), 0);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -604,7 +625,8 @@ void ejecutar_io_fs_truncate(InterfazSalienteFsTruncate* args){
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
     send(socketClienteIO, a_enviar, bytes, 0); 
-    recibirMensaje(socketClienteIO);
+    char *mensaje;
+    recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -668,39 +690,61 @@ void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
-    int direccion=atoi(args->direccion);
-    int tamanio=atoi(args->tamanio);
+    char* direccion=args->direccion;
+    char* tamanio=args->tamanio;
     char* punteroArchivo=args->punteroArchivo;
     int punterito = atoi(punteroArchivo);
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     int pid = proceso->pid;
+    char** direcciones = string_split(direccion, ",");
+    int cantidadDirecciones = 0;
+    while(direcciones[cantidadDirecciones] != NULL)
+        cantidadDirecciones++;
+    int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
+    for(int i = 0; i < cantidadDirecciones; i++)
+        direccionesInt[i] = atoi(direcciones[i]);
     t_paquete* paquete=crearPaquete();
+    // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
+    char** tamanios = string_split(tamanio, ",");
+    int cantidadTamanios = 0;
+    while(tamanios[cantidadTamanios] != NULL)
+        cantidadTamanios++;
+    int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
+    for(int i = 0; i < cantidadTamanios; i++)
+        tamaniosInt[i] = atoi(tamanios[i]);
     paquete->codigo_operacion=IO_FS_WRITE;
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
     int archivo_len = strlen(nombreArchivo);
-    paquete->buffer->size = interfaz_len + archivo_len+ 6*sizeof(int);
+    paquete->buffer->size = 6*sizeof(int) + interfaz_len + archivo_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int);
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
-    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &direccion, sizeof(int));
-    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
-    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &punterito, sizeof(int));
-    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
-    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len, &pid, sizeof(int));
-    memcpy(paquete->buffer->stream + 6*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &cantidadDirecciones, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, direccionesInt, cantidadDirecciones* sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int), &cantidadTamanios, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int), tamaniosInt, cantidadTamanios* sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), &punterito, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 6*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), nombreArchivo, archivo_len);
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
-    send(socketClienteIO, a_enviar, bytes, 0); 
-    recibirMensaje(socketClienteIO);
+    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); 
+    }
+    char *mensaje;
+    recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
     free(a_enviar);
     queue_pop(args->colaBloqueados);
     free(args);
+    free(direccionesInt);
+    free(tamaniosInt);
     pasarAReady(proceso);
-    
 }
 
 void io_fs_write(t_pcb *proceso,char **parametros){
@@ -724,11 +768,11 @@ void io_fs_write(t_pcb *proceso,char **parametros){
                 args->direccion = parametros[2];
                 args->tamanio = parametros[3];
                 args->punteroArchivo = parametros[4];
-                pthread_t pcb_bloqueado;
-                if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_write, (void*)args))
-                    pthread_detach(pcb_bloqueado);
-                else
-                log_error(loggerError, "Error al crear hilo");
+                pthread_t pcb_bloqueado2;
+                pthread_create(&pcb_bloqueado2, NULL, (void*)ejecutar_io_fs_write, (void*)args);
+                pthread_detach(pcb_bloqueado2);
+               // else
+                //log_error(loggerError, "Error al crear hilo");
             }
         }
         else{
@@ -759,37 +803,57 @@ void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
     t_pcb* proceso=args->proceso;
     char* interfaz=args->interfaz;
     char* nombreArchivo=args->nombreArchivo;
-    int direccion=atoi(args->direccion);
-    int tamanio=atoi(args->tamanio);
+    char* direccion=args->direccion;
+    char* tamanio=args->tamanio;
     char* punteroArchivo=args->punteroArchivo;
     int punterito = atoi(punteroArchivo);
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     int pid = proceso->pid;
+    char** direcciones = string_split(direccion, ",");
+    int cantidadDirecciones = 0;
+    while(direcciones[cantidadDirecciones] != NULL)
+        cantidadDirecciones++;
+    int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
+    for(int i = 0; i < cantidadDirecciones; i++)
+        direccionesInt[i] = atoi(direcciones[i]);
     t_paquete* paquete=crearPaquete();
+    // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
+    char** tamanios = string_split(tamanio, ",");
+    int cantidadTamanios = 0;
+    while(tamanios[cantidadTamanios] != NULL)
+        cantidadTamanios++;
+    int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
+    for(int i = 0; i < cantidadTamanios; i++)
+        tamaniosInt[i] = atoi(tamanios[i]);
     paquete->codigo_operacion=IO_FS_READ;
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
     int archivo_len = strlen(nombreArchivo);
-    paquete->buffer->size = interfaz_len + archivo_len+ 6*sizeof(int);
+    paquete->buffer->size = 6*sizeof(int) + interfaz_len + archivo_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int);
     paquete->buffer->stream = malloc(paquete->buffer->size);
     memcpy(paquete->buffer->stream, &interfaz_len, sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), interfaz, interfaz_len);
-    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &direccion, sizeof(int));
-    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, &tamanio, sizeof(int));
-    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len, &punterito, sizeof(int));
-    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len, &archivo_len, sizeof(int));
-    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len, &pid, sizeof(int));
-    memcpy(paquete->buffer->stream + 6*sizeof(int)+ interfaz_len, nombreArchivo, archivo_len);
+    memcpy(paquete->buffer->stream + sizeof(int)+ interfaz_len, &cantidadDirecciones, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len, direccionesInt, cantidadDirecciones* sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int), &cantidadTamanios, sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int), tamaniosInt, cantidadTamanios* sizeof(int));
+    memcpy(paquete->buffer->stream + 3*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), &punterito, sizeof(int));
+    memcpy(paquete->buffer->stream + 4*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), &archivo_len, sizeof(int));
+    memcpy(paquete->buffer->stream + 5*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 6*sizeof(int)+ interfaz_len + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int), nombreArchivo, archivo_len);
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
     send(socketClienteIO, a_enviar, bytes, 0); 
-    recibirMensaje(socketClienteIO);
+    char *mensaje;
+    recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
     free(a_enviar);
     queue_pop(args->colaBloqueados);
     free(args);
+    free(direccionesInt);
+    free(tamaniosInt);
     pasarAReady(proceso); 
 }
 
