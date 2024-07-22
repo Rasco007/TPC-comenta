@@ -258,9 +258,9 @@ void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *b
     int start_page = first_addr / page_size;
     int start_offset = first_addr % page_size;
     int end_page = last_addr / page_size;
-    num_pages = end_page - start_page + 1;
+    *num_pages = end_page - start_page + 1;
     bytes_por_pagina[0] = page_size - start_offset;
-    for (int i = 1; i <num_pages - 1; i++) {
+    for (int i = 1; i <*num_pages - 1; i++) {
         bytes_por_pagina[i] = page_size;
     }
     bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;

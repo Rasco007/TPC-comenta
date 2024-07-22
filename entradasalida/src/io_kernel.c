@@ -272,10 +272,10 @@ void manejarSTDINREAD(int socketCliente) {
     //voy a recibir un array de tamanios y otro array de direcciones
     int *tamanios = malloc(sizeof(int)*20);
     int *direcciones = malloc(sizeof(int)*20);
-
-    recibirEnteros3(socketCliente, tamanios, direcciones, &pid);
+    int cantidad;
+    recibirEnteros3(socketCliente, tamanios, direcciones, &pid, &cantidad);
     // Loguear los parámetros recibidos
-    for(int i=0; i<5; i++){
+    for(int i=0; i<cantidad; i++){
         log_info(logger, "Tamanio recibido: %d", tamanios[i]);
         log_info(logger, "Direccion recibida: %d", direcciones[i]);
     }
@@ -299,8 +299,8 @@ void manejarSTDINREAD(int socketCliente) {
 }
 
 void manejarSTDOUTWRITE(int socketCliente) {
-    int tamanioTexto, direccion, pid;
-    recibirEnteros3(socketCliente, &tamanioTexto, &direccion, &pid);
+    int tamanioTexto, direccion, pid, cantidad;
+    recibirEnteros3(socketCliente, &tamanioTexto, &direccion, &pid, &cantidad);
     // Loguear los parámetros recibidos
     log_info(logger, "Tamanio recibido: %d", tamanioTexto);
     log_info(logger, "Direccion recibida: %d", direccion);
@@ -381,7 +381,7 @@ void enviarDireccionTamano(int direccion,int tamano, int pid, int socket) {
     free(paquete);
 }
 
-void recibirEnteros3(int socket, int *tamanio, int *direccion, int *pid) {
+void recibirEnteros3(int socket, int *tamanio, int *direccion, int *pid, int *cantidad) {
     char buffer[2048];
     int bytes_recibidos = recv(socket, buffer, sizeof(buffer), 0);
     if (bytes_recibidos < 0) {
@@ -395,4 +395,5 @@ void recibirEnteros3(int socket, int *tamanio, int *direccion, int *pid) {
     memcpy(&cantidadtamanios, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones, sizeof(int));
     memcpy(tamanio, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones+sizeof(int), sizeof(int)*cantidadtamanios);
     memcpy(pid, buffer+2*sizeof(int)+sizeof(op_code), sizeof(int));
+    *cantidad = cantidaddireciones;
 }

@@ -27,6 +27,7 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
     if (consulta==1) {
         // TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, page_number);
+        log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame_number);
         return frame_number * PAGE_SIZE + offset;
     } else {
         // TLB Miss
@@ -35,11 +36,6 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         log_info(logger,"PID: <%d> - TLB MISS - Pagina: <%d>", pid, page_number);
         //log_info(logger,"TLB Miss\n");
         solicitarDireccion((int) pid,(int)page_number,conexionAMemoria);
-        /*t_paquete* peticion = crearPaquete();
-        peticion->codigo_operacion = MMU;
-        enviarPaquete(peticion, conexionAMemoria);    
-        eliminarPaquete (peticion);*/
-        
         //int control = 1;
         // while(control) {
         recibo = recibirOperacion(conexionAMemoria);
@@ -48,8 +44,9 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         switch (recibo){
             case 0:
                 valorAInsertar = recibirMensaje(conexionAMemoria);
-                log_info(logger,"Frame de la pagina %d es: %s\n", page_number,valorAInsertar);
+                //log_info(logger,"Frame de la pagina %d es: %s\n", page_number,valorAInsertar);
                 frame=atoi(valorAInsertar);
+                log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame);
                 //control=0;
                 //limpiarBuffer(conexionAMemoria);
                 break;
@@ -73,7 +70,6 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
 
         //return UINT32_MAX; // Indica que no se encontró
     }
-    log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame_number);
 }
 
 void solicitarDireccion(int pid, int pagina, int socket){

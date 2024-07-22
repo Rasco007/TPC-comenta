@@ -10,7 +10,7 @@
 
     #define obtenerAlgoritmoTLB() config_get_string_value(config, "ALGORITMO_TLB")
 	#define CANTIDAD_ENTRADAS_TLB 32 // Define la cantidad de entradas en la TLB
-    #define PAGE_SIZE 32 //ESTO DEBE SALIR DEL CONFIG DE MEMORIA!!!!!!
+    #define PAGE_SIZE 16 //ESTO DEBE SALIR DEL CONFIG DE MEMORIA!!!!!!
 
     typedef struct {
         uint32_t pid;         // ID del proceso
