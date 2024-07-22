@@ -53,7 +53,7 @@ void enviarPathDeInstrucciones(char* path){
 
     enviarMensaje(path,conexionAMemoria);
     
-    log_info(logger,"Se envio el path de instrucciones a memoria.");
+    //log_info(logger,"Se envio el path de instrucciones a memoria.");
     //logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }

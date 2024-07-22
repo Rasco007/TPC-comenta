@@ -268,29 +268,34 @@ void manejarFS_CREATE(int socketCliente) {
 }
 //IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
 void manejarSTDINREAD(int socketCliente) {
-    int tamanioTexto, direccion, pid;
-    recibirEnteros3(socketCliente, &tamanioTexto, &direccion, &pid);
+    int  pid;
+    //voy a recibir un array de tamanios y otro array de direcciones
+    int *tamanios = malloc(sizeof(int)*20);
+    int *direcciones = malloc(sizeof(int)*20);
+
+    recibirEnteros3(socketCliente, tamanios, direcciones, &pid);
     // Loguear los parámetros recibidos
-    log_info(logger, "Tamanio recibido: %d", tamanioTexto);
-    log_info(logger, "Direccion recibida: %d", direccion);
+    for(int i=0; i<5; i++){
+        log_info(logger, "Tamanio recibido: %d", tamanios[i]);
+        log_info(logger, "Direccion recibida: %d", direcciones[i]);
+    }
     log_info(logger, "PID: <%d> - Operacion: <STDIN READ>", pid);
     // Leer una línea de texto usando readline
     char* texto = readline("Ingrese el texto: ");
-	char *datosLeidos = (char *)malloc(tamanioTexto ); // +1 para el terminador nulo
-    datosLeidos[tamanioTexto] = '\0'; // Asegurar el terminador nulo
-    if (datosLeidos == NULL) {
-        perror("Error al reservar memoria para los datos leídos");
-        return ;
-    }
+    //tengo que dividir el texto en partes de tamanio y enviarlo a memoria
+    /*char datosLeidos = malloc(sizeof(char)tamanios[0]);
+    memcpy(datosLeidos, texto, tamanios[0]);
+    enviarAImprimirAMemoria(datosLeidos,direcciones[0], fd_memoria, pid);
+
     // Copiar los datos desde el archivo mapeado al buffer de datos leídos
-    memcpy(datosLeidos, texto, tamanioTexto);
-	printf("Texto a enviar: %s\n", datosLeidos);
-	enviarAImprimirAMemoria(datosLeidos,direccion, fd_memoria, pid); //estos datos se deben escribir en la direccion de memoria
-	//UNA FUNCION QUE MANDE "datosLeidos" A MEMORIA Y LO ESCRIBA EN "direccion"
-	// Liberar la memoria reservada
-    enviarMensaje("OK", socketCliente);
-	free(texto);
-	free(datosLeidos);
+    //memcpy(datosLeidos, texto, tamanioTexto);
+    printf("Texto a enviar: %s\n", datosLeidos);
+    enviarAImprimirAMemoria(datosLeidos,direccion, fd_memoria, pid); //estos datos se deben escribir en la direccion de memoria
+    //UNA FUNCION QUE MANDE "datosLeidos" A MEMORIA Y LO ESCRIBA EN "direccion"
+    // Liberar la memoria reservada
+    enviarMensaje("OK", socketCliente);*/
+    free(texto);
+    //free(datosLeidos);
 }
 
 void manejarSTDOUTWRITE(int socketCliente) {
@@ -383,7 +388,11 @@ void recibirEnteros3(int socket, int *tamanio, int *direccion, int *pid) {
         perror("Error al recibir el mensaje");
         return;
     }
-    memcpy(direccion, buffer+sizeof(op_code), sizeof(int));
-    memcpy(tamanio, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
+    int cantidaddireciones,cantidadtamanios;
+    memcpy(&cantidaddireciones, buffer+sizeof(op_code), sizeof(int));
+    printf("Cantidad de direcciones: %d\n", cantidaddireciones);
+    memcpy(direccion, buffer+sizeof(op_code)+sizeof(int), sizeof(int)*cantidaddireciones);
+    memcpy(&cantidadtamanios, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones, sizeof(int));
+    memcpy(tamanio, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones+sizeof(int), sizeof(int)*cantidadtamanios);
     memcpy(pid, buffer+2*sizeof(int)+sizeof(op_code), sizeof(int));
 }

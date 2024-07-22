@@ -10,7 +10,7 @@
 
     #define obtenerAlgoritmoTLB() config_get_string_value(config, "ALGORITMO_TLB")
 	#define CANTIDAD_ENTRADAS_TLB 32 // Define la cantidad de entradas en la TLB
-    #define PAGE_SIZE 2048 // Define el tamaño de una página
+    #define PAGE_SIZE 32 //ESTO DEBE SALIR DEL CONFIG DE MEMORIA!!!!!!
 
     typedef struct {
         uint32_t pid;         // ID del proceso
@@ -28,7 +28,7 @@
     } TLB;
 
     
-	uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor);
+	uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor);
 	//bool manejar_fallo_de_pagina(PageTable *page_table, uint32_t page_number, uint32_t frame_number);
     void inicializar_tlb(char* algoritmoTLB);
     int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number);

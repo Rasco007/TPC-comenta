@@ -97,6 +97,7 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
             EntradaTablaPaginas *entrada = malloc(sizeof(EntradaTablaPaginas));
             entrada->numero_marco= i;
             entrada->valido =1;
+            entrada->numero_pagina = numero_pagina;
             list_add(proceso->tabla_paginas->entradas, entrada);
             proceso->tabla_paginas->paginas_asignadas++; // Incrementa el contador de páginas asignadas
             list_replace(mf->listaMarcosLibres,i,true);

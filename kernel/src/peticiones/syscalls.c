@@ -246,17 +246,39 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
     char* direccionFisica=args->direccionFisica;
     char* tamanio=args->tamanio;
     int socketClienteIO = obtener_socket(&kernel, interfaz);
-    int tamanioInt = atoi(tamanio);
-    int direccionFisicaInt = atoi(direccionFisica);
+    //int tamanioInt = atoi(tamanio);
+    //int direccionFisicaInt = atoi(direccionFisica);
     int pid = proceso->pid;
+    // direccionFisica contiene todas las direcciones separadas por una coma, necesito separarlas
+    char** direcciones = string_split(direccionFisica, ",");
+    int cantidadDirecciones = 0;
+    while(direcciones[cantidadDirecciones] != NULL){
+        cantidadDirecciones++;
+    }
+    int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
+    for(int i = 0; i < cantidadDirecciones; i++)
+        direccionesInt[i] = atoi(direcciones[i]);
     t_paquete* paquete=crearPaquete();
+    // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
+    char** tamanios = string_split(tamanio, ",");
+    int cantidadTamanios = 0;
+    while(tamanios[cantidadTamanios] != NULL){
+        cantidadTamanios++;
+    }
+    int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
+    for(int i = 0; i < cantidadTamanios; i++)
+        tamaniosInt[i] = atoi(tamanios[i]);
     paquete->codigo_operacion=IO_STDIN_READ;
     paquete->buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->size = 3*sizeof(int);
+    paquete->buffer->size = cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int) + sizeof(int)*3;
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    memcpy(paquete->buffer->stream, &direccionFisicaInt, sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), &tamanioInt, sizeof(int));
-    memcpy(paquete->buffer->stream + 2*sizeof(int), &pid, sizeof(int));
+    printf("cantidad de direcciones: %d\n", cantidadDirecciones);
+    //enviar la cantidad de direcciones, las direcciones, la cantidad de tamanios, los tamanios y el pid
+    memcpy(paquete->buffer->stream, &cantidadDirecciones, sizeof(int));
+    memcpy(paquete->buffer->stream+sizeof(int), direccionesInt, cantidadDirecciones*sizeof(int));
+    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+sizeof(int), &cantidadTamanios, sizeof(int));
+    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+2*sizeof(int), tamaniosInt, cantidadTamanios*sizeof(int));
+    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int)+2*sizeof(int), &pid, sizeof(int));
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     void *a_enviar = serializarPaquete(paquete, bytes);
     if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {

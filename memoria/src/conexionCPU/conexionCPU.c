@@ -49,7 +49,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 char marco[sizeof(int)];
                 recibirEnteros(*socketCliente,&pid,&pag);
                 BuscarYEnviarMarco(pid, pag, marco,*socketCliente);
-                limpiarBuffer(*socketCliente);
+                //limpiarBuffer(*socketCliente);
                 break;
             case -1:
                 log_error(logger, "El CPU se desconectó");

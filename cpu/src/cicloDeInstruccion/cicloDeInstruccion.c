@@ -246,15 +246,94 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     flag_bloqueante = 1;
     flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
-
+// Función para calcular la cantidad de páginas a leer
+int calcularPaginasALeer(int first_addr, int last_addr, int page_size){ 
+    int start_page = first_addr / page_size;
+    int end_page = last_addr / page_size;
+    return end_page - start_page + 1;
+}
+// Función para calcular la cantidad de bytes a escribir/leer en cada página
+void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
+    int total_bytes = last_addr - first_addr + 1;
+    int start_page = first_addr / page_size;
+    int start_offset = first_addr % page_size;
+    int end_page = last_addr / page_size;
+    num_pages = end_page - start_page + 1;
+    bytes_por_pagina[0] = page_size - start_offset;
+    for (int i = 1; i <num_pages - 1; i++) {
+        bytes_por_pagina[i] = page_size;
+    }
+    bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;
+}
+int obtenerTamanoPagina(char* path){
+    t_config* config = config_create(path);
+    int tamPagina = config_get_int_value(config, "TAM_PAGINA");
+    return tamPagina;
+}
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
     temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    // FALTA OBTENER LOS REGISTROS!!!!!!
-    modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, regDireccion, regTamanio, "", "");
+    int tamPagina = obtenerTamanoPagina("/home/utnso/tp-2024-1c-Silver-Crime/memoria/memoria.config"); 
+    printf("Tamaño de página: %d\n", tamPagina);
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + atoi(regTamanio);
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //convierto la variable bytes_por_pagina a un string
+    char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
+    bytes_por_pagina_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* bytes = malloc(sizeof(char) * 10);
+        sprintf(bytes, "%d", bytes_por_pagina[i]);
+        strcat(bytes_por_pagina_str, bytes);
+        free(bytes);
+        if (i < num_pages - 1) {
+            strcat(bytes_por_pagina_str, ",");
+        }
+    }
+    //imprimo el string
+    printf("Bytes por página: %s\n", bytes_por_pagina_str);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) {
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    }
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) {
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+    }
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+    //convierto a char* las direcciones fisicas
+    char* direccionesFisicas_str = malloc(sizeof(char) * 100);
+    direccionesFisicas_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* direccion = malloc(sizeof(char) * 10);
+        sprintf(direccion, "%d", direccionesFisicas[i]);
+        strcat(direccionesFisicas_str, direccion);
+        free(direccion);
+        if (i < num_pages - 1) {
+            strcat(direccionesFisicas_str, ",");
+        }
+    }
+    //imprimo las direcciones fisicas
+    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
+    modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     flag_bloqueante = 1;
     flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt

@@ -14,10 +14,11 @@ void limpiarBuffer(int socketCliente){
 }
 
 //MMU
-uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor) {
-    uint32_t dirLogica = (uint32_t)strtoul(direccionLogica, NULL, 10);
-    uint32_t page_number = dirLogica / PAGE_SIZE;
-    uint32_t offset = dirLogica % PAGE_SIZE;
+uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
+    //uint32_t dirLogica = (uint32_t)strtoul(direccionLogica, NULL, 10);
+    uint32_t page_number = direccionLogica / PAGE_SIZE;
+    uint32_t offset = direccionLogica % PAGE_SIZE;
+    log_info(logger,"PID: <%d> - DIRECCION LOGICA: <%d> - PAGINA: <%d> - OFFSET: <%d>", pid, direccionLogica, page_number, offset);
     int recibo;
     char* valorAInsertar;
 
