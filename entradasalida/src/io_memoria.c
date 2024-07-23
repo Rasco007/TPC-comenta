@@ -23,13 +23,13 @@ void io_atender_memoria(){
 				longitud+=tamaniosglobales[i];
 				i++;
 				if(i==cantidadglobal){
-					printf("Mensaje que se va a escribir en el archivo:%s\n", cadenaCompleta);
+					printf("Mensaje completo:%s\n", cadenaCompleta);
 					if (strcmp(TIPO_INTERFAZ, "DialFS") == 0) 
 						escribirCadenaEnArchivo(archivoWrite, cadenaCompleta, pointerArchivo);
-					i=0;
 					free(cadenaCompleta);
 					char *mensje="ok";
     				send(fd_kernel, &mensje, sizeof(mensje), 0);
+					i=0;
 			}
 			}
 			//else

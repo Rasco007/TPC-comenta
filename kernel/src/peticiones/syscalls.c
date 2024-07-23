@@ -384,7 +384,8 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
         perror("Error al enviar datos al servidor");
         exit(EXIT_FAILURE); 
     }
-    recibirMensaje(socketClienteIO);
+    char *buffer;
+    recv(socketClienteIO, &buffer, sizeof(buffer), 0);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);

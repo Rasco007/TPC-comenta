@@ -255,6 +255,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         log_error(loggerError, "Out of Memory al intentar asignar %d bytes al proceso PID: %d",nuevo_tamano,proceso->pid);
         return proceso;
     }
+    //log_warning(logger, "Cantidad de páginas necesarias: %d", paginas_necesarias);
     // Si se requieren más páginas, asignar las nuevas páginas
     if (paginas_necesarias > proceso->tabla_paginas->paginas_asignadas) {
         // Registro de ampliación del proceso
@@ -283,12 +284,25 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
 
             // Liberar la página i
             list_remove(proceso->tabla_paginas->entradas,i);
-            list_replace(mf->listaMarcosLibres, marco - 1,false); //creo que se pone - 1 porque es el indice dee una lista y no existe el marco 0
+            list_replace(mf->listaMarcosLibres, marco,false); //creo que se pone - 1 porque es el indice dee una lista y no existe el marco 0
             //reemmplazaaaa vaalor marcando false como  disponible
         }
     }
     // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
     proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
+    log_info(logger,"cant. de paginas asignadas: %d",proceso->tabla_paginas->paginas_asignadas);
+    //contar cantidad de marcos libres
+    int marcosLibres=0;
+    for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
+        if (list_get(mf->listaMarcosLibres,i) == false)
+            marcosLibres++;
+    }
+    log_info(logger,"Marcos libres: %d",marcosLibres);
+    //indicar en que posicion de la lista de marcos libres se encuentran los marcos ocupados
+    for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
+        if (list_get(mf->listaMarcosLibres,i) == true)
+            log_info(logger,"Marco ocupado: %d",i);
+    }
     return proceso;    
 }
 
