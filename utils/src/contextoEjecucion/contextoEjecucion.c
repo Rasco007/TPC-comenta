@@ -213,6 +213,7 @@ void recibirContextoBeta(int socket) {
 }
 
 
+
 void iniciarContextoBeta(){
 
     contextoEjecucion = malloc(sizeof(t_contexto));
@@ -251,8 +252,8 @@ void destroyContextoUnico () {
     /*for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) 
         if (strcmp(contextoEjecucion->motivoDesalojo->parametros[i], "")) 
             free(contextoEjecucion->motivoDesalojo->parametros[i]);*/
-    free(contextoEjecucion->motivoDesalojo);
-    free(contextoEjecucion);
+    //free(contextoEjecucion->motivoDesalojo);
+    //free(contextoEjecucion);
     
     contextoEjecucion = NULL;
 }

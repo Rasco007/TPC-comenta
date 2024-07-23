@@ -63,7 +63,11 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
    
     dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
 
+     log_info(logger,"nrro instruuuucciones kerrnel %d", procesoEnEjecucion->cantidad_instrucciones);
+    
+
     enviarContextoBeta(conexionACPU, contextoEjecucion);
+   
 
     if (recibirOperacionDeCPU() < 0) error ("Se desconecto la CPU.");
     
@@ -74,6 +78,9 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     free(bufferContexto);
     return contextoEjecucion;
 }
+
+
+
 
  void log_registro(char *key, void *value) {
         log_info(logger, "Registro %s: %s", key, (char*)value);
@@ -101,7 +108,7 @@ void actualizarPCB(t_pcb* proceso){
 void asignarPCBAContexto(t_pcb* proceso){
     //list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
     //contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    contextoEjecucion->instruccionesLength = numeroInstrucciones;//list_size(contextoEjecucion->instrucciones);
+    contextoEjecucion->instruccionesLength = proceso->cantidad_instrucciones;//list_size(contextoEjecucion->instrucciones);
     contextoEjecucion->pid = proceso->pid;
     contextoEjecucion->programCounter = proceso->programCounter;
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
@@ -110,6 +117,7 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->DI=proceso->DI;
     contextoEjecucion->SI=proceso->SI;
     contextoEjecucion->algoritmo = proceso->algoritmo;
+
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
         log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
@@ -137,38 +145,6 @@ void asignarPCBAContexto(t_pcb* proceso){
    log_info(logger, "--------------------------------" );*/
 }
 
-void asignarPCBAContextoBeta(t_pcb* proceso){
-
-t_pagina* nuevaPagina1 = malloc(sizeof(t_pagina)); 
-nuevaPagina1->idPagina = 0;
-nuevaPagina1->idFrame = 10;
-nuevaPagina1->bitDeValidez = 1;
-
-t_pagina* nuevaPagina2 = malloc(sizeof(t_pagina));
-nuevaPagina2->idPagina = 1;
-nuevaPagina2->idFrame = 20;
-nuevaPagina2->bitDeValidez = 0;
-
-
-    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    //contextoEjecucion->instrucciones = list_create();
-list_add(contextoEjecucion->instrucciones, strdup("instr1"));
-list_add(contextoEjecucion->instrucciones, strdup("instr2"));
-list_add(contextoEjecucion->instrucciones, strdup("instr3"));
-    contextoEjecucion->instruccionesLength = 3;
-    contextoEjecucion->pid = proceso->pid;
-    contextoEjecucion->programCounter = proceso->programCounter;
-    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    contextoEjecucion->registrosCPU = registrosDelCPU(proceso->registrosCPU);
-    contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
-    contextoEjecucion->DI=proceso->DI;
-    contextoEjecucion->SI=proceso->SI;
-    contextoEjecucion->quantum=proceso->quantum;
-     list_add (contextoEjecucion->tablaDePaginas, nuevaPagina1);
-     list_add (contextoEjecucion->tablaDePaginas, nuevaPagina2);
- contextoEjecucion->tablaDePaginasSize=2;
-}
 
 t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     t_dictionary *copia = dictionary_create();

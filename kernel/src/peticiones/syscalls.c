@@ -164,37 +164,19 @@ void signal_s(t_pcb *proceso,char **parametros){
     }
 }
 
-//IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
-void dormir_IO(InterfazSalienteGenSleep* args){  
-    //log_warning(logger, "ENTRE A DORMIR IO");
-    char* interfaz=args->interfaz;
-    char* tiempo=args->tiempo;
-    t_pcb* proceso=args->proceso;
-    int pid = proceso->pid;
-    log_info(logger, "tiempo recibido %s", tiempo);
-    log_info(logger, "interfaz recibida %s", interfaz);
-    int socketClienteIO = obtener_socket(&kernel, interfaz);
-    log_info(logger, "se recibio el socket %d", socketClienteIO);
-    enviarMensajeGen(socketClienteIO, interfaz, tiempo, pid);
-    //log_info(logger, "antes de recibir msj");
-    //Recibir mensaje de confirmacion de IO
-    recibirMsjIO( socketClienteIO);
-    //log_info(logger, "luego e recobor msj");
-    log_warning(logger, "Proceso <%d> desbloqueado por IO_GEN_SLEEP", proceso->pid);
-    queue_pop(args->colaBloqueados);
-    pasarAReady(proceso);
-    //free(args);
-}
 
 //     INICIAR_PROCESO /home/utnso/tp-2024-1c-Silver-Crime/memoria/src/scripts_memoria/PLANI_1
 void io_gen_sleep(t_pcb *proceso, char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     InterfazSalienteGenSleep* args = malloc(sizeof(InterfazSalienteGenSleep));
-    args->colaBloqueados = queue_create();
-    if (existeInterfaz == 1){
+    //args->colaBloqueados = queue_create();
+     Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
+    if (existeInterfaz == 1 && io_global){
+        
+
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
         if (esValida == 1){
-            queue_push(args->colaBloqueados, &proceso->pid);
+            /////////queue_push(args->colaBloqueados, &proceso->pid);
             log_warning(logger, "Proceso <%d> encolado en cola de bloqueados", proceso->pid);
             // en caso de validar() sea 1, hacemos io_gen_sleep
             estadoAnterior = proceso->estado;
@@ -202,21 +184,27 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
+            log_info(logger, "Puntero proceso sysclass: %p", (void*)proceso);
+
+            
+            io_global->parametro1 = parametros[0];
+            io_global->parametro2 = parametros[1];
+            
+            queue_push( io_global->cola_procesos_io,proceso);
+            sem_post(&io_global->semaforo_cola_procesos);
+            
             // si la cola de bloqueados esta vacia, ejecutar
-            int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
+            /*int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
             if (pidBloqueado == proceso->pid){
                 args->proceso = proceso;
                 args->interfaz = parametros[0];
                 args->tiempo = parametros[1];
                 pthread_t pcb_bloqueado;
                 //log_warning(logger, "Proceso: <%d> - Interfaz: <%s> - Tiempo: <%s>",args->proceso->pid, args->interfaz, args->tiempo);
-                /*if (!pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void *) args))
-                    pthread_join(pcb_bloqueado,NULL);
-                else
-                    log_error(loggerError, "Error al crear hilo para dormir IO");*/
+               
                 pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void *) args);
                 pthread_detach(pcb_bloqueado);
-            }
+            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1

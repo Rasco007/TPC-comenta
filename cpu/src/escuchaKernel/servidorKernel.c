@@ -3,8 +3,10 @@
 int socketClienteDispatch;
 int socketClienteInterrupt;
 t_temporal* tiempoDeUsoCPU;
+pthread_mutex_t mutex;
 
 void escucharAlKernel() {
+	pthread_mutex_init(&mutex, NULL) ;
     char *puertoEscuchaDispatch = confGet("PUERTO_ESCUCHA_DISPATCH");
 
     log_info(logger,"Esperando conexiones con KERNEL...");
@@ -50,15 +52,23 @@ int ejecutarServidorCPU(int socketCliente){
 						destroyContexto ();
 					}
 					return EXIT_FAILURE;
+				
 				case CONTEXTOEJECUCION:
 					log_info(logger,"APAREZCO DESDE CPU");
+					
+					
+
 					recibirContextoBeta(socketCliente);
+					log_info(logger,"RECIBO CONTEXTO DE KERNEL");
+					
+    
+					
 					//Inicio el cronometro del tiempo de uso de CPU
-					log_info(logger,"luego de recibir contexto de kernel");
+					
 					tiempoDeUsoCPU=temporal_create(); //Inicio y creo el CRONOMETRO
 					/*log_info(logger,"-*-*- Antes del while, programCounter: %d",contextoEjecucion->programCounter);
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);*/
-					log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
+					//log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
 					log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 
 					 flag_bloqueante = 0;
@@ -67,6 +77,7 @@ int ejecutarServidorCPU(int socketCliente){
 						//log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
 					 } 
+					 log_info(logger,"flag %d",   flag_bloqueante);
 					//temporal_destroy (rafagaCPU);
 					break;
 				default:

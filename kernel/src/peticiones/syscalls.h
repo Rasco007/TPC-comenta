@@ -20,6 +20,7 @@ extern int tiempoIO;
 extern t_list *recursos;
 extern t_list* pcbsEnMemoria;
 extern t_contexto* contextoEjecucion;
+//extern Interfaz * io_global;
 typedef struct{
     t_pcb* proceso;
     char* tiempo;
@@ -30,7 +31,7 @@ void retornoContexto(t_pcb *, t_contexto *);
 //void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso);
 void volverACPU(t_pcb *);
 void pasarAReady(t_pcb* proceso);
-void dormir_IO(InterfazSalienteGenSleep* args);
+
 
 void recibirMsjIO(int socketClienteIO);
 

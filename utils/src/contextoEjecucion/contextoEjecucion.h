@@ -5,7 +5,6 @@
 #include <utilsCliente/utilsCliente.h>
 #include <utilsServidor/utilsServidor.h>
 #include <commons/temporal.h>
-
 #include "stdlib.h"
 #include "stdint.h"
 #include "math.h"
@@ -66,6 +65,7 @@ void deserializarRegistros (void * buffer, int * desplazamiento);
 void deserializarMotivoDesalojo (void * buffer, int * desplazamiento);
 t_pagina*  deserializarPagina(void* buffer, int* desplazamiento);
 void deserializarTablaDePaginas (void * buffer, int * desplazamiento); 
+
 
 void iniciarContexto();
 void destroyContexto();

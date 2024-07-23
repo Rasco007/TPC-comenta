@@ -3,38 +3,37 @@
 #define BUFFER_SIZE 1024
 int instruccionActual;
 char* nombre;
-void ejecutarServidorKernel(int socketClienteIO);
-void hacerHandshake(int socketClienteIO);
-void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel);
+Interfaz* io_global;
 
-void guardarNombreYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[1024], int socketClienteIO);
+void ejecutarServidorKernel(Interfaz *interfaz_actual);
+void hacerHandshake(int socketClienteIO);
+void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel, Interfaz *interfaz_actual);
+
 
 
 void escucharAlIO() {
+    io_global= malloc(sizeof(Interfaz));
+
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
     //log_info(logger,"Esperando conexiones con IO...");
     while (1) {
+        log_info(logger,"Esperando conexiones con IO...");
         
-        //pthread_t thread;
         
         int *socketClienteIO = malloc(sizeof(int));
         *socketClienteIO = esperarCliente(socketKernel);
        // log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
 
         hacerHandshake(*socketClienteIO);
-        recibirNombreInterfaz(*socketClienteIO, &kernel);
+        recibirNombreInterfaz(*socketClienteIO, &kernel, io_global);
 
-        /*pthread_create(&thread,
-                        NULL,
-                        (void*) ejecutarServidorKernel,
-                        socketClienteIO);
-        pthread_detach(thread);*/
+       
     }
     
 }
 
-void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
+void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel, Interfaz *interfaz_actual){
 
  char nombreInterfaz[BUFFER_SIZE] = {0};    
  char tipoInterfaz[BUFFER_SIZE] = {0};  
@@ -51,14 +50,14 @@ void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
            // log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
             //log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
 
-            guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO);
+            guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO, interfaz_actual);
             nombre=nombreInterfaz;
         }
         
     }
 }
 
-void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[256], char tipoInterfaz[256], int socketClienteIO)
+void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[256], char tipoInterfaz[256], int socketClienteIO, Interfaz * interfaz_actual)
 {
     kernel->interfaces = realloc(kernel->interfaces, (kernel->cantidad + 1) * sizeof(Interfaz));
     if (kernel->interfaces == NULL)
@@ -78,6 +77,19 @@ void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char nombreInterfaz[256
     // Guardar socket de la interfaz
     kernel->interfaces[kernel->cantidad].socket_interfaz = socketClienteIO;
 
+    //inicio queue
+    kernel->interfaces[kernel->cantidad].cola_procesos_io = queue_create();
+    
+    //innicio semaforo de bloqueo
+     sem_init(&kernel->interfaces[kernel->cantidad].semaforo_cola_procesos, 0, 0);
+
+    *interfaz_actual= kernel->interfaces[kernel->cantidad];
+pthread_t thread;
+     pthread_create(&thread,
+                        NULL,
+                        (void*) ejecutarServidorKernel,
+                        &kernel->interfaces[kernel->cantidad]);
+        pthread_detach(thread);
     // Incrementar la cantidad de interfaces
     kernel->cantidad++;
     
@@ -111,8 +123,14 @@ void destruirStructsIO (Kernel_io *kernel) {
     kernel->cantidad = 0;
 }
 
-
-//esta funcion anda flama
+Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz) {
+    for (size_t i = 0; i < kernel->cantidad; i++) {
+        if (strcmp(kernel->interfaces[i].nombre_interfaz, nombre_interfaz) == 0) {
+            return &kernel->interfaces[i];
+        }
+    }
+     return NULL;// Si no se encuentra la interfaz
+}
 int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
     for (size_t i = 0; i < kernel->cantidad; i++) {
         if (strcmp(kernel->interfaces[i].nombre_interfaz, nombre_interfaz) == 0) {
@@ -121,7 +139,6 @@ int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
     }
     return -1; // Si no se encuentra la interfaz
 }
-
 void desconectar_interfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     for (size_t i = 0; i < kernel->cantidad; i++) {
         if (strcmp(kernel->interfaces[i].nombre_interfaz, nombre_interfaz) == 0) {
@@ -203,35 +220,72 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
 }
 
 
-void ejecutarServidorKernel(int socketClienteIO){
-    // char * tamaño_max = "5";
-     //char * direc_memoria = "1234";
-    //dormirIO(NULL,nombre,"5");
-    //mandar_ejecutar_stdin(nombre,direc_memoria, tamaño_max);//IR COMENTANDO Y DESCOMENTANDO 
-    //mandar_ejecutar_stdout(NULL, nombre,direc_memoria, tamaño_max);//IR COMENTANDO Y DESCOMENTANDO
-    return;
-     /*while (1) {//ver de solamente poner un recv en vez de while 1 aunque en realidad recibe la operacion en syscalls
-        instruccionActual = -1; //habria que importar el ciclo de instrucciones para que la reconozca
-		int codOP = recibirOperacion(socketClienteIO);
-		switch (codOP) {
-			case -1:
-				log_info(logger, "El Kernel se desconecto.");
-				if (contextoEjecucion != NULL)
-					destroyContexto ();
-				return EXIT_FAILURE;
+void ejecutarServidorKernel(Interfaz *interfaz_actual){
+    //io_global = interfaz_actual;
 
-			case CONTEXTOEJECUCION:
-				return 0;
-				break;
-			default:
-				log_warning(loggerError,"Operacion desconocida. No quieras meter la pata");
-				break;
-		}
-	}*/
+  pthread_mutex_unlock(&mutex_lista_global);
+  list_add(lista_global_io, interfaz_actual);
+  pthread_mutex_lock(&mutex_lista_global);
+     //log_info(logger, "Puntero io_global: %p", (void*)io_global);
+    log_info(logger, "Puntero interfaz?actual: %p", (void*)interfaz_actual);
+  
+      log_info(logger,"tipo de la innterfaz conectada:  %s", interfaz_actual->tipo_interfaz);
+        log_info(logger,"socket de la innterfaz conectada:  %d", interfaz_actual->socket_interfaz); 
+    while(true) {
+        log_info(logger,"antes de estar en la cola");
+        sem_wait(&interfaz_actual->semaforo_cola_procesos);
+        t_pcb *pcb;
+        pcb = queue_pop(interfaz_actual->cola_procesos_io);
+        log_info(logger, "Puntero proceso servidor: %p", (void*)pcb);
+        log_info(logger,"hay proceso en la cola");
+        ejecutar_io(interfaz_actual, pcb);
+        /*if (respuesta_ok) {
+            ...
+        } else {
+            ...
+            break
+        }*/
+    } 
+    
+     pthread_mutex_unlock(&mutex_lista_global);
+    list_remove(lista_global_io, interfaz_actual);
+    pthread_mutex_lock(&mutex_lista_global);
+   /* wait(mutex_lista_global)
+    remove(lista_global, io)
+    signal(mutex_lista_global)*/
+}
+void ejecutar_io(Interfaz *interfaz, t_pcb *proceso){
 
-
+    log_info(logger,"noombre %s", interfaz->parametro1);
+     log_info(logger,"tiempooo %s", interfaz->parametro2);
+    if (strcmp(interfaz->tipo_interfaz, "GENERICA") == 0)
+    {
+        dormir_IO(interfaz, proceso);
+    }
+    
+    
 }
 
+//IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
+void dormir_IO(Interfaz *interfaz, t_pcb *proceso){  
+    //log_warning(logger, "ENTRE A DORMIR IO");
+   
+    int pid = proceso->pid;
+    log_info(logger, "tiempo recibido %s", interfaz->parametro2);
+    log_info(logger, "interfaz recibida %s", interfaz->parametro1);
+    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    log_info(logger, "se recibio el socket %d", socketClienteIO);
+    enviarMensajeGen(socketClienteIO, interfaz->parametro1, interfaz->parametro2, pid);
+    log_info(logger, "antes de recibir msj");
+    //Recibir mensaje de confirmacion de IO
+    recibirMsjIO( socketClienteIO);
+    log_info(logger, "luego e recobor msj");
+    //queue_pop(interfaz->cola_procesos_io);
+    //sem_wait(&interfaz->semaforo_cola_procesos);
+    //free(args);
+    pasarAReady(proceso);
+    //free(args);
+}
 
 int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
     for (size_t i = 0; i < kernel->cantidad; i++) {

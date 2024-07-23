@@ -40,6 +40,7 @@ typedef struct {
     t_list* tablaDePaginas; //Sacar
     int64_t quantum;
     t_algoritmo algoritmo;
+    int  cantidad_instrucciones;
 } t_pcb; 
 
 extern t_list *pcbsNEW;
