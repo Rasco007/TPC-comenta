@@ -663,6 +663,17 @@ void copy_string(char* tamanio){
 /*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
     solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
+    char* mensaje = recibirMensaje(conexionAMemoria);
+    if(strcmp(mensaje,"OUT_OF_MEMORY")){
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (RESIZE, 0, "","", "", "","");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+        flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+        return;  
+    }
 }
 
 /*Le asigno al registro el valor que se indica*/

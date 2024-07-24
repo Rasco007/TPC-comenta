@@ -3,6 +3,8 @@
 t_list *recursos;
 char **nombresRecursos;
 char* invalidResource = "INVALID_RESOURCE";
+char* invalidInterface = "INVALID_INTERFACE";
+char* outOfMemory = "OUT_OF_MEMORY";
 estadoProceso estadoAnterior; 
 
 void pasarAReady(t_pcb *proceso)
@@ -14,7 +16,7 @@ void pasarAReady(t_pcb *proceso)
         encolar(pcbsREADYaux,proceso);
         pidsInvolucrados = string_new();
         listarPIDS(pcbsREADYaux);
-        log_info(logger, "Cola Ready AUX <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
+        log_info(logger, "Ready Prioridad <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
         free(pidsInvolucrados);
         sem_post(&hayProcesosReady);
     } else ingresarAReady(proceso);
@@ -67,6 +69,9 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
         case EXIT:
             exit_s(proceso, contextoEjecucion->motivoDesalojo->parametros);
+            break;
+        case RESIZE:
+            exit_s(proceso, &outOfMemory);
             break;
         case FIN_DE_QUANTUM:
             finDeQuantum(proceso);
@@ -220,14 +225,12 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -328,14 +331,12 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -430,14 +431,12 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -511,14 +510,12 @@ void io_fs_create(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 //IO_FS_DELETE (Interfaz, Nombre Archivo)
@@ -588,14 +585,12 @@ void io_fs_delete(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -670,14 +665,12 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -785,14 +778,12 @@ void io_fs_write(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -897,14 +888,12 @@ void io_fs_read(t_pcb *proceso,char **parametros){
         }
         else{
             // mandar proceso a exit porque devuelve -1
-            log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
-            exit_s(proceso,parametros);
+            exit_s(proceso,&invalidInterface);
         }
     }
     else{
-        log_warning(logger, "Finaliza el proceso <%d> - Motivo: <INVALID_INTERFACE>", proceso->pid);
         // mandar proceso a exit
-        exit_s(proceso,parametros);
+        exit_s(proceso,&invalidInterface);
     }
 }
 
@@ -929,6 +918,8 @@ void exit_s(t_pcb *proceso,char **parametros){
     log_info(logger, "finalizo el exit");
     //TODO: ver de encolar en pcbsParaExit
 }
+
+
 
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){

@@ -280,7 +280,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas)
         return proceso;
     if (paginas_necesarias > CANT_FRAMES){
-        enviarMensaje("No hay suficiente espacio en memoria para asignar más páginas", sockets[0]);
+        enviarMensaje("OUT_OF_MEMORY", sockets[0]);
         log_error(loggerError, "Out of Memory al intentar asignar %d bytes al proceso PID: %d",nuevo_tamano,proceso->pid);
         return proceso;
     }
