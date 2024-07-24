@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-
+#include <limits.h>
 TLB tlb;
 uint64_t tiempo_actual=0; // Contador de tiempo para LRU
 
@@ -12,12 +12,24 @@ void limpiarBuffer(int socketCliente){
     void* buffer = recibirBuffer(socketCliente, &size);
     free(buffer);
 }
-
+int obtenerTamanoPagina2(char* path){
+    char *pathConfig=malloc(PATH_MAX);
+    pathConfig[0]='\0';
+    realpath(path, pathConfig);
+    strcat(pathConfig,"/memoria.config");
+  // printf("Path: %s\n", pathConfig);
+    t_config* config = config_create(pathConfig);
+    int tamPagina = config_get_int_value(config, "TAM_PAGINA");
+    config_destroy(config);
+    free(pathConfig);
+    return tamPagina;
+}
 //MMU
 uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
     //uint32_t dirLogica = (uint32_t)strtoul(direccionLogica, NULL, 10);
-    uint32_t page_number = direccionLogica / PAGE_SIZE;
-    uint32_t offset = direccionLogica % PAGE_SIZE;
+    int tamPagina = obtenerTamanoPagina2("../memoria");
+    uint32_t page_number = direccionLogica / tamPagina;
+    uint32_t offset = direccionLogica % tamPagina;
     log_info(logger,"PID: <%d> - DIRECCION LOGICA: <%d> - PAGINA: <%d> - OFFSET: <%d>", pid, direccionLogica, page_number, offset);
     int recibo;
     char* valorAInsertar;
@@ -28,7 +40,7 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         // TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, page_number);
         log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame_number);
-        return frame_number * PAGE_SIZE + offset;
+        return frame_number * tamPagina + offset;
     } else {
         // TLB Miss
         // Aquí deberías consultar la tabla de páginas en memoria y actualizar la TLB
@@ -47,6 +59,7 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
                 //log_info(logger,"Frame de la pagina %d es: %s\n", page_number,valorAInsertar);
                 frame=atoi(valorAInsertar);
                 log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame);
+                free(valorAInsertar);
                 //control=0;
                 //limpiarBuffer(conexionAMemoria);
                 break;
@@ -59,7 +72,7 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         // Agregar la nueva entrada a la TLB
         agregar_a_tlb(pid, page_number, frame);
 
-        return frame* PAGE_SIZE + offset;
+        return frame* tamPagina + offset;
         //}
         //return frame_number * PAGE_SIZE + offset;
         /*log_info(logger,"Recibo de memoria: %d\n", recibo);
@@ -96,9 +109,9 @@ void solicitarDireccion(int pid, int pagina, int socket){
 	free(paquete);
 }
 void inicializar_tlb(char* algoritmoTLB) {
-    tlb.size = CANTIDAD_ENTRADAS_TLB;
+    tlb.size = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
     tlb.algoritmo = algoritmoTLB; // Establece el algoritmo de reemplazo
-    for (size_t i = 0; i < CANTIDAD_ENTRADAS_TLB; i++) {
+    for (size_t i = 0; i < tlb.size; i++) {
         tlb.entries[i].pid = -1;
         tlb.entries[i].page_number = -1;
         tlb.entries[i].frame_number = -1;

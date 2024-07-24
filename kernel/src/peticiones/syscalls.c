@@ -258,7 +258,7 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
     int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
     for(int i = 0; i < cantidadDirecciones; i++)
         direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
     char** tamanios = string_split(tamanio, ",");
     int cantidadTamanios = 0;
@@ -285,7 +285,10 @@ void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
         perror("Error al enviar datos al servidor");
         exit(EXIT_FAILURE); 
     }
-    recibirMensaje(socketClienteIO);
+    char *buffer;
+    recv(socketClienteIO, &buffer, sizeof(buffer), 0);
+    free(direcciones);
+    free(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -359,7 +362,7 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
     for(int i = 0; i < cantidadDirecciones; i++)
         direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
     char** tamanios = string_split(tamanio, ",");
     int cantidadTamanios = 0;
@@ -386,6 +389,8 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     }
     char *buffer;
     recv(socketClienteIO, &buffer, sizeof(buffer), 0);
+    free(direcciones);
+    free(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -450,7 +455,7 @@ void ejecutar_io_fs_create(InterfazSalienteFsCreate* args){
     char* nombreArchivo=args->nombreArchivo;
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     int pid = proceso->pid;
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     paquete->codigo_operacion=IO_FS_CREATE;
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
@@ -530,7 +535,7 @@ void ejecutar_io_fs_delete(InterfazSalienteFsDelete* args){
     char* nombreArchivo=args->nombreArchivo;
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     int pid = proceso->pid;
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     paquete->codigo_operacion=IO_FS_DELETE;
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
@@ -610,7 +615,7 @@ void ejecutar_io_fs_truncate(InterfazSalienteFsTruncate* args){
     int tamanio=atoi(args->tamanio);
     int socketClienteIO = obtener_socket(&kernel, interfaz);
     int pid = proceso->pid;
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     paquete->codigo_operacion=IO_FS_TRUNCATE;
     paquete->buffer = malloc(sizeof(t_buffer));
     int interfaz_len = strlen(interfaz) ; // +1 para el terminador nulo??????
@@ -704,7 +709,7 @@ void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
     int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
     for(int i = 0; i < cantidadDirecciones; i++)
         direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
     char** tamanios = string_split(tamanio, ",");
     int cantidadTamanios = 0;
@@ -737,6 +742,8 @@ void ejecutar_io_fs_write(InterfazSalienteFsWrite* args){
     }
     char *mensaje;
     recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
+    free(direcciones);
+    free(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -817,7 +824,7 @@ void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
     int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
     for(int i = 0; i < cantidadDirecciones; i++)
         direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=crearPaquete();
+    t_paquete* paquete=malloc(sizeof(t_paquete));
     // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
     char** tamanios = string_split(tamanio, ",");
     int cantidadTamanios = 0;
@@ -847,6 +854,8 @@ void ejecutar_io_fs_read(InterfazSalienteFsRead* args){
     send(socketClienteIO, a_enviar, bytes, 0); 
     char *mensaje;
     recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
+    free(direcciones);
+    free(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);

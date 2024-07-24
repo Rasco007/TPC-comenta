@@ -79,6 +79,36 @@ int ejecutarServidorCPU(int *socketCliente) {
                 }
                 proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
                 break;
+            case 104: // PARA LEER POR COPY STRING
+                usleep(1000*1000);
+                log_info(logger, "MEMORIA envía mensaje a CPU segun direccion y tamaño");
+                int dir2, tamano, pid2;
+                recibirDireccionyTamano(*socketCliente, &dir2, &pid2, &tamano);
+                printf("Tamaño: %d\n", tamano);
+                char* datosLeidos = malloc(tamano);
+                memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
+                datosLeidos[tamano] = '\0';
+                log_info(logger, "PID: <%d> - Accion: <LEER> - Direccion Física: <%d> - Valor: <%s>", pid2, dir2, datosLeidos);
+                send(*socketCliente, datosLeidos, tamano, 0);
+                free(datosLeidos);
+                break;
+            case 105: //PARA ESCRIBIR POR COPY STRING
+                usleep(1000*1000);
+                log_info(logger, "CPU envía mensaje a escribir en memoria");
+                int dir, pid3;
+                char cadena[2048]="";
+                recibirDirYCadena(*socketCliente, &dir, &pid3, cadena);
+                cadena[strlen(cadena)] = '\0';
+                log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid3, dir, cadena); 
+                memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
+                char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
+                memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
+                datoEscrito[strlen(cadena)] = '\0';
+                printf("Dato escrito: %s\n", datoEscrito);
+                free(datoEscrito);
+                char *mensje="ok";
+                send(*socketCliente, &mensje, sizeof(mensje), 0);
+                break;
             default:
                 log_warning(logger, "Operación desconocida del CPU.");
                 break;
@@ -138,7 +168,6 @@ char* leer(uint32_t pid, uint32_t direccionFisica, uint32_t tamanio) {
         int marco = entrada->numero_marco;
         list_add(listaMarcosInvolucrados, marco);
     }
-    
     //Falta la lectura
  
 }

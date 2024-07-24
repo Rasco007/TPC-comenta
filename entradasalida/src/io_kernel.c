@@ -362,7 +362,8 @@ void manejarSTDINREAD(int socketCliente) {
     free(tamanios);
     free(direcciones);
     printf("Todo liberado!\n");
-    enviarMensaje("OK", socketCliente);
+    char *mensje="ok";
+    send(fd_kernel, &mensje, sizeof(mensje), 0);
 }
 
 void manejarSTDOUTWRITE(int socketCliente) {

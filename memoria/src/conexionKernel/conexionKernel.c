@@ -46,7 +46,8 @@ int ejecutarServidorKernel(int *socketCliente) {
                 PID = recibirPID(*socketCliente);
                 log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
                 log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
-                //eliminarProcesoDeMemoria(PID);
+                eliminarProcesoDeMemoria(PID);
+                free(pathInstrucciones);
                 break;
             }
             case MENSAJE:{
@@ -68,7 +69,27 @@ int ejecutarServidorKernel(int *socketCliente) {
 void eliminarProcesoDeMemoria(int pid) {
    Proceso *proceso = buscar_proceso_por_pid(pid);
     if (proceso != NULL) {
-        // Elimina todas las páginas del proceso
+        //liberar los marcos de la tabla de paginas
+        for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= 0; i--) {
+             EntradaTablaPaginas *entrada =list_get(proceso->tabla_paginas->entradas, i);
+             int marco = entrada->numero_marco;
+
+            //TODDDDO: PONERRRR   EN LISTA DE  MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS
+
+            // Liberar la página i
+            list_remove(proceso->tabla_paginas->entradas,i);
+            list_replace(mf->listaMarcosLibres, marco,false); //creo que se pone - 1 porque es el indice dee una lista y no existe el marco 0
+            //reemmplazaaaa vaalor marcando false como  disponible
+            free(entrada);
+        }
+    int marcosLibres=0;
+    for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
+        if (list_get(mf->listaMarcosLibres,i) == false)
+            marcosLibres++;
+    }
+    log_info(logger,"Marcos libres: %d",marcosLibres);
+            // Elimina todas las páginas del proceso
+        list_destroy(proceso->tabla_paginas->entradas);
         liberar_tabla_paginas(proceso->tabla_paginas);
 
         // Elimina todas las instrucciones del proceso
@@ -84,7 +105,6 @@ void eliminarProcesoDeMemoria(int pid) {
                 list_remove(mf->listaProcesos,i);
             }
         }
-
         // Libera la memoria del proceso
         free(proceso);
 

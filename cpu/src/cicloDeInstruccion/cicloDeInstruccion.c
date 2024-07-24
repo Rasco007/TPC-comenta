@@ -1,6 +1,6 @@
 #include <cicloDeInstruccion/cicloDeInstruccion.h>
 #include <inttypes.h> //Para imprimir int64_t. No se si esta permitida
-
+#include <limits.h>
 char *listaComandos[] = {
     [SET] = "SET",
     [MOV_IN] = "MOV_IN",
@@ -197,8 +197,15 @@ void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *b
     bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;
 }
 int obtenerTamanoPagina(char* path){
-    t_config* config = config_create(path);
+    char *pathConfig=malloc(PATH_MAX);
+    pathConfig[0]='\0';
+    realpath(path, pathConfig);
+    strcat(pathConfig,"/memoria.config");
+  // printf("Path: %s\n", pathConfig);
+    t_config* config = config_create(pathConfig);
     int tamPagina = config_get_int_value(config, "TAM_PAGINA");
+    config_destroy(config);
+    free(pathConfig);
     return tamPagina;
 }
 // Instrucciones
@@ -218,7 +225,7 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
     temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    int tamPagina = obtenerTamanoPagina("/home/utnso/tp-2024-1c-Silver-Crime/memoria/memoria.config"); 
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio);
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
@@ -311,7 +318,7 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
 
-    int tamPagina = obtenerTamanoPagina("/home/utnso/tp-2024-1c-Silver-Crime/memoria/memoria.config"); 
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio);
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
@@ -383,7 +390,7 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
 
-   int tamPagina = obtenerTamanoPagina("/home/utnso/tp-2024-1c-Silver-Crime/memoria/memoria.config"); 
+   int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio);
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
@@ -454,7 +461,7 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    int tamPagina = obtenerTamanoPagina("/home/utnso/tp-2024-1c-Silver-Crime/memoria/memoria.config"); 
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
     printf("Tamaño de página: %d\n", tamPagina);
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio); 
@@ -518,19 +525,55 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     flag_bloqueante = 1;
     flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
+void enviarDireccionTamano2(int direccion,int tamano, int pid, int socket) {
+   t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = 104;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 3 * sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamano, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), &pid, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
+}
+void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket, int pid) {
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = 105;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    size_t mensaje_len = strlen(mensaje) ; // +1 para el terminador nulo??????
+    paquete->buffer->size = 2*sizeof(int) + mensaje_len;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), mensaje, mensaje_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
+}
 
 /*Copio la cantidad de bytes indicada del string apuntado por SI a DI*/
 void copy_string(char* tamanio){
-    //Copiar contenido de SI a DI
-    memcpy((void*)&contextoEjecucion->DI, (const void*)&contextoEjecucion->SI, sizeof(uint32_t));
-
-    int tamanioInt = atoi(tamanio);
- //Toma del string apuntado por el registro SI y copia la cantidad de bytes indicadas en el parámetro tamaño a la posición de memoria apuntada por el registro DI.
+    int tamanioInt = atoi(tamanio); //ESTE ES EL TAMAÑO DE LA PALABRA A LEER Y ESCRIBIR EN MEMORIA
     int pointer = contextoEjecucion->SI;
-    int tamPagina = obtenerTamanoPagina("/home/utnso/tp-2024-1c-Silver-Crime/memoria/memoria.config"); 
-    printf("Tamaño de página: %d\n", tamPagina);
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = pointer;
-    int last_addr = first_addr + atoi(tamanio); 
+    int last_addr = first_addr + tamanioInt; 
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
@@ -539,51 +582,83 @@ void copy_string(char* tamanio){
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
-    //convierto la variable bytes_por_pagina a un string
-    char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
-    bytes_por_pagina_str[0] = '\0';
-    for (int i = 0; i < num_pages; i++) {
-        char* bytes = malloc(sizeof(char) * 10);
-        sprintf(bytes, "%d", bytes_por_pagina[i]);
-        strcat(bytes_por_pagina_str, bytes);
-        free(bytes);
-        if (i < num_pages - 1) {
-            strcat(bytes_por_pagina_str, ",");
-        }
-    }
-    //imprimo el string
-    printf("Bytes por página: %s\n", bytes_por_pagina_str);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
-    for (int i = 1; i < num_pages; i++) {
+    for (int i = 1; i < num_pages; i++) 
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
-    }
     //imprimo las direcciones lógicas
     printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d\n", i, direccionesLogicas[i]);
-    }
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
     for (int i = 0; i < num_pages; i++) {
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
         printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
     }
-    //convierto a char* las direcciones fisicas
-    char* direccionesFisicas_str = malloc(sizeof(char) * 100);
-    direccionesFisicas_str[0] = '\0';
-    for (int i = 0; i < num_pages; i++) {
-        char* direccion = malloc(sizeof(char) * 10);
-        sprintf(direccion, "%d", direccionesFisicas[i]);
-        strcat(direccionesFisicas_str, direccion);
-        free(direccion);
-        if (i < num_pages - 1) {
-            strcat(direccionesFisicas_str, ",");
-        }
+    int longitud=0;
+    char *cadenacompleta = malloc(tamanioInt);
+    for(int i=0; i<num_pages; i++){
+        if (i==0)
+            cadenacompleta[0]='\0';
+        enviarDireccionTamano2(direccionesFisicas[i],bytes_por_pagina[i],contextoEjecucion->pid,conexionAMemoria);
+        //recibir un mensaje de confirmacion de que se escribio en memoria
+        //usleep(1000*1200);
+        char recibido[100];
+		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        recibido[bytes] = '\0';
+        //log_info(logger, "Recibido: %s", recibido);
+        strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
+			longitud+=bytes_por_pagina[i];
+        log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", contextoEjecucion->pid, direccionesFisicas[i], recibido);
     }
-    //imprimo las direcciones fisicas
-    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
+    log_info(logger, "Cadena completa: %s", cadenacompleta);
+
+//ACA MANDA PARA ESCRIBIR EN MEMORIA
+    int pointer2 = contextoEjecucion->DI;
+    int first_addr2 = pointer2;
+    int last_addr2 = first_addr2 + tamanioInt; 
+    int paginasALeer2 = calcularPaginasALeer(first_addr2, last_addr2, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer2);
+    int bytes_por_pagina2[paginasALeer2];
+    int num_pages2;
+    calcularBytesPorPagina(first_addr2, last_addr2, tamPagina, bytes_por_pagina2, &num_pages2);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages2; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina2[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas2[num_pages2];
+    direccionesLogicas2[0] = first_addr2;
+    for (int i = 1; i < num_pages2; i++) 
+        direccionesLogicas2[i] = direccionesLogicas2[i - 1] + bytes_por_pagina2[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages2; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas2[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas2[num_pages2];
+    for (int i = 0; i < num_pages2; i++) {
+        direccionesFisicas2[i] =  mmu(contextoEjecucion->pid, direccionesLogicas2[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas2[i]);
+    }
+    char *datosLeidos2 = malloc(100);
+    int tamanotexto=0;
+    //divido el texto en partes
+    for(int i=0; i<num_pages2; i++){
+        memcpy(datosLeidos2, cadenacompleta + tamanotexto, bytes_por_pagina2[i]);
+        datosLeidos2[bytes_por_pagina2[i]] = '\0';
+       // printf("Texto a enviar a memoria: %s\n", datosLeidos2);
+        log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", contextoEjecucion->pid, direccionesFisicas2[i], datosLeidos2);
+        tamanotexto += strlen(datosLeidos2);
+        enviarAImprimirAMemoria(datosLeidos2,direccionesFisicas2[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
+        //recibir un mensaje de confirmacion de que se escribio en memoria
+        char recibido[100];
+        recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+    }
+    free(datosLeidos2);
+    free(cadenacompleta);
+    log_warning(logger, "FIN DE COPY_STRING");
 }
 /*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
@@ -824,7 +899,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-   // free(instruccionAEjecutar);
+    free(instruccionAEjecutar); //ver si va aca
     log_info(logger,"Memoria liberada!");
 }
 
