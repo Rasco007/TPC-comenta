@@ -9,9 +9,9 @@
 	#include <cicloDeInstruccion/cicloDeInstruccion.h>
 
     #define obtenerAlgoritmoTLB() config_get_string_value(config, "ALGORITMO_TLB")
-	#define CANTIDAD_ENTRADAS_TLB 32 // Define la cantidad de entradas en la TLB
+	//#define CANTIDAD_ENTRADAS_TLB config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB")
     #define PAGE_SIZE 16 //ESTO DEBE SALIR DEL CONFIG DE MEMORIA!!!!!!
-
+    
     typedef struct {
         uint32_t pid;         // ID del proceso
         uint32_t page_number; // Número de página
@@ -22,7 +22,7 @@
     } TLBEntry;
 
     typedef struct {
-        TLBEntry entries[CANTIDAD_ENTRADAS_TLB];
+        t_list *entries;
         size_t size;
         char* algoritmo;
     } TLB;

@@ -101,6 +101,7 @@ void* ejecutarServidor(void* socketCliente) {
                 printf("Tamaño: %d\n", tamano);
                 char* datosLeidos = malloc(2048);
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
+                datosLeidos[tamano]='0';
                 log_info(logger, "PID: <%d> - Accion: <LEER> - Direccion Física: <%d> - Valor: <%s>", pid2, dir2, datosLeidos);
                 enviarMensaje(datosLeidos, sock);
                 free(datosLeidos);

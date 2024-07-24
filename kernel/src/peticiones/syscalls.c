@@ -362,7 +362,7 @@ void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
     int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
     for(int i = 0; i < cantidadDirecciones; i++)
         direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=malloc(sizeof(t_paquete));
+    t_paquete* paquete=crearPaquete();
     // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
     char** tamanios = string_split(tamanio, ",");
     int cantidadTamanios = 0;

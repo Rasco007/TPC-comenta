@@ -4,7 +4,7 @@
 #include <math.h>
 #include <string.h>
 #include <limits.h>
-TLB tlb;
+TLB *tlb;
 uint64_t tiempo_actual=0; // Contador de tiempo para LRU
 
 void limpiarBuffer(int socketCliente){
@@ -109,7 +109,7 @@ void solicitarDireccion(int pid, int pagina, int socket){
 	free(paquete);
 }
 void inicializar_tlb(char* algoritmoTLB) {
-    tlb.size = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
+    /*tlb.size = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
     tlb.algoritmo = algoritmoTLB; // Establece el algoritmo de reemplazo
     for (size_t i = 0; i < tlb.size; i++) {
         tlb.entries[i].pid = -1;
@@ -119,11 +119,26 @@ void inicializar_tlb(char* algoritmoTLB) {
         tlb.entries[i].last_used = -1;
         tlb.entries[i].time_added = -1;
     }
-    log_info(logger,"TLB inicializada con algoritmo %s. Primer entrada: %d\n", algoritmoTLB, tlb.entries[0].valid);
+    log_info(logger,"TLB inicializada con algoritmo %s. Primer entrada: %d\n", algoritmoTLB, tlb.entries[0].valid);*/
+    //iniciar tlb
+    tlb = malloc(sizeof(TLB));
+    tlb->size = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
+    tlb->algoritmo = algoritmoTLB;
+    tlb->entries = list_create();
+    for(size_t i = 0; i < tlb->size; i++){
+        TLBEntry *entry = malloc(sizeof(TLBEntry));
+        entry->pid = -1;
+        entry->page_number = -1;
+        entry->frame_number = -1;
+        entry->valid = false;
+        entry->last_used = -1;
+        entry->time_added = -1;
+        list_add(tlb->entries, entry);
+    }
 }
 
 int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
-    for (size_t i = 0; i < tlb.size; i++) {
+    /*for (size_t i = 0; i < tlb.size; i++) {
         //printf("TLB Entry valid: %d, TLB entry pid: %d, TLB entry page_number: %d\n", tlb.entries[i].valid, tlb.entries[i].pid, tlb.entries[i].page_number);
         if (tlb.entries[i].valid==true && tlb.entries[i].pid == pid && tlb.entries[i].page_number == page_number) {
             // TLB Hit
@@ -133,12 +148,23 @@ int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
         }
     }
     // TLB Miss
+    return 0; // Indica TLB Miss*/
+    for (size_t i = 0; i < list_size(tlb->entries); i++) {
+        TLBEntry *entry = list_get(tlb->entries, i);
+        if (entry->valid == true && entry->pid == pid && entry->page_number == page_number) {
+            // TLB Hit
+            entry->last_used = tiempo_actual++;
+            *frame_number = entry->frame_number;
+            return 1; // Indica TLB Hit
+        }
+    }
+    // TLB Miss
     return 0; // Indica TLB Miss
 }
 
 void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
     // Busca una entrada inválida
-    for (size_t i = 0; i < tlb.size; i++) {
+    /*for (size_t i = 0; i < tlb.size; i++) {
         if (!tlb.entries[i].valid) {
             tlb.entries[i].pid = pid;
             tlb.entries[i].page_number = page_number;
@@ -178,5 +204,53 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
     tlb.entries[reemplazo].last_used = tiempo_actual;
     tlb.entries[reemplazo].time_added = tiempo_actual;
     tiempo_actual++;
-    log_info(logger,"se reemplazo la entrada %ld\n", reemplazo);
+    log_info(logger,"se reemplazo la entrada %ld\n", reemplazo);*/
+        // Busca una entrada inválida
+    for (size_t i = 0; i < list_size(tlb->entries); i++) {
+        TLBEntry *entry = list_get(tlb->entries, i);
+        if (!entry->valid) {
+            entry->pid = pid;
+            entry->page_number = page_number;
+            entry->frame_number = frame_number;
+            entry->valid = true;
+            entry->last_used = tiempo_actual;
+            entry->time_added = tiempo_actual;
+            tiempo_actual++;
+            log_info(logger, "Se agregó la entrada %ld\n", i);
+            return;
+        }
+    }
+    // Reemplazar una entrada existente según el algoritmo configurado
+    size_t reemplazo = 0;
+    if (strcmp(tlb->algoritmo, "FIFO") == 0) {
+        // Reemplazo FIFO: Encuentra la entrada más antigua
+        reemplazo = 0;
+        for (size_t i = 1; i < list_size(tlb->entries); i++) {
+            TLBEntry *entry = list_get(tlb->entries, i);
+            TLBEntry *oldest = list_get(tlb->entries, reemplazo);
+            if (entry->time_added < oldest->time_added) {
+                reemplazo = i;
+            }
+        }
+    } else if (strcmp(tlb->algoritmo, "LRU") == 0) {
+        // Reemplazo LRU: Encuentra la entrada menos recientemente usada
+        reemplazo = 0;
+        for (size_t i = 1; i < list_size(tlb->entries); i++) {
+            TLBEntry *entry = list_get(tlb->entries, i);
+            TLBEntry *least_used = list_get(tlb->entries, reemplazo);
+            if (entry->last_used < least_used->last_used) {
+                reemplazo = i;
+            }
+        }
+    }
+    // Actualiza la entrada reemplazada
+    TLBEntry *entry = list_get(tlb->entries, reemplazo);
+    entry->pid = pid;
+    entry->page_number = page_number;
+    entry->frame_number = frame_number;
+    entry->valid = true;
+    entry->last_used = tiempo_actual;
+    entry->time_added = tiempo_actual;
+    tiempo_actual++;
+    log_info(logger, "Se reemplazó la entrada %ld\n", reemplazo);
 }
