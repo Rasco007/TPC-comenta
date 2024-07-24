@@ -168,15 +168,13 @@ void signal_s(t_pcb *proceso,char **parametros){
 //     INICIAR_PROCESO /home/utnso/tp-2024-1c-Silver-Crime/memoria/src/scripts_memoria/PLANI_1
 void io_gen_sleep(t_pcb *proceso, char **parametros){
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
-    InterfazSalienteGenSleep* args = malloc(sizeof(InterfazSalienteGenSleep));
-    //args->colaBloqueados = queue_create();
+
      Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
     if (existeInterfaz == 1 && io_global){
         
-
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
         if (esValida == 1){
-            /////////queue_push(args->colaBloqueados, &proceso->pid);
+           
             log_warning(logger, "Proceso <%d> encolado en cola de bloqueados", proceso->pid);
             // en caso de validar() sea 1, hacemos io_gen_sleep
             estadoAnterior = proceso->estado;
@@ -200,7 +198,7 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
                 args->interfaz = parametros[0];
                 args->tiempo = parametros[1];
                 pthread_t pcb_bloqueado;
-                //log_warning(logger, "Proceso: <%d> - Interfaz: <%s> - Tiempo: <%s>",args->proceso->pid, args->interfaz, args->tiempo);
+                //log_warning(logger, "Proceso: <%d> - Interfaz: <%s> - Tiempo: <%s>",args->proceso->pid, args->interfaz, args->tiempo); ver este log
                
                 pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void *) args);
                 pthread_detach(pcb_bloqueado);
@@ -228,76 +226,29 @@ typedef struct{
     t_queue* colaBloqueados;
 }InterfazSalienteStdinRead;
 
-void ejecutar_io_stdin_read(InterfazSalienteStdinRead* args){
-    t_pcb* proceso=args->proceso;
-    char* interfaz=args->interfaz;
-    char* direccionFisica=args->direccionFisica;
-    char* tamanio=args->tamanio;
-    int socketClienteIO = obtener_socket(&kernel, interfaz);
-    //int tamanioInt = atoi(tamanio);
-    //int direccionFisicaInt = atoi(direccionFisica);
-    int pid = proceso->pid;
-    // direccionFisica contiene todas las direcciones separadas por una coma, necesito separarlas
-    char** direcciones = string_split(direccionFisica, ",");
-    int cantidadDirecciones = 0;
-    while(direcciones[cantidadDirecciones] != NULL){
-        cantidadDirecciones++;
-    }
-    int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
-    for(int i = 0; i < cantidadDirecciones; i++)
-        direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=crearPaquete();
-    // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
-    char** tamanios = string_split(tamanio, ",");
-    int cantidadTamanios = 0;
-    while(tamanios[cantidadTamanios] != NULL){
-        cantidadTamanios++;
-    }
-    int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
-    for(int i = 0; i < cantidadTamanios; i++)
-        tamaniosInt[i] = atoi(tamanios[i]);
-    paquete->codigo_operacion=IO_STDIN_READ;
-    paquete->buffer = malloc(sizeof(t_buffer));
-    paquete->buffer->size = cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int) + sizeof(int)*3;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    printf("cantidad de direcciones: %d\n", cantidadDirecciones);
-    //enviar la cantidad de direcciones, las direcciones, la cantidad de tamanios, los tamanios y el pid
-    memcpy(paquete->buffer->stream, &cantidadDirecciones, sizeof(int));
-    memcpy(paquete->buffer->stream+sizeof(int), direccionesInt, cantidadDirecciones*sizeof(int));
-    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+sizeof(int), &cantidadTamanios, sizeof(int));
-    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+2*sizeof(int), tamaniosInt, cantidadTamanios*sizeof(int));
-    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int)+2*sizeof(int), &pid, sizeof(int));
-    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-    void *a_enviar = serializarPaquete(paquete, bytes);
-    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
-        perror("Error al enviar datos al servidor");
-        exit(EXIT_FAILURE); 
-    }
-    recibirMensaje(socketClienteIO);
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(paquete);
-    free(a_enviar);
-    queue_pop(args->colaBloqueados);
-    free(args);
-    free(direccionesInt);
-    free(tamaniosInt);
-    pasarAReady(proceso);
-}
 
 void io_stdin_read(t_pcb *proceso,char **parametros){
-    InterfazSalienteStdinRead* args=malloc(sizeof(InterfazSalienteStdinRead));
-    args->colaBloqueados = queue_create();
+    Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
+   
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
-    if (existeInterfaz == 1){
+    if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDIN");
         if (esValida == 1){
-            queue_push(args->colaBloqueados, &proceso->pid);
+           
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
             loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ",proceso->pid);
+
+            io_global->parametro1 = parametros[1];
+            io_global->parametro2 = parametros[2];
+             log_warning(logger, "parametro 1 %s", parametros[1]);
+             log_warning(logger, "parametro 2 %s", parametros[2]);
+              
+             queue_push( io_global->cola_procesos_io,proceso);
+            sem_post(&io_global->semaforo_cola_procesos);
+            /*
             int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
             if (pidBloqueado == proceso->pid){
                 args->proceso = proceso;
@@ -309,7 +260,7 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
                     pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
-            }
+            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -333,71 +284,29 @@ typedef struct{
     t_queue* colaBloqueados;
 }InterfazSalienteStdoutWrite;
 
-void ejecutar_io_stdout_write(InterfazSalienteStdoutWrite* args){
-    t_pcb* proceso=args->proceso;
-    char* interfaz=args->interfaz;
-    char* direccionFisica=args->direccionFisica;
-    char* tamanio=args->tamanio;
-    int socketClienteIO = obtener_socket(&kernel, interfaz);
-    int pid = proceso->pid;
-    char** direcciones = string_split(direccionFisica, ",");
-    int cantidadDirecciones = 0;
-    while(direcciones[cantidadDirecciones] != NULL)
-        cantidadDirecciones++;
-    int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
-    for(int i = 0; i < cantidadDirecciones; i++)
-        direccionesInt[i] = atoi(direcciones[i]);
-    t_paquete* paquete=crearPaquete();
-    // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
-    char** tamanios = string_split(tamanio, ",");
-    int cantidadTamanios = 0;
-    while(tamanios[cantidadTamanios] != NULL)
-        cantidadTamanios++;
-    int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
-    for(int i = 0; i < cantidadTamanios; i++)
-        tamaniosInt[i] = atoi(tamanios[i]);
-    paquete->codigo_operacion=IO_STDOUT_WRITE;
-    paquete->buffer->size = cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int) + sizeof(int)*3;
-    paquete->buffer->stream = malloc(paquete->buffer->size);
-    printf("cantidad de direcciones: %d\n", cantidadDirecciones);
-    //enviar la cantidad de direcciones, las direcciones, la cantidad de tamanios, los tamanios y el pid
-    memcpy(paquete->buffer->stream, &cantidadDirecciones, sizeof(int));
-    memcpy(paquete->buffer->stream + sizeof(int), direccionesInt, cantidadDirecciones*sizeof(int));
-    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+sizeof(int), &cantidadTamanios, sizeof(int));
-    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int)+2*sizeof(int), tamaniosInt, cantidadTamanios*sizeof(int));
-    memcpy(paquete->buffer->stream + cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int)+2*sizeof(int), &pid, sizeof(int));
-    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-    void *a_enviar = serializarPaquete(paquete, bytes);
-    if (send(socketClienteIO, a_enviar, bytes, 0) != bytes) {
-        perror("Error al enviar datos al servidor");
-        exit(EXIT_FAILURE); 
-    }
-    char *buffer;
-    recv(socketClienteIO, &buffer, sizeof(buffer), 0);
-    free(paquete->buffer->stream);
-    free(paquete->buffer);
-    free(paquete);
-    free(a_enviar);
-    queue_pop(args->colaBloqueados);
-    free(args);
-    free(direccionesInt);
-    free(tamaniosInt);
-    pasarAReady(proceso);
-}
 
 void io_stdout_write(t_pcb *proceso,char **parametros){
-    InterfazSalienteStdoutWrite* args=malloc(sizeof(InterfazSalienteStdoutWrite));
-    args->colaBloqueados = queue_create();
+    Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
+
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
-    if (existeInterfaz == 1){
+    if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDOUT");
         if (esValida == 1){
-            queue_push(args->colaBloqueados, &proceso->pid);
+           
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
             loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDOUT_WRITE",proceso->pid);
+
+              io_global->parametro1 = parametros[1];
+            io_global->parametro2 = parametros[2];
+             log_warning(logger, "parametro 1 %s", parametros[1]);
+             log_warning(logger, "parametro 2 %s", parametros[2]);
+              
+             queue_push( io_global->cola_procesos_io,proceso);
+            sem_post(&io_global->semaforo_cola_procesos);
+            /*
             int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
             if (pidBloqueado == proceso->pid){
                 args->proceso = proceso;
@@ -409,7 +318,7 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
                     pthread_detach(pcb_bloqueado);
                 else
                     log_error(loggerError, "Error al crear hilo");
-            }
+            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1
