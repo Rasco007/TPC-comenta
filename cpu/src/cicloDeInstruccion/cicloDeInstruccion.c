@@ -600,7 +600,7 @@ void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket, int
 /*Copio la cantidad de bytes indicada del string apuntado por SI a DI*/
 void copy_string(char* tamanio){
     int tamanioInt = atoi(tamanio); //ESTE ES EL TAMAÑO DE LA PALABRA A LEER Y ESCRIBIR EN MEMORIA
-    int pointer = contextoEjecucion->SI;
+    int pointer = atoi(dictionary_get(contextoEjecucion->registrosCPU, "SI"));
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = pointer;
     int last_addr = first_addr + tamanioInt-1; 
@@ -646,7 +646,7 @@ void copy_string(char* tamanio){
     log_info(logger, "Cadena completa: %s", cadenacompleta);
 
 //ACA MANDA PARA ESCRIBIR EN MEMORIA
-    int pointer2 = contextoEjecucion->DI;
+    int pointer2 = atoi(dictionary_get(contextoEjecucion->registrosCPU, "DI"));
     int first_addr2 = pointer2;
     int last_addr2 = first_addr2 + tamanioInt-1; 
     int paginasALeer2 = calcularPaginasALeer(first_addr2, last_addr2, tamPagina);
@@ -723,17 +723,7 @@ void set_c(char* registro, char* valor){
     if(strcmp(registro, "PC") == 0){
         contextoEjecucion->programCounter = atoi(valor);
         return;
-    }else if(strcmp(registro, "SI") == 0){
-        contextoEjecucion->SI = atoi(valor);
-        return;
-    }else if(strcmp(registro, "DI") == 0){
-        contextoEjecucion->DI = atoi(valor);
-        return;
     }else{
-        //tiempoEspera = obtenerTiempoEspera();
-        //log_info(logger, "tiempoEspera: %d", tiempoEspera);
-        //usleep(10 * 1000); 
-        //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
     }
 }
@@ -1098,7 +1088,7 @@ char* recibirValor(int socket) {
 }
 
 int obtenerTamanioReg(char* registro){
-    if(string_starts_with(registro, "E")) return 4;
+    if(string_starts_with(registro, "E") || strcmp(registro,"SI")==0 || strcmp(registro,"DI")==0) return 4;
     else return 1;
 }
 

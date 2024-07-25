@@ -21,23 +21,12 @@ typedef enum estadoProceso{
 } estadoProceso; 
 
 typedef struct {
-    char AX[4], BX[4], CX[4], DX[4];
-    char EAX[8], EBX[8], ECX[8], EDX[8];
-}t_reg; //SI y DI?
-
-
-typedef struct {
     uint32_t pid; 
-    int socketPCB; //Sacar
-    t_list* instrucciones; //Sacar
-    uint32_t programCounter;
-    uint32_t SI;
-    uint32_t DI;   
+    uint32_t programCounter;  
     estadoProceso estado; 
     t_dictionary* registrosCPU;
     int64_t tiempoDeUsoCPU; 
     t_list* recursosAsignados;
-    t_list* tablaDePaginas; //Sacar
     int64_t quantum;
     t_algoritmo algoritmo;
 } t_pcb; 

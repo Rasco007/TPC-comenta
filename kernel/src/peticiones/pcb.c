@@ -13,12 +13,8 @@ t_pcb *crearPCB(){
     nuevoPCB->estado = NEW;
     nuevoPCB->pid = procesosCreados;
     nuevoPCB->programCounter = 0;
-    nuevoPCB->SI = 0;
-    nuevoPCB->DI = 0;
-    nuevoPCB->instrucciones = list_create();
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
     nuevoPCB->recursosAsignados = list_create();
-    nuevoPCB->tablaDePaginas = list_create();
     recibirEstructurasInicialesMemoria(nuevoPCB); //Mando señal a memoria para que reserve espacio para el PCB
     log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
@@ -29,25 +25,25 @@ void destruirPCB(t_pcb *pcb){
     //logger=cambiarNombre(logger,"Kernel-Destruccion PCB");
     int pid_copia = pcb->pid;
     list_add(pcbsParaExit, (void*)(uintptr_t)pid_copia);
-    list_destroy_and_destroy_elements(pcb->instrucciones, free);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
     log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
     free(pcb->recursosAsignados);
-    free(pcb->tablaDePaginas);
     free(pcb);
 }
 
 t_dictionary *crearDiccionarioDeRegistros(){
 
     t_dictionary *registros = dictionary_create();
-
-    char name[3] = "AX", longName[4] = "EAX";
-    for (int i = 0; i < 4; i++) {
-        dictionary_put(registros, name, string_repeat('0', 1));
-        longName[0] = 'E';
-        dictionary_put(registros, longName, string_repeat('0', 4));
-        name[0]++, longName[1]++;
-    }
+    dictionary_put(registros,"AX", string_repeat('0', 1));
+    dictionary_put(registros,"BX", string_repeat('0', 1));
+    dictionary_put(registros,"CX", string_repeat('0', 1));
+    dictionary_put(registros,"DX", string_repeat('0', 1));
+    dictionary_put(registros,"EAX", string_repeat('0', 4));
+    dictionary_put(registros,"EBX", string_repeat('0', 4));
+    dictionary_put(registros,"ECX", string_repeat('0', 4));
+    dictionary_put(registros,"EDX", string_repeat('0', 4));
+    dictionary_put(registros,"SI",string_repeat('0',4));
+    dictionary_put(registros,"DI",string_repeat('0',4));
 
     return registros;
 }

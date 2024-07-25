@@ -89,8 +89,6 @@ void actualizarPCB(t_pcb* proceso){
     // list_destroy_and_destroy_elements (proceso->tablaDePaginas, free);
     //proceso->tablaDePaginas = list_duplicate(contextoEjecucion->tablaDePaginas);
     proceso->tiempoDeUsoCPU=contextoEjecucion->tiempoDeUsoCPU;
-    proceso->DI=contextoEjecucion->DI;
-    proceso->SI=contextoEjecucion->SI;
     proceso->algoritmo=contextoEjecucion->algoritmo;
     
     if(proceso->algoritmo != FIFO){
@@ -107,8 +105,6 @@ void asignarPCBAContexto(t_pcb* proceso){
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
     contextoEjecucion->registrosCPU = registrosDelCPU(proceso->registrosCPU);
     contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
-    contextoEjecucion->DI=proceso->DI;
-    contextoEjecucion->SI=proceso->SI;
     contextoEjecucion->algoritmo = proceso->algoritmo;
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
@@ -137,39 +133,6 @@ void asignarPCBAContexto(t_pcb* proceso){
    log_info(logger, "--------------------------------" );*/
 }
 
-void asignarPCBAContextoBeta(t_pcb* proceso){
-
-t_pagina* nuevaPagina1 = malloc(sizeof(t_pagina)); 
-nuevaPagina1->idPagina = 0;
-nuevaPagina1->idFrame = 10;
-nuevaPagina1->bitDeValidez = 1;
-
-t_pagina* nuevaPagina2 = malloc(sizeof(t_pagina));
-nuevaPagina2->idPagina = 1;
-nuevaPagina2->idFrame = 20;
-nuevaPagina2->bitDeValidez = 0;
-
-
-    list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    //contextoEjecucion->instrucciones = list_create();
-list_add(contextoEjecucion->instrucciones, strdup("instr1"));
-list_add(contextoEjecucion->instrucciones, strdup("instr2"));
-list_add(contextoEjecucion->instrucciones, strdup("instr3"));
-    contextoEjecucion->instruccionesLength = 3;
-    contextoEjecucion->pid = proceso->pid;
-    contextoEjecucion->programCounter = proceso->programCounter;
-    dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
-    contextoEjecucion->registrosCPU = registrosDelCPU(proceso->registrosCPU);
-    contextoEjecucion->tiempoDeUsoCPU=proceso->tiempoDeUsoCPU;
-    contextoEjecucion->DI=proceso->DI;
-    contextoEjecucion->SI=proceso->SI;
-    contextoEjecucion->quantum=proceso->quantum;
-     list_add (contextoEjecucion->tablaDePaginas, nuevaPagina1);
-     list_add (contextoEjecucion->tablaDePaginas, nuevaPagina2);
- contextoEjecucion->tablaDePaginasSize=2;
-}
-
 t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     t_dictionary *copia = dictionary_create();
 
@@ -184,6 +147,8 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     char* EBX = malloc(10);
     char* ECX = malloc(10);
     char* EDX = malloc(10);
+    char* SI=malloc(10);
+    char* DI=malloc(10);
 
     // Copy values from the original dictionary
     strncpy(AX, (char *)dictionary_get(aCopiar, "AX"), 3);
@@ -196,6 +161,9 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     strncpy(ECX, (char *)dictionary_get(aCopiar, "ECX"), 10);
     strncpy(EDX, (char *)dictionary_get(aCopiar, "EDX"), 10);
 
+    strncpy(SI, (char *)dictionary_get(aCopiar, "SI"), 10);
+    strncpy(DI, (char *)dictionary_get(aCopiar, "DI"), 10);
+
     // Ensure the strings are null-terminated
     AX[3] = '\0';
     BX[3] = '\0';
@@ -207,6 +175,9 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     ECX[10] = '\0';
     EDX[10] = '\0';
 
+    SI[10]='\0';
+    DI[10]='\0';
+
     // Put values into the new dictionary
     dictionary_put(copia, "AX", AX);
     dictionary_put(copia, "BX", BX);
@@ -216,6 +187,8 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     dictionary_put(copia, "EBX", EBX);
     dictionary_put(copia, "ECX", ECX);
     dictionary_put(copia, "EDX", EDX);
+    dictionary_put(copia, "SI", SI);
+    dictionary_put(copia, "DI", DI);
 
     return copia;
 }
