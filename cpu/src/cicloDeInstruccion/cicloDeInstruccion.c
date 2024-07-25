@@ -112,7 +112,7 @@ void fetch() {
 	switch (peticion) {
 		case MENSAJE:
 			instruccionAEjecutar=recibirMensaje(conexionAMemoria);
-            log_info(logger, "Instruccion recibida: %s", instruccionAEjecutar);
+            //log_info(logger, "Instruccion recibida: %s", instruccionAEjecutar);
 			break;
 		default:
             log_warning(logger,"Operacion desconocida.");
@@ -126,13 +126,13 @@ void decode(){
     // Eliminar el salto de línea al final de instruccionAEjecutar
     remove_newline(instruccionAEjecutar);
 
-    log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
+    //log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
     elementosInstruccion = string_n_split(instruccionAEjecutar, 6, " ");
-    log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); 
+    //log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); 
     cantParametros = string_array_size(elementosInstruccion) - 1; 
-    log_info(logger, "cantParametros: %d", cantParametros);
+    //log_info(logger, "cantParametros: %d", cantParametros);
     instruccionActual = buscar(elementosInstruccion[0], listaComandos); 
-    log_info(logger, "instruccion Actual: %d", instruccionActual);
+    //log_info(logger, "instruccion Actual: %d", instruccionActual);
     //free(instruccionAEjecutar); // creo que va aca
 }
 
@@ -157,7 +157,7 @@ int buscar(char *elemento, char **lista) {
 }
  
 void check_interrupt(){
-    log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
+    //log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
@@ -641,7 +641,7 @@ void copy_string(char* tamanio){
         //log_info(logger, "Recibido: %s", recibido);
         strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
 			longitud+=bytes_por_pagina[i];
-        log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", contextoEjecucion->pid, direccionesFisicas[i], recibido);
+        log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", contextoEjecucion->pid, direccionesFisicas[i], recibido);
     }
     log_info(logger, "Cadena completa: %s", cadenacompleta);
 
@@ -679,7 +679,7 @@ void copy_string(char* tamanio){
         memcpy(datosLeidos2, cadenacompleta + tamanotexto, bytes_por_pagina2[i]);
         datosLeidos2[bytes_por_pagina2[i]] = '\0';
        // printf("Texto a enviar a memoria: %s\n", datosLeidos2);
-        log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", contextoEjecucion->pid, direccionesFisicas2[i], datosLeidos2);
+        log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>", contextoEjecucion->pid, direccionesFisicas2[i], datosLeidos2);
         tamanotexto += strlen(datosLeidos2);
         enviarAImprimirAMemoria(datosLeidos2,direccionesFisicas2[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
         //recibir un mensaje de confirmacion de que se escribio en memoria
@@ -698,7 +698,7 @@ void resize(char* tamanio){
 	switch (peticion) {
 		case MENSAJE:
 			char* mensaje=recibirMensaje(conexionAMemoria);
-            log_info(logger, "Mensaje recibido: %s", mensaje);
+            //log_info(logger, "Mensaje recibido: %s", mensaje);
             if(strcmp(mensaje,"OUT_OF_MEMORY")==0){
                 temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
                 contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
@@ -719,7 +719,7 @@ void resize(char* tamanio){
 
 /*Le asigno al registro el valor que se indica*/
 void set_c(char* registro, char* valor){ 
-    log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
+    //log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
     if(strcmp(registro, "PC") == 0){
         contextoEjecucion->programCounter = atoi(valor);
         return;
@@ -915,7 +915,7 @@ void mov_in(char* registro, char* direccionLogica){
 		longitud+=bytes_por_pagina[i];
         int numeros=0;
         memcpy(&numeros, recibido,bytes_por_pagina[i]);
-        log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+        log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
         // mem_hexdump(&numeros, bytes_por_pagina[i]);
     }
     log_info(logger, "Cadena completa: %s", cadenacompleta);
@@ -1014,7 +1014,7 @@ void mov_out(char* direccionLogica, char* registro){
             printf("Palabra: %s\n", palabra); 
             int numeros=0;
             memcpy(&numeros, palabra,bytes_por_pagina[i]);
-            log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+            log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
             tamanotexto += strlen(palabra);
             enviarAImprimirAMemoria(palabra,direccionesFisicas[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
             //recibir un mensaje de confirmacion de que se escribio en memoria
@@ -1035,7 +1035,7 @@ void mov_out(char* direccionLogica, char* registro){
             printf("Palabra: %s\n", palabra); 
             int numeros=0;
             memcpy(&numeros, palabra, bytes_por_pagina[i]);
-            log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+            log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
             tamanotexto += strlen(palabra);
             enviarAImprimirAMemoria(palabra,direccionesFisicas[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
             //recibir un mensaje de confirmacion de que se escribio en memoria
@@ -1065,7 +1065,7 @@ void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
     free(instruccionAEjecutar); //ver si va aca
-    log_info(logger,"Memoria liberada!");
+    //log_info(logger,"Memoria liberada!");
 }
 
 char* recibirValor(int socket) {
@@ -1115,7 +1115,7 @@ void execute() {
             log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
             break;
     }
-    log_info(logger, "instruccionActual: %d", instruccionActual);
+    //log_info(logger, "instruccionActual: %d", instruccionActual);
     switch(instruccionActual){//TODO: Completar con instrucciones restantes
         case SET: 
             set_c(elementosInstruccion[1], elementosInstruccion[2]);

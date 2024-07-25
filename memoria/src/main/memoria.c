@@ -15,8 +15,8 @@ t_config* config;
 MemoriaFisica *mf;
 int server_fd =0;
 int main() {
-    logger = iniciarLogger ("memoria.log", "Main-Memoria");
-	loggerError = iniciarLogger ("memoriaErrores.log","Main-Memoria (Errores)"); 
+    logger = iniciarLogger ("memoria.log", "Memoria");
+	loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
 	config = iniciarConfiguracion ("memoria.config");
     mf = inicializar_memoria_fisica(TAM_PAGINA);
 	atexit (terminarPrograma);

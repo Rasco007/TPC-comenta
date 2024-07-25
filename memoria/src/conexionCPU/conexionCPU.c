@@ -130,7 +130,7 @@ void recibirEnteros(int socket, int *pid, int *pagina) {
     }
     memcpy(pid ,buffer+sizeof(op_code), sizeof(int));
     memcpy(pagina, buffer+sizeof(int)+sizeof(op_code), sizeof(int));
-    printf("Recibido PID: %d, Página: %d\n", *pid, *pagina);
+    //printf("Recibido PID: %d, Página: %d\n", *pid, *pagina);
 }
 
 void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
@@ -141,7 +141,7 @@ void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
     for (int i = 0; i < list_size(proceso->tabla_paginas->entradas); i++) {
     EntradaTablaPaginas* entrada = list_get(proceso->tabla_paginas->entradas, i);
         if (proceso->pid == pid && entrada->numero_pagina == pagina) {
-             log_info(logger, "Marco encontrado: %d", i);
+            //log_info(logger, "Marco encontrado: %d", i);
             frame = entrada->numero_marco;
         }
     }

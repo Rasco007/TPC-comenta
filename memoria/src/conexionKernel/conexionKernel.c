@@ -108,7 +108,7 @@ void eliminarProcesoDeMemoria(int pid) {
         // Libera la memoria del proceso
         free(proceso);
 
-        log_info(logger, "Proceso PID: <%d> eliminado correctamente", pid);
+        //log_info(logger, "Proceso PID: <%d> eliminado correctamente", pid);
     } else {
         log_warning(logger, "Proceso PID: <%d> no encontrado para eliminación", pid);
     }
