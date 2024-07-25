@@ -5,6 +5,8 @@ pthread_mutex_t mutex;
 MemoriaFisica *inicializar_memoria_fisica() {
     MemoriaFisica *mf = malloc(sizeof(MemoriaFisica));
     mf->memoria = malloc(TAM_MEMORIA);
+    //inicializo la memoria con nulos
+    memset(mf->memoria,0,TAM_MEMORIA);
     mf->listaMarcosLibres = list_create();
     mf->listaProcesos = list_create();
     for(int i=0;i<TAM_MEMORIA/TAM_PAGINA;i++){

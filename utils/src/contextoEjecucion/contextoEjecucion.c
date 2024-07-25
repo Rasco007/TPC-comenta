@@ -12,7 +12,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     paquete->buffer->size = sizeof(contexto->pid) + sizeof(contexto->programCounter) + sizeof(contexto->instruccionesLength) ;
 
      // Calcular el tamaño de los registros
-    paquete->buffer->size  += 4 * (1 + 4); // AX, BX, CX, DX (1 bytes cada uno) + EAX, EBX, ECX, EDX (4 bytes cada uno)
+    paquete->buffer->size  += 4 * (3 + 10); // AX, BX, CX, DX (1 bytes cada uno) + EAX, EBX, ECX, EDX (4 bytes cada uno)
     
     //Calculo para SI y DI
     paquete->buffer->size+=sizeof(contexto->SI)+sizeof(contexto->DI);
@@ -49,7 +49,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     char* registros[] = {"AX", "BX", "CX", "DX", "EAX", "EBX", "ECX", "EDX"};
     for (int i = 0; i < 8; i++) {
         char* registro = dictionary_get(contexto->registrosCPU, registros[i]);
-        int registro_length = (i < 4) ? 1 : 4;
+        int registro_length = (i < 4) ? 3 : 10;
         memcpy(paquete->buffer->stream + desplazamiento, registro, registro_length);
         desplazamiento += registro_length;
     }
@@ -90,7 +90,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
 
 log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
-    int bytes = sizeof(op_code) + sizeof(int) + paquete->buffer->size;
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     
     // Serializar el paquete
     void *a_enviar = serializarPaquete(paquete, bytes);
@@ -148,10 +148,10 @@ void recibirContextoBeta(int socket) {
 
     // AX, BX, CX, DX (1 byte cada uno)
     for (char nombre = 'A'; nombre <= 'D'; nombre++) {
-        registro = malloc(2); // 1 byte + terminador nulo
-        memcpy(registro, buffer + desplazamiento, 1);
-        registro[1] = '\0';
-        desplazamiento += 1;
+        registro = malloc(4); // 1 byte + terminador nulo
+        memcpy(registro, buffer + desplazamiento, 3);
+        registro[3] = '\0';
+        desplazamiento += 3;
 
         snprintf(nombreRegistro, 3, "%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
@@ -161,10 +161,10 @@ void recibirContextoBeta(int socket) {
 
     // EAX, EBX, ECX, EDX (4 bytes cada uno)
     for (char nombre = 'A'; nombre <= 'D'; nombre++) {
-        registro = malloc(5); // 4 bytes + terminador nulo
-        memcpy(registro, buffer + desplazamiento, 4);
-        registro[4] = '\0';
-        desplazamiento += 4;
+        registro = malloc(11); // 4 bytes + terminador nulo
+        memcpy(registro, buffer + desplazamiento, 10);
+        registro[10] = '\0';
+        desplazamiento += 10;
 
         snprintf(nombreRegistro, 4, "E%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);

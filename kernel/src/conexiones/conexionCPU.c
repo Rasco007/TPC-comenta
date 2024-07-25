@@ -174,38 +174,38 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     t_dictionary *copia = dictionary_create();
 
     // Allocate memory for 1-byte registers
-    char* AX = malloc(sizeof(char) * (1 + 1));
-    char* BX = malloc(sizeof(char) * (1 + 1));
-    char* CX = malloc(sizeof(char) * (1 + 1));
-    char* DX = malloc(sizeof(char) * (1 + 1));
+    char* AX = malloc(3);
+    char* BX = malloc(3);
+    char* CX = malloc(3);
+    char* DX = malloc(3);
 
     // Allocate memory for 4-byte registers
-    char* EAX = malloc(sizeof(char) * (4 + 1));
-    char* EBX = malloc(sizeof(char) * (4 + 1));
-    char* ECX = malloc(sizeof(char) * (4 + 1));
-    char* EDX = malloc(sizeof(char) * (4 + 1));
+    char* EAX = malloc(10);
+    char* EBX = malloc(10);
+    char* ECX = malloc(10);
+    char* EDX = malloc(10);
 
     // Copy values from the original dictionary
-    strncpy(AX, (char *)dictionary_get(aCopiar, "AX"), 1);
-    strncpy(BX, (char *)dictionary_get(aCopiar, "BX"), 1);
-    strncpy(CX, (char *)dictionary_get(aCopiar, "CX"), 1);
-    strncpy(DX, (char *)dictionary_get(aCopiar, "DX"), 1);
+    strncpy(AX, (char *)dictionary_get(aCopiar, "AX"), 3);
+    strncpy(BX, (char *)dictionary_get(aCopiar, "BX"), 3);
+    strncpy(CX, (char *)dictionary_get(aCopiar, "CX"), 3);
+    strncpy(DX, (char *)dictionary_get(aCopiar, "DX"), 3);
 
-    strncpy(EAX, (char *)dictionary_get(aCopiar, "EAX"), 4);
-    strncpy(EBX, (char *)dictionary_get(aCopiar, "EBX"), 4);
-    strncpy(ECX, (char *)dictionary_get(aCopiar, "ECX"), 4);
-    strncpy(EDX, (char *)dictionary_get(aCopiar, "EDX"), 4);
+    strncpy(EAX, (char *)dictionary_get(aCopiar, "EAX"), 10);
+    strncpy(EBX, (char *)dictionary_get(aCopiar, "EBX"), 10);
+    strncpy(ECX, (char *)dictionary_get(aCopiar, "ECX"), 10);
+    strncpy(EDX, (char *)dictionary_get(aCopiar, "EDX"), 10);
 
     // Ensure the strings are null-terminated
-    AX[1] = '\0';
-    BX[1] = '\0';
-    CX[1] = '\0';
-    DX[1] = '\0';
+    AX[3] = '\0';
+    BX[3] = '\0';
+    CX[3] = '\0';
+    DX[3] = '\0';
 
-    EAX[4] = '\0';
-    EBX[4] = '\0';
-    ECX[4] = '\0';
-    EDX[4] = '\0';
+    EAX[10] = '\0';
+    EBX[10] = '\0';
+    ECX[10] = '\0';
+    EDX[10] = '\0';
 
     // Put values into the new dictionary
     dictionary_put(copia, "AX", AX);
