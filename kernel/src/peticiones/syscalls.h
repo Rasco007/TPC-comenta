@@ -30,7 +30,7 @@ void retornoContexto(t_pcb *, t_contexto *);
 //void prc_io_gen_sleep(t_contexto *contextoEjecucion, t_pcb *proceso);
 void volverACPU(t_pcb *);
 void pasarAReady(t_pcb* proceso);
-void dormir_IO(InterfazSalienteGenSleep* args);
+
 
 void recibirMsjIO(int socketClienteIO);
 
