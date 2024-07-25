@@ -1,6 +1,7 @@
 #include <cicloDeInstruccion/cicloDeInstruccion.h>
 #include <inttypes.h> //Para imprimir int64_t. No se si esta permitida
 #include <limits.h>
+#include <commons/memory.h>
 char *listaComandos[] = {
     [SET] = "SET",
     [MOV_IN] = "MOV_IN",
@@ -196,6 +197,37 @@ void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *b
     }
     bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;
 }
+void calcularBytesPorPagina2(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
+    int total_bytes = last_addr - first_addr+1; // Calcula el total de bytes a leer
+
+    // Calcula el número de página inicial y el desplazamiento dentro de la página
+    int start_page = first_addr / page_size;
+    int start_offset = first_addr % page_size;
+
+    // Calcula el número de página final
+    int end_page = last_addr / page_size;
+
+    // Calcula el número total de páginas
+    *num_pages = end_page - start_page + 1;
+
+    // Calcula los bytes a leer en la primera página
+    if (start_page == end_page) {
+        // Caso especial: first_addr y last_addr están en la misma página
+        bytes_por_pagina[0] = total_bytes;
+    } else {
+        bytes_por_pagina[0] = page_size - start_offset;
+   
+
+    // Llena las páginas intermedias con tamaño completo de página
+    for (int i = 1; i < *num_pages - 1; i++) {
+        bytes_por_pagina[i] = page_size;
+    }
+
+    // Calcula los bytes a leer en la última página
+    bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size); 
+    }
+}
+
 int obtenerTamanoPagina(char* path){
     char *pathConfig=malloc(PATH_MAX);
     pathConfig[0]='\0';
@@ -227,12 +259,12 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
-    int last_addr = first_addr + atoi(regTamanio);
+    int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
-    calcularBytesPorPagina(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
@@ -320,12 +352,12 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
 
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
-    int last_addr = first_addr + atoi(regTamanio);
+    int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
-    calcularBytesPorPagina(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
@@ -392,12 +424,12 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
 
    int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
-    int last_addr = first_addr + atoi(regTamanio);
+    int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
-    calcularBytesPorPagina(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
@@ -464,12 +496,12 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     printf("Tamaño de página: %d\n", tamPagina);
     int first_addr = atoi(regDireccion);
-    int last_addr = first_addr + atoi(regTamanio); 
+    int last_addr = first_addr + atoi(regTamanio)-1; 
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
-    calcularBytesPorPagina(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
@@ -573,12 +605,12 @@ void copy_string(char* tamanio){
     int pointer = contextoEjecucion->SI;
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = pointer;
-    int last_addr = first_addr + tamanioInt; 
+    int last_addr = first_addr + tamanioInt-1; 
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
-    calcularBytesPorPagina(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
@@ -618,12 +650,12 @@ void copy_string(char* tamanio){
 //ACA MANDA PARA ESCRIBIR EN MEMORIA
     int pointer2 = contextoEjecucion->DI;
     int first_addr2 = pointer2;
-    int last_addr2 = first_addr2 + tamanioInt; 
+    int last_addr2 = first_addr2 + tamanioInt-1; 
     int paginasALeer2 = calcularPaginasALeer(first_addr2, last_addr2, tamPagina);
     log_info(logger, "Cant. de paginas a leer: %d", paginasALeer2);
     int bytes_por_pagina2[paginasALeer2];
     int num_pages2;
-    calcularBytesPorPagina(first_addr2, last_addr2, tamPagina, bytes_por_pagina2, &num_pages2);
+    calcularBytesPorPagina2(first_addr2, last_addr2, tamPagina, bytes_por_pagina2, &num_pages2);
     //printf("Bytes a escribir en cada página:\n");
     for (int i = 0; i < num_pages2; i++) 
         printf("Página %d: %d bytes\n", i, bytes_por_pagina2[i]);
@@ -663,7 +695,7 @@ void copy_string(char* tamanio){
 /*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
     solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
-    char* mensaje = recibirMensaje(conexionAMemoria);
+    /*char* mensaje = recibirMensaje(conexionAMemoria);
     if(strcmp(mensaje,"OUT_OF_MEMORY")){
         temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
         contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
@@ -673,7 +705,7 @@ void resize(char* tamanio){
         flag_bloqueante = 1;
         flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
         return;  
-    }
+    }*/
 }
 
 /*Le asigno al registro el valor que se indica*/
@@ -805,54 +837,102 @@ void exit_c () {
 
 /*Leo el valor almacenado en la direccion fisica de memoria y lo almaceno en el registro*/
 void mov_in(char* registro, char* direccionLogica){
-    uint32_t pid=contextoEjecucion->pid;
+    /*uint32_t pid=contextoEjecucion->pid;
     char* valorAInsertar;
     char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
     uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
     uint32_t dirFisica = UINT32_MAX;
     dirFisica = mmu(pid,dirLogica, tamRegistro); 
-
     log_info(logger, "Direccion fisica: %d", dirFisica);
-
     //Mando pid, dirFisica y tamanio de registro a memoria
     if(dirFisica!=UINT32_MAX){
         t_paquete* paquete=crearPaquete();
         paquete->codigo_operacion=READ;
         paquete->buffer = malloc(sizeof(t_buffer));
-
         paquete->buffer->size = sizeof(uint32_t)*3;
         paquete->buffer->stream = malloc(paquete->buffer->size);
         memcpy(paquete->buffer->stream, &pid, sizeof(uint32_t));
         memcpy(paquete->buffer->stream + sizeof(uint32_t), &dirFisica, sizeof(uint32_t));
         memcpy(paquete->buffer->stream + sizeof(uint32_t)*2, &tamRegistro, sizeof(uint32_t));
-
         int bytes=sizeof(op_code)+sizeof(paquete->buffer->size)+paquete->buffer->size;
         void *a_enviar = serializarPaquete(paquete, bytes);
         if (send(conexionAMemoria, a_enviar, bytes, 0) != bytes) {
             perror("Error al enviar datos al servidor");
             exit(EXIT_FAILURE); 
         }
-        
         free(paquete->buffer->stream);
         free(paquete->buffer);
         free(paquete);
         free(a_enviar);    
-        
         valorAInsertar=recibirMensaje(conexionAMemoria);
-
         dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
-        
         log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", dirFisica, valorAInsertar);
         free (valorAInsertar);
     }else {
         log_info(logger, "Error: Dirección física inválida\n");
+    }*/
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
+    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + tamRegistro-1;
+    printf("last_addr: %d\n", last_addr);   
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) 
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
     }
+
+    int longitud=0;
+    char *cadenacompleta = malloc(tamRegistro);
+    for(int i=0; i<num_pages; i++){
+        if (i==0)
+            cadenacompleta[0]='\0';
+        enviarDireccionTamano2(direccionesFisicas[i],bytes_por_pagina[i],contextoEjecucion->pid,conexionAMemoria);
+        char recibido[100];
+		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        recibido[bytes] = '\0';
+        log_info(logger, "Recibido: %s", recibido);
+        strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
+		longitud+=bytes_por_pagina[i];
+        int numeros=0;
+        memcpy(&numeros, recibido,bytes_por_pagina[i]);
+        log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+        // mem_hexdump(&numeros, bytes_por_pagina[i]);
+    }
+    log_info(logger, "Cadena completa: %s", cadenacompleta);
+    int numTotal=0;
+    memcpy(&numTotal, cadenacompleta, tamRegistro);
+    log_info(logger, "Valor total: %d", numTotal);
+    //paso numTotal a string
+    char* numTotalStr = malloc(sizeof(char) * 10);
+    sprintf(numTotalStr, "%d", numTotal);
+    free(cadenacompleta);
+    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(numTotalStr));
 };
 
 /*Escribo en la direccion fisica de memoria el valor almacenado en el registro*/
 void mov_out(char* direccionLogica, char* registro){
-    uint32_t pid=contextoEjecucion->pid;
+    /*uint32_t pid=contextoEjecucion->pid;
     void * valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
     uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
     char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
@@ -860,7 +940,6 @@ void mov_out(char* direccionLogica, char* registro){
     //printf("Direccion logica: %s\n", dirLogica);
     //printf("tamRegistro: %d\n", tamRegistro); ver esto!
     dirFisica = mmu(pid,dirLogica, tamRegistro);
-
     //Mando pid, dirFisica y tamanio de registro a memoria
     if(dirFisica != UINT32_MAX){ 
         t_paquete* paquete=crearPaquete();
@@ -889,6 +968,82 @@ void mov_out(char* direccionLogica, char* registro){
         free(respuesta);
 
         log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", dirFisica, (char *)valor);
+    }*/
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
+    char* valorRegistro=dictionary_get(contextoEjecucion->registrosCPU, registro);
+    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
+    uint32_t valorReg= atoi(valorRegistro);
+    log_warning(logger, "Valor del registro: %u", valorReg);
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    //printf("first_addr: %d\n", first_addr);
+    int last_addr = first_addr + tamRegistro-1;
+    //printf("last_addr: %d\n", last_addr);
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) 
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+
+    if (tamRegistro == 1){
+        uint8_t registro_ext = valorReg;
+        void* registro_ext_puntero = &registro_ext;
+        char *palabra=malloc(1);
+        int tamanotexto=0;
+        for(int i=0; i<num_pages; i++){
+            printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
+            memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
+            palabra[bytes_por_pagina[i]] = '\0';
+            printf("Palabra: %s\n", palabra); 
+            int numeros=0;
+            memcpy(&numeros, palabra,bytes_por_pagina[i]);
+            log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+            tamanotexto += strlen(palabra);
+            enviarAImprimirAMemoria(palabra,direccionesFisicas[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
+            //recibir un mensaje de confirmacion de que se escribio en memoria
+            char recibido[100];
+            recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        }
+        free(palabra);
+    }
+    else{
+        uint32_t registro_ext = valorReg;
+        void* registro_ext_puntero = &registro_ext;
+        char *palabra=malloc(4);
+        int tamanotexto=0;
+        for(int i=0; i<num_pages; i++){
+            printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
+            memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
+            palabra[bytes_por_pagina[i]] = '\0';
+            printf("Palabra: %s\n", palabra); 
+            int numeros=0;
+            memcpy(&numeros, palabra, bytes_por_pagina[i]);
+            log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+            tamanotexto += strlen(palabra);
+            enviarAImprimirAMemoria(palabra,direccionesFisicas[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
+            //recibir un mensaje de confirmacion de que se escribio en memoria
+            char recibido[100];
+            recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        }
+        free(palabra);
     }
 };
 
