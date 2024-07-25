@@ -109,8 +109,6 @@ void fetch() {
     solicitarInstruccion(pid, numInstruccionABuscar, conexionAMemoria);
     //Recibo la instruccion
     int peticion = recibirOperacion(conexionAMemoria);
-    //int x=1;
-    //while(x==1){
 	switch (peticion) {
 		case MENSAJE:
 			instruccionAEjecutar=recibirMensaje(conexionAMemoria);
@@ -695,17 +693,28 @@ void copy_string(char* tamanio){
 /*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
     solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
-    /*char* mensaje = recibirMensaje(conexionAMemoria);
-    if(strcmp(mensaje,"OUT_OF_MEMORY")){
-        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-        modificarMotivoDesalojo (RESIZE, 0, "","", "", "","");
-        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-        flag_bloqueante = 1;
-        flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
-        return;  
-    }*/
+    
+    int peticion = recibirOperacion(conexionAMemoria);
+	switch (peticion) {
+		case MENSAJE:
+			char* mensaje=recibirMensaje(conexionAMemoria);
+            log_info(logger, "Mensaje recibido: %s", mensaje);
+            if(strcmp(mensaje,"OUT_OF_MEMORY")==0){
+                temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+                contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+                temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+                modificarMotivoDesalojo (RESIZE, 0, "","", "", "","");
+                enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+                flag_bloqueante = 1;
+                flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+                return;  
+            }
+            free(mensaje);
+			break;
+		default:
+            log_warning(logger,"Operacion desconocida.");
+			break;
+	}
 }
 
 /*Le asigno al registro el valor que se indica*/

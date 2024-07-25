@@ -4,7 +4,8 @@ int tiempo;
 char* valorLeido;
 int indice;
 int pid;
-char* instruccion; 
+char* instruccion;
+char* mensajeResize; 
 
 void limpiarBuffer(int socketCliente){
     int size;
@@ -78,6 +79,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                     break;
                 }
                 proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
+                enviarMensaje(mensajeResize, *socketCliente);
                 break;
             case 104: // PARA LEER POR COPY STRING
                 usleep(1000*1000);
@@ -280,7 +282,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     if (paginas_necesarias == proceso->tabla_paginas->paginas_asignadas)
         return proceso;
     if (paginas_necesarias > CANT_FRAMES){
-        enviarMensaje("OUT_OF_MEMORY", sockets[0]);
+        mensajeResize = "OUT_OF_MEMORY";
         log_error(loggerError, "Out of Memory al intentar asignar %d bytes al proceso PID: %d",nuevo_tamano,proceso->pid);
         return proceso;
     }
@@ -332,6 +334,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         if (list_get(mf->listaMarcosLibres,i) == true)
             log_info(logger,"Marco ocupado: %d",i);
     }
+    mensajeResize="OK";
     return proceso;    
 }
 
