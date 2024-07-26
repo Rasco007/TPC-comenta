@@ -13,8 +13,8 @@ void conexionCPU() {
     loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU");
 
     while(1){
-        conexionACPU = conexion("CPU_DISPATCH");
-        
+       
+        conexionACPU = crearConexion(confGet("IP_CPU"), confGet("PUERTO_CPU_DISPATCH"));
         if(conexionACPU != -1){
            break;
         }
@@ -26,7 +26,7 @@ void conexionCPU() {
 
     //CONEXION CPU INTERRUPT
     while(1){
-        conexionACPUInterrupt = conexion("CPU_INTERRUPT");
+        conexionACPUInterrupt = crearConexion(confGet("IP_CPU"), confGet("PUERTO_CPU_INTERRUPT"));
         
         if(conexionACPUInterrupt != -1){
             break;
