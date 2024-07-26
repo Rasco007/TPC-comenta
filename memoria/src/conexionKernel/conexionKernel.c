@@ -47,7 +47,7 @@ int ejecutarServidorKernel(int *socketCliente) {
                 log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
                 log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
                 eliminarProcesoDeMemoria(PID);
-                free(pathInstrucciones);
+               // free(pathInstrucciones);
                 break;
             }
             case MENSAJE:{
@@ -93,10 +93,10 @@ void eliminarProcesoDeMemoria(int pid) {
         liberar_tabla_paginas(proceso->tabla_paginas);
 
         // Elimina todas las instrucciones del proceso
-        for (int i = 0; i < proceso->numero_instrucciones; i++) {
+        /*for (int i = 0; i < proceso->numero_instrucciones; i++) {
             free(proceso->instrucciones[i]);
         }
-        free(proceso->instrucciones);
+        free(proceso->instrucciones);*/
 
         //bbusco procesoo en la lisssstaa y lo eliminoo
         for (int i = 0; i < list_size(mf->listaProcesos); i++) {
@@ -106,7 +106,7 @@ void eliminarProcesoDeMemoria(int pid) {
             }
         }
         // Libera la memoria del proceso
-        free(proceso);
+        //free(proceso);
 
         log_info(logger, "Proceso PID: <%d> eliminado correctamente", pid);
     } else {

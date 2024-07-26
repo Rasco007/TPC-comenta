@@ -509,7 +509,7 @@ void ejecutar_io_fs_read(Interfaz *interfaz, t_pcb *proceso){
     char* punteroArchivo=interfaz->parametro4;
     
     int punterito = atoi(punteroArchivo);
-    int socketClienteIO = obtener_socket(&kernel, interfaz);
+    int socketClienteIO = obtener_socket(&kernel, interfaz->nombre_interfaz);
     int pid = proceso->pid;
     char** direcciones = string_split(direccion, ",");
     int cantidadDirecciones = 0;
@@ -684,10 +684,10 @@ void dormir_IO(Interfaz *interfaz, t_pcb *proceso){
    
     int pid = proceso->pid;
     log_info(logger, "tiempo recibido %s", tiempo);
-    log_info(logger, "interfaz recibida %s", interfaz);
+    log_info(logger, "interfaz recibida %s", interfaz->nombre_interfaz);
     int socketClienteIO = interfaz->socket_interfaz;
     log_info(logger, "se recibio el socket %d", socketClienteIO);
-    enviarMensajeGen(socketClienteIO, interfaz, tiempo, pid);
+    enviarMensajeGen(socketClienteIO, interfaz->nombre_interfaz, tiempo, pid);
     //log_info(logger, "antes de recibir msj");
     //Recibir mensaje de confirmacion de IO
     recibirMsjIO( socketClienteIO);

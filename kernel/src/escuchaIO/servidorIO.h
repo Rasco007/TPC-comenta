@@ -44,6 +44,13 @@ int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz);
 int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido);
 Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz);
 extern t_contexto* contextoEjecucion;
-
+void ejecutar_io(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_fs_truncate(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_fs_write(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_fs_read(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_stdout_write(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_fs_create(Interfaz *interfaz, t_pcb *proceso);
+void ejecutar_io_fs_delete(Interfaz *interfaz, t_pcb *proceso);
 extern Kernel_io kernel;
 #endif

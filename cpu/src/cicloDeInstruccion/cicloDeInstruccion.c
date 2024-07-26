@@ -899,7 +899,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-    free(instruccionAEjecutar); //ver si va aca
+    //free(instruccionAEjecutar); //ver si va aca
     log_info(logger,"Memoria liberada!");
 }
 
