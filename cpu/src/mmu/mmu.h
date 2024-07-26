@@ -9,25 +9,26 @@
 	#include <cicloDeInstruccion/cicloDeInstruccion.h>
 
     #define obtenerAlgoritmoTLB() config_get_string_value(config, "ALGORITMO_TLB")
-	#define CANTIDAD_ENTRADAS_TLB 32 // Define la cantidad de entradas en la TLB
-    #define PAGE_SIZE 2048 // Define el tamaño de una página
-
+	//#define CANTIDAD_ENTRADAS_TLB config_get_string_value(config, "CANTIDAD_ENTRADAS_TLB")
+    #define PAGE_SIZE 16 //ESTO DEBE SALIR DEL CONFIG DE MEMORIA!!!!!!
+    
     typedef struct {
         uint32_t pid;         // ID del proceso
         uint32_t page_number; // Número de página
         uint32_t frame_number;// Número de marco
         bool valid;           // Validez de la entrada
         uint64_t last_used;   // Timestamp para LRU (Opcional, para el manejo de LRU)
+        uint64_t time_added;   // Timestamp para FIFO
     } TLBEntry;
 
     typedef struct {
-        TLBEntry entries[CANTIDAD_ENTRADAS_TLB];
+        t_list *entries;
         size_t size;
         char* algoritmo;
     } TLB;
 
     
-	uint32_t mmu(uint32_t pid, char* direccionLogica, int tamValor);
+	uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor);
 	//bool manejar_fallo_de_pagina(PageTable *page_table, uint32_t page_number, uint32_t frame_number);
     void inicializar_tlb(char* algoritmoTLB);
     int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number);

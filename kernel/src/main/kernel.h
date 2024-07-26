@@ -23,5 +23,6 @@ extern t_log* logger;
 extern t_log* loggerError;
 extern t_config* config;
 extern pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h;
-
+extern pthread_mutex_t mutex_lista_global;
+extern t_list* lista_global_io;
 #endif

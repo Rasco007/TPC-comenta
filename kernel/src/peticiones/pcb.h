@@ -10,6 +10,7 @@
 #include <commons/temporal.h>
 #include <global.h>
 #include <main/configuraciones.h>
+#include <contextoEjecucion/contextoEjecucion.h>
 
 typedef enum estadoProceso{
     NEW, 
@@ -20,29 +21,24 @@ typedef enum estadoProceso{
 } estadoProceso; 
 
 typedef struct {
-    char AX[4], BX[4], CX[4], DX[4];
-    char EAX[8], EBX[8], ECX[8], EDX[8];
-}t_reg; //SI y DI?
-
-
-typedef struct {
     uint32_t pid; 
-    int socketPCB; 
-    t_list* instrucciones; 
-    uint32_t programCounter;
-    uint32_t SI;
-    uint32_t DI;   
+    uint32_t programCounter;  
     estadoProceso estado; 
     t_dictionary* registrosCPU;
-    t_temporal* tiempoDeUsoCPU; 
+    int64_t tiempoDeUsoCPU; 
     t_list* recursosAsignados;
-    t_list* tablaDePaginas;
     int64_t quantum;
+    t_algoritmo algoritmo;
+    bool fin_de_quantum;
+    int numeroInstrucciones;
 } t_pcb; 
 
 extern t_list *pcbsNEW;
 extern t_list *pcbsREADY;
+extern t_list *pcbsREADYaux;
 extern t_list *pcbsEnMemoria;
+extern t_list *pcbsBloqueados;
+extern t_list *pcbsParaExit;
 extern t_log* logger;
 extern int32_t procesosCreados;
 extern char* pidsInvolucrados; 
@@ -98,6 +94,7 @@ void agregarPID(void *value);
 void listarPIDS(t_list *pcbs);
 void imprimirListaPCBs(t_list *pcbs);
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid);
+void imprimirListaExit(t_list *idsExit);
 
 
 

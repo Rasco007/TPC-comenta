@@ -19,7 +19,7 @@
 #include <../include/iniciar_io.h>
 
 #include <../include/io_kernel.h>
-
+#include <../include/io_memoria.h>
 extern t_log* loggerError;
 
 extern int fd_kernel;
@@ -34,5 +34,7 @@ extern char* PUERTO_MEMORIA;
 extern char* PATH_BASE_DIALFS;
 extern int BLOCK_SIZE;
 extern int BLOCK_COUNT;
+extern int RETRASO_COMPACTACION;
 
+void crearCarpetaSiNoExiste(const char *path);
 #endif

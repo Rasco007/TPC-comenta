@@ -2,6 +2,8 @@
 
 sem_t hayProcesosReady;
 sem_t hayProcesosNuevos;
+pthread_mutex_t pausaMutex;
+pthread_cond_t pausaCond;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
 t_list *pcbsREADYaux;
@@ -10,23 +12,41 @@ t_list *pcbsBloqueados;
 t_list *pcbsParaExit;
 int32_t procesosCreados = 0;
 pthread_mutex_t mutexListaNew;
-pthread_mutex_t mutexListaReady; 
+pthread_mutex_t mutexListaReady;
+pthread_mutex_t mutexListaReadyAux; 
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 bool pausaPlanificacion =false; //Flag para manejar el pausado de la planificacion desde consola
+int flag_exit=0;
 
 int gradoMultiprogramacion; 
 char *estadosProcesos[5] = {"NEW", "READY", "EXEC", "BLOCKED", "EXIT"}; 
 int *instanciasRecursos;
 
 void planificarALargoPlazo(){
-    log_info(logger, "Planificador a largo plazo iniciado");
-    while (!pausaPlanificacion) //Mientras no este pausado...
+    //logger=cambiarNombre(logger,"Kernel-Planificador LP");
+    while (1)
     {
-        log_info(logger, "------comienza while");
+        pthread_mutex_lock(&pausaMutex);
+        while(pausaPlanificacion){
+            pthread_cond_wait(&pausaCond, &pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+
+       // log_info(logger, "------comienza while largo plazo");
         sem_wait(&hayProcesosNuevos);
+
+        pthread_mutex_lock(&pausaMutex);
+        if (pausaPlanificacion) {
+            pthread_cond_wait(&pausaCond,&pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+
+        int semValue;
+        sem_getvalue(&semGradoMultiprogramacion, &semValue);
+        log_info(logger,"Valor del semáforo de multiprogramación: %d", semValue);
         sem_wait(&semGradoMultiprogramacion);
-        log_info(logger, "------obtenerSiguienteAReady");
+        //log_info(logger, "------obtenerSiguienteAReady");
         t_pcb *pcb = obtenerSiguienteAReady(); //Agarro un pcb de la cola de new
 
         //recibirEstructurasInicialesMemoria(pcb); //Mando peticion a memoria
@@ -42,13 +62,28 @@ void planificarALargoPlazo(){
 
 
 void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
-
-    //crearColasBloqueo();
+    
+    crearColasBloqueo();
 
     while (1)
     {
+        pthread_mutex_lock(&pausaMutex);
+        while(pausaPlanificacion){
+            pthread_cond_wait(&pausaCond, &pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+
+        //log_info(logger, "------comienza while corto plazo");
+        flag_exit=0;
+        //logger=cambiarNombre(logger,"Kernel-Planificador CP");
         sem_wait(&hayProcesosReady);
-        log_info(logger, "hay proceso en ready");
+
+        pthread_mutex_lock(&pausaMutex);
+        if (pausaPlanificacion) {
+            pthread_cond_wait(&pausaCond,&pausaMutex);
+        }
+        pthread_mutex_unlock(&pausaMutex);
+         
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
         
@@ -61,11 +96,12 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         //Mando el contexto de ejecucion a la CPU por dispatch
         contextoEjecucion = procesarPCB(aEjecutar); 
 
-        rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
+        //rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
        
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
-         log_info(logger, "APAREZCO KERNEL");
+        log_info(logger, "APAREZCO KERNEL");
+        if(flag_exit==1) continue;
     }
 }
 
@@ -76,17 +112,23 @@ void inicializarSemaforos(){
     gradoMultiprogramacion = obtenerGradoMultiprogramacion();
     pthread_mutex_init(&mutexListaNew, NULL);
     pthread_mutex_init(&mutexListaReady,NULL); 
+    pthread_mutex_init(&mutexListaReadyAux,NULL);
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
+    sem_init(&memoriaOK,0,0);
 }
 
 void destruirSemaforos () {
     pthread_mutex_destroy(&mutexListaNew);
     pthread_mutex_destroy(&mutexListaReady);
+    pthread_mutex_destroy(&mutexListaReadyAux);
     sem_close(&hayProcesosNuevos);
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);
+    sem_close(&memoriaOK);
+    pthread_mutex_init(&pausaMutex, NULL);
+    pthread_cond_init(&pausaCond, NULL);
 }
 
 //Manejo de colas
@@ -118,6 +160,19 @@ void ingresarAReady(t_pcb *pcb){
     pidsInvolucrados = string_new();
     listarPIDS(pcbsREADY);
     log_info(logger, "Cola Ready <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
+    free(pidsInvolucrados);
+}
+
+void ingresarAReadyAux(t_pcb *pcb){
+    pthread_mutex_lock(&mutexListaReadyAux);
+    encolar(pcbsREADYaux, pcb);
+    pthread_mutex_unlock(&mutexListaReadyAux);
+
+    sem_post(&hayProcesosReady);
+
+    pidsInvolucrados = string_new();
+    listarPIDS(pcbsREADY);
+    log_info(logger, "Ready Prioridad <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
     free(pidsInvolucrados);
 }
 

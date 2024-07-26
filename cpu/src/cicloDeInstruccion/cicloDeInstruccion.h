@@ -17,18 +17,13 @@
     #include <contextoEjecucion/contextoEjecucion.h>
     #include <conexionMemoria/conexionMemoria.h>
     #include <escuchaKernel/servidorKernel.h>
-
-    #define obtenerTiempoEspera() config_get_int_value(config, "RETARDO_INSTRUCCION")
+    #include <mmu/mmu.h>
     
-
-    
-
     extern char *listaComandos[];
     extern char* instruccionAEjecutar; 
     extern char** elementosInstruccion; 
     extern int instruccionActual; 
     extern int cantParametros;
-    extern int tiempoEspera;
     extern int conexionAMemoria;
     extern int socketClienteDispatch;
     extern int socketClienteInterrupt;
@@ -40,14 +35,14 @@
     void decode();
     void execute();
     void liberarMemoria();
-    void check_interrupt();
+    bool check_interrupt();
     int buscar(char *elemento, char **lista); 
 
     
     char* recibirValor(int);
-    void destruirTemporizador (t_temporal * temporizador);
     void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5);
     int obtenerTamanioReg(char* registro);
+    void remove_newline(char* str);
     
 
 #endif 

@@ -94,6 +94,13 @@ int alistarServidor(char *puerto){
 	return esperarCliente(serverFD);
 }
 
+int alistarServidorMulti(char *puerto){
+
+	int serverFD = iniciarServidor(puerto);
+
+	return serverFD;
+}
+
 void elementDestroyer(void *palabra){
 	free(palabra);
 }

@@ -94,7 +94,7 @@ void enviarPaquete(t_paquete *paquete, int socket)
 	int bytes = paquete->buffer->size + 2 * sizeof(int);
 	void *a_enviar = serializarPaquete(paquete, bytes);
 	
-	log_info(logger, "Enviando paquete con tamaño %d, de %d bytes.", paquete->buffer->size, bytes);
+	//log_info(logger, "Enviando paquete con tamaño %d, de %d bytes.", paquete->buffer->size, bytes);
 
 	send(socket, a_enviar, bytes, 0);
 
@@ -106,7 +106,7 @@ void eliminarPaquete(t_paquete *paquete)
 	free(paquete->buffer->stream);
 	free(paquete->buffer);
 	free(paquete);
-	log_info(logger, "Paquete eliminado");
+	//log_info(logger, "Paquete eliminado");
 }
 
 void enviarCodOp (op_code codigoDeOperacion, int socket) {
@@ -134,7 +134,7 @@ int conexion(char *SERVIDOR)
 			sleep (SEGS_ANTES_DE_REINTENTO);
 		}
 	}
-	log_info(logger, "Conectado a %s, en socket %d", SERVIDOR, conexion);
+	//log_info(logger, "Conectado a %s, en socket %d", SERVIDOR, conexion);
 
 	return conexion;
 }

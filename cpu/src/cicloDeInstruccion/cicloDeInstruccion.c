@@ -1,5 +1,7 @@
 #include <cicloDeInstruccion/cicloDeInstruccion.h>
-
+#include <inttypes.h> //Para imprimir int64_t. No se si esta permitida
+#include <limits.h>
+#include <commons/memory.h>
 char *listaComandos[] = {
     [SET] = "SET",
     [MOV_IN] = "MOV_IN",
@@ -26,18 +28,15 @@ char* instruccionAEjecutar;
 char** elementosInstruccion; 
 int instruccionActual; 
 int cantParametros;
-int tiempoEspera;
-int nroSegmento;
 
-t_temporal* rafagaCPU; 
 int64_t rafagaCPUEjecutada; 
 
 void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
-    check_interrupt(); //control de quantum
     liberarMemoria();
+    usleep(200);  //VER ESTO!!!!
 }
 void solicitarInstruccion(int pid, int indice, int socket){
     t_paquete *paquete = malloc(sizeof(t_paquete));
@@ -63,9 +62,33 @@ void solicitarInstruccion(int pid, int indice, int socket){
 	free(paquete);
 }
 
+void solicitudResize(int pid, int tamanio, int socket){
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+	paquete->codigo_operacion = RESIZE;
+	paquete->buffer = malloc(sizeof(t_buffer));
+
+	paquete->buffer->size = 2*sizeof(int);
+	paquete->buffer->stream = malloc(paquete->buffer->size);
+
+	memcpy(paquete->buffer->stream, &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamanio, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+
+    void *a_enviar = serializarPaquete(paquete, bytes);
+
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE);
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+	free(a_enviar);
+	free(paquete);
+}
+
 // ------- Funciones del ciclo ------- //
 void fetch() { 
-    log_info(logger, "inicio fetch");
+    log_info(logger, "PID: <%d> - FETCH - Program Counter: <%d>", contextoEjecucion->pid, contextoEjecucion->programCounter);
     //Mando la linea que voy a leer de la lista de instrucciones de memoria
     int pid=contextoEjecucion->pid;
     int numInstruccionABuscar = contextoEjecucion->programCounter;
@@ -76,12 +99,10 @@ void fetch() {
     solicitarInstruccion(pid, numInstruccionABuscar, conexionAMemoria);
     //Recibo la instruccion
     int peticion = recibirOperacion(conexionAMemoria);
-    //int x=1;
-    //while(x==1){
 	switch (peticion) {
 		case MENSAJE:
 			instruccionAEjecutar=recibirMensaje(conexionAMemoria);
-            log_info(logger, "Instruccion recibida: %s", instruccionAEjecutar);
+            //log_info(logger, "Instruccion recibida: %s", instruccionAEjecutar);
 			break;
 		default:
             log_warning(logger,"Operacion desconocida.");
@@ -92,14 +113,25 @@ void fetch() {
 }
 
 void decode(){
-    log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
-    elementosInstruccion = string_n_split(instruccionAEjecutar, 4, " ");
-    log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); //TODO: Loguea cualquier cosa: �WI1�U
-    cantParametros = string_array_size(elementosInstruccion) - 1; //TODO: Loguea 0
-    log_info(logger, "cantParametros: %d", cantParametros);
+    // Eliminar el salto de línea al final de instruccionAEjecutar
+    remove_newline(instruccionAEjecutar);
+
+    //log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
+    elementosInstruccion = string_n_split(instruccionAEjecutar, 6, " ");
+    //log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); 
+    cantParametros = string_array_size(elementosInstruccion) - 1; 
+    //log_info(logger, "cantParametros: %d", cantParametros);
     instruccionActual = buscar(elementosInstruccion[0], listaComandos); 
-    log_info(logger, "instruccion Actual: %d", instruccionActual);
-    
+    //log_info(logger, "instruccion Actual: %d", instruccionActual);
+    //free(instruccionAEjecutar); // creo que va aca
+}
+
+// Función para eliminar el salto de línea al final de la cadena
+void remove_newline(char* str) {
+    size_t len = strlen(str);
+    if (len > 0 && str[len - 1] == '\n') {
+        str[len - 1] = '\0';
+    }
 }
 
 int buscar(char *elemento, char **lista) {
@@ -114,228 +146,1025 @@ int buscar(char *elemento, char **lista) {
     return (i > string_array_size(lista)) ? -1 : i;
 }
  
-void check_interrupt(){
+bool check_interrupt(){
+    //log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
-        t_temporal* tiempoDeUsoCPU = contextoEjecucion->tiempoDeUsoCPU;
+
+        log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
+        log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
-        log_info(logger, temporal_gettime(tiempoDeUsoCPU)>=quantum ? "entro al if porque es true" : "NO entro al if porque es false");
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
-            destruirTemporizador(rafagaCPU); // ACA TIRA SEGMENTATION FAULT
-            modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-            enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-        }
+            log_warning(logger,"FIN DE QUANTUM");
+            return true;
+        } else return false;
+    } else return false;
+}
+// Función para calcular la cantidad de páginas a leer
+int calcularPaginasALeer(int first_addr, int last_addr, int page_size){ 
+    int start_page = first_addr / page_size;
+    int end_page = last_addr / page_size;
+    return end_page - start_page + 1;
+}
+// Función para calcular la cantidad de bytes a escribir/leer en cada página
+void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
+    int total_bytes = last_addr - first_addr + 1;
+    int start_page = first_addr / page_size;
+    int start_offset = first_addr % page_size;
+    int end_page = last_addr / page_size;
+    *num_pages = end_page - start_page + 1;
+    bytes_por_pagina[0] = page_size - start_offset;
+    for (int i = 1; i <*num_pages - 1; i++) {
+        bytes_por_pagina[i] = page_size;
+    }
+    bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;
+}
+void calcularBytesPorPagina2(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
+    int total_bytes = last_addr - first_addr+1; // Calcula el total de bytes a leer
+
+    // Calcula el número de página inicial y el desplazamiento dentro de la página
+    int start_page = first_addr / page_size;
+    int start_offset = first_addr % page_size;
+
+    // Calcula el número de página final
+    int end_page = last_addr / page_size;
+
+    // Calcula el número total de páginas
+    *num_pages = end_page - start_page + 1;
+
+    // Calcula los bytes a leer en la primera página
+    if (start_page == end_page) {
+        // Caso especial: first_addr y last_addr están en la misma página
+        bytes_por_pagina[0] = total_bytes;
+    } else {
+        bytes_por_pagina[0] = page_size - start_offset;
+   
+
+    // Llena las páginas intermedias con tamaño completo de página
+    for (int i = 1; i < *num_pages - 1; i++) {
+        bytes_por_pagina[i] = page_size;
+    }
+
+    // Calcula los bytes a leer en la última página
+    bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size); 
     }
 }
 
+int obtenerTamanoPagina(char* path){
+    char *pathConfig=malloc(PATH_MAX);
+    pathConfig[0]='\0';
+    realpath(path, pathConfig);
+    strcat(pathConfig,"/memoria.config");
+  // printf("Path: %s\n", pathConfig);
+    t_config* config = config_create(pathConfig);
+    int tamPagina = config_get_int_value(config, "TAM_PAGINA");
+    config_destroy(config);
+    free(pathConfig);
+    return tamPagina;
+}
 // Instrucciones
 void io_fs_delete(char* interfaz,char* nombreArchivo){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, registroDireccion, RegistroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
+    char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, RegistroTamanio);
+    /*temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro*/
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + atoi(regTamanio)-1;
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //convierto la variable bytes_por_pagina a un string
+    char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
+    bytes_por_pagina_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* bytes = malloc(sizeof(char) * 10);
+        sprintf(bytes, "%d", bytes_por_pagina[i]);
+        strcat(bytes_por_pagina_str, bytes);
+        free(bytes);
+        if (i < num_pages - 1) {
+            strcat(bytes_por_pagina_str, ",");
+        }
+    }
+    //imprimo el string
+    printf("Bytes por página: %s\n", bytes_por_pagina_str);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) {
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    }
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) {
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+    }
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+    //convierto a char* las direcciones fisicas
+    char* direccionesFisicas_str = malloc(sizeof(char) * 100);
+    direccionesFisicas_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* direccion = malloc(sizeof(char) * 10);
+        sprintf(direccion, "%d", direccionesFisicas[i]);
+        strcat(direccionesFisicas_str, direccion);
+        free(direccion);
+        if (i < num_pages - 1) {
+            strcat(direccionesFisicas_str, ",");
+        }
+    }
+    //imprimo las direcciones fisicas
+    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
+
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, RegistroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, RegistroTamanio);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, regTamanio, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, regTamanio, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
+    char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
+    char* regPunteroArchivo=dictionary_get(contextoEjecucion->registrosCPU, registroPunteroArchivo);
+
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + atoi(regTamanio)-1;
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //convierto la variable bytes_por_pagina a un string
+    char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
+    bytes_por_pagina_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* bytes = malloc(sizeof(char) * 10);
+        sprintf(bytes, "%d", bytes_por_pagina[i]);
+        strcat(bytes_por_pagina_str, bytes);
+        free(bytes);
+        if (i < num_pages - 1) {
+            strcat(bytes_por_pagina_str, ",");
+        }
+    }
+    //imprimo el string
+    printf("Bytes por página: %s\n", bytes_por_pagina_str);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) {
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    }
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) {
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+    }
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+    //convierto a char* las direcciones fisicas
+    char* direccionesFisicas_str = malloc(sizeof(char) * 100);
+    direccionesFisicas_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* direccion = malloc(sizeof(char) * 10);
+        sprintf(direccion, "%d", direccionesFisicas[i]);
+        strcat(direccionesFisicas_str, direccion);
+        free(direccion);
+        if (i < num_pages - 1) {
+            strcat(direccionesFisicas_str, ",");
+        }
+    }
+    //imprimo las direcciones fisicas
+    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
+    
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, registroDireccion, registroTamanio, registroPunteroArchivo);
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
+    char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
+    char* regPunteroArchivo=dictionary_get(contextoEjecucion->registrosCPU, registroPunteroArchivo);
+
+   int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + atoi(regTamanio)-1;
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //convierto la variable bytes_por_pagina a un string
+    char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
+    bytes_por_pagina_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* bytes = malloc(sizeof(char) * 10);
+        sprintf(bytes, "%d", bytes_por_pagina[i]);
+        strcat(bytes_por_pagina_str, bytes);
+        free(bytes);
+        if (i < num_pages - 1) {
+            strcat(bytes_por_pagina_str, ",");
+        }
+    }
+    //imprimo el string
+    printf("Bytes por página: %s\n", bytes_por_pagina_str);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) {
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    }
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) {
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+    }
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+    //convierto a char* las direcciones fisicas
+    char* direccionesFisicas_str = malloc(sizeof(char) * 100);
+    direccionesFisicas_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* direccion = malloc(sizeof(char) * 10);
+        sprintf(direccion, "%d", direccionesFisicas[i]);
+        strcat(direccionesFisicas_str, direccion);
+        free(direccion);
+        if (i < num_pages - 1) {
+            strcat(direccionesFisicas_str, ",");
+        }
+    }
+    //imprimo las direcciones fisicas
+    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
+    
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, registroDireccion, registroTamanio, "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
+    char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    printf("Tamaño de página: %d\n", tamPagina);
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + atoi(regTamanio)-1; 
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //convierto la variable bytes_por_pagina a un string
+    char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
+    bytes_por_pagina_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* bytes = malloc(sizeof(char) * 10);
+        sprintf(bytes, "%d", bytes_por_pagina[i]);
+        strcat(bytes_por_pagina_str, bytes);
+        free(bytes);
+        if (i < num_pages - 1) {
+            strcat(bytes_por_pagina_str, ",");
+        }
+    }
+    //imprimo el string
+    printf("Bytes por página: %s\n", bytes_por_pagina_str);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) {
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    }
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) {
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+    }
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+    //convierto a char* las direcciones fisicas
+    char* direccionesFisicas_str = malloc(sizeof(char) * 100);
+    direccionesFisicas_str[0] = '\0';
+    for (int i = 0; i < num_pages; i++) {
+        char* direccion = malloc(sizeof(char) * 10);
+        sprintf(direccion, "%d", direccionesFisicas[i]);
+        strcat(direccionesFisicas_str, direccion);
+        free(direccion);
+        if (i < num_pages - 1) {
+            strcat(direccionesFisicas_str, ",");
+        }
+    }
+    //imprimo las direcciones fisicas
+    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
+}
+void enviarDireccionTamano2(int direccion,int tamano, int pid, int socket) {
+   t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = 104;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    paquete->buffer->size = 3 * sizeof(int);
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &tamano, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), &pid, sizeof(int));
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
+}
+void enviarAImprimirAMemoria(const char *mensaje, int direccion, int socket, int pid) {
+    t_paquete *paquete = malloc(sizeof(t_paquete));
+    paquete->codigo_operacion = 105;
+    paquete->buffer = malloc(sizeof(t_buffer));
+    size_t mensaje_len = strlen(mensaje) ; // +1 para el terminador nulo??????
+    paquete->buffer->size = 2*sizeof(int) + mensaje_len;
+    paquete->buffer->stream = malloc(paquete->buffer->size);
+    memcpy(paquete->buffer->stream, &direccion, sizeof(int));
+    memcpy(paquete->buffer->stream + sizeof(int), &pid, sizeof(int));
+    memcpy(paquete->buffer->stream + 2*sizeof(int), mensaje, mensaje_len);
+    int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
+    void *a_enviar = serializarPaquete(paquete, bytes);
+    if (send(socket, a_enviar, bytes, 0) != bytes) {
+        perror("Error al enviar datos al servidor");
+        exit(EXIT_FAILURE); // Manejo de error
+    }
+    free(paquete->buffer->stream);
+    free(paquete->buffer);
+    free(a_enviar);
+    free(paquete);
 }
 
+/*Copio la cantidad de bytes indicada del string apuntado por SI a DI*/
 void copy_string(char* tamanio){
-    //Copiar contenido de SI a DI
-    contextoEjecucion->DI=contextoEjecucion->DI; //Ver
-}
+    int tamanioInt = atoi(tamanio); //ESTE ES EL TAMAÑO DE LA PALABRA A LEER Y ESCRIBIR EN MEMORIA
+    int pointer = atoi(dictionary_get(contextoEjecucion->registrosCPU, "SI"));
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = pointer;
+    int last_addr = first_addr + tamanioInt-1; 
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) 
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
+    int longitud=0;
+    char *cadenacompleta = malloc(tamanioInt);
+    for(int i=0; i<num_pages; i++){
+        if (i==0)
+            cadenacompleta[0]='\0';
+        enviarDireccionTamano2(direccionesFisicas[i],bytes_por_pagina[i],contextoEjecucion->pid,conexionAMemoria);
+        //recibir un mensaje de confirmacion de que se escribio en memoria
+        //usleep(1000*1200);
+        char recibido[100];
+		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        recibido[bytes] = '\0';
+        //log_info(logger, "Recibido: %s", recibido);
+        strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
+			longitud+=bytes_por_pagina[i];
+        log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", contextoEjecucion->pid, direccionesFisicas[i], recibido);
+    }
+    log_info(logger, "Cadena completa: %s", cadenacompleta);
 
+//ACA MANDA PARA ESCRIBIR EN MEMORIA
+    int pointer2 = atoi(dictionary_get(contextoEjecucion->registrosCPU, "DI"));
+    int first_addr2 = pointer2;
+    int last_addr2 = first_addr2 + tamanioInt-1; 
+    int paginasALeer2 = calcularPaginasALeer(first_addr2, last_addr2, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer2);
+    int bytes_por_pagina2[paginasALeer2];
+    int num_pages2;
+    calcularBytesPorPagina2(first_addr2, last_addr2, tamPagina, bytes_por_pagina2, &num_pages2);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages2; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina2[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas2[num_pages2];
+    direccionesLogicas2[0] = first_addr2;
+    for (int i = 1; i < num_pages2; i++) 
+        direccionesLogicas2[i] = direccionesLogicas2[i - 1] + bytes_por_pagina2[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages2; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas2[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas2[num_pages2];
+    for (int i = 0; i < num_pages2; i++) {
+        direccionesFisicas2[i] =  mmu(contextoEjecucion->pid, direccionesLogicas2[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas2[i]);
+    }
+    char *datosLeidos2 = malloc(100);
+    int tamanotexto=0;
+    //divido el texto en partes
+    for(int i=0; i<num_pages2; i++){
+        memcpy(datosLeidos2, cadenacompleta + tamanotexto, bytes_por_pagina2[i]);
+        datosLeidos2[bytes_por_pagina2[i]] = '\0';
+       // printf("Texto a enviar a memoria: %s\n", datosLeidos2);
+        log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%s>", contextoEjecucion->pid, direccionesFisicas2[i], datosLeidos2);
+        tamanotexto += strlen(datosLeidos2);
+        enviarAImprimirAMemoria(datosLeidos2,direccionesFisicas2[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
+        //recibir un mensaje de confirmacion de que se escribio en memoria
+        char recibido[100];
+        recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+    }
+    free(datosLeidos2);
+    free(cadenacompleta);
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+}
+/*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
-    t_paquete* paquete = crearPaquete();
-    paquete->codigo_operacion = RESIZE;
-    agregarAPaquete(paquete, tamanio, sizeof(tamanio));
-    agregarAPaquete(paquete, &contextoEjecucion->pid, sizeof(uint32_t));
-    enviarPaquete(paquete, conexionAMemoria);
+    solicitudResize(contextoEjecucion->pid,atoi(tamanio), conexionAMemoria);
+    
+    int peticion = recibirOperacion(conexionAMemoria);
+	switch (peticion) {
+		case MENSAJE:
+			char* mensaje=recibirMensaje(conexionAMemoria);
+            //log_info(logger, "Mensaje recibido: %s", mensaje);
+            if(strcmp(mensaje,"OUT_OF_MEMORY")==0){
+                contextoEjecucion->fin_de_quantum=false;
+                temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+                contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+                temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+                modificarMotivoDesalojo (RESIZE, 0, "","", "", "","");
+                enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+                flag_bloqueante = 1;
+                return;  
+            }
+            free(mensaje);
+			break;
+		default:
+            log_warning(logger,"Operacion desconocida.");
+			break;
+	}
 
-}
-
-void set_c(char* registro, char* valor){ 
-    log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
-    //tiempoEspera = obtenerTiempoEspera();
-    //log_info(logger, "tiempoEspera: %d", tiempoEspera);
-    //usleep(10 * 1000); 
-    //dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
-    log_info(logger, "fin set_c");
-}
-
-void sum_c(char* registro_destino, char* registro_origen){ 
-    int valorDestino = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_destino));
-    int valorOrigen = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_origen));
-    int resultado = valorDestino + valorOrigen;
-    char* resultadoStr = malloc(sizeof(char) * 10);
-    sprintf(resultadoStr, "%d", resultado);
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
-    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
-}
-
-void sub_c(char* registro_destino, char* registro_origen){ 
-    int valorDestino = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_destino));
-    int valorOrigen = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro_origen));
-    int resultado = valorDestino - valorOrigen;
-    char* resultadoStr = malloc(sizeof(char) * 10);
-    sprintf(resultadoStr, "%d", resultado);
-    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
-    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
-}
-
-
-void jnz(char* registro, char* instruccion){ 
-    int valorRegistro = atoi(dictionary_get(contextoEjecucion->registrosCPU, registro));
-    if (valorRegistro != 0) {
-        contextoEjecucion->programCounter = atoi(instruccion);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 }
 
+/*Le asigno al registro el valor que se indica*/
+void set_c(char* registro, char* valor){ 
+    //log_info(logger, "inicio set_c con registro: %s y valor: %s", registro, valor);
+    if(strcmp(registro, "PC") == 0){
+        contextoEjecucion->programCounter = atoi(valor);
+        return;
+    }else{
+        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
+    }
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+        //free(tiempoDeUsoCPU);
+    }
+}
+
+/*RD=RD+RO*/
+void sum_c(char* registro_destino, char* registro_origen){ 
+    // Verificar que los registros existen en el diccionario
+    char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
+    char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
+    if (!valorDestino || !valorOrigen) {
+        log_error(logger, "Registro no encontrado: %s o %s", registro_destino, registro_origen);
+        return;
+    }
+    int primerValor = atoi(valorDestino);
+    int segundoValor = atoi(valorOrigen);
+    int resultado = primerValor + segundoValor;
+    char* resultadoStr = malloc(sizeof(char) * 10);
+    sprintf(resultadoStr,"%d", resultado);
+    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
+    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
+    
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    }
+}
+
+/*RD=RD-RO*/
+void sub_c(char* registro_destino, char* registro_origen){ 
+    // Verificar que los registros existen en el diccionario
+    char* valorDestino = dictionary_get(contextoEjecucion->registrosCPU, registro_destino);
+    char* valorOrigen = dictionary_get(contextoEjecucion->registrosCPU, registro_origen);
+    if (!valorDestino || !valorOrigen) {
+        log_error(logger, "Registro no encontrado: %s o %s", registro_destino, registro_origen);
+        return;
+    }
+    int primerValor = atoi(valorDestino);
+    int segundoValor = atoi(valorOrigen);
+    int resultado = primerValor - segundoValor;
+    char* resultadoStr = malloc(sizeof(char) * 10);
+    sprintf(resultadoStr, "%d", resultado);
+    dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
+    dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    }
+}
+
+/*Me fijo que el registro sea distinto de 0. Si lo es, seteo el PC con la instruccion indicada*/
+void jnz(char* registro, char* instruccion){ 
+    log_info(logger,"En jnz con: %s y %s", registro, instruccion);
+    // Obtener el valor del registro desde el diccionario
+    char* valorRegistro = dictionary_get(contextoEjecucion->registrosCPU, registro);
+    if (!valorRegistro) {
+        log_error(logger, "Registro no encontrado: %s", registro);
+        return;
+    }
+
+    // Convertir el valor del registro a un entero
+    int valor = atoi(valorRegistro);
+    
+    // Si el valor no es 0, actualizar el contador de programa (programCounter)
+    if (valor != 0) {
+        log_info(logger, "contextoEjecucion->programCounter: %d", contextoEjecucion->programCounter);
+        log_info(logger, "Valor de registro: %d", atoi(instruccion));
+
+        contextoEjecucion->programCounter = atoi(instruccion);
+    }
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    }
+}
+/*Desalojo el proceso y kernel le indica a IO que haga un sleep en una interfaz indicada y un tiempo indicado*/
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (IO_GEN_SLEEP, 2, interfaz, unidades_trabajo, "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else {
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+    
 }
 
+/*Desalojo el proceso y le pido a kernel que asigne una instancia del recurso indicado*/
 void wait_c(char* recurso){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
+/*Desalojo el proceso y le pido a kernel que libere una instancia del recurso indicado*/
 void signal_c(char* recurso){
-    destruirTemporizador(rafagaCPU);
-    modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
+/*Desalojo el proceso y kernel se encarga de mover el proceso a EXIT*/
 void exit_c () {
-    //log_info(logger, "Antes destruirTemporizador rafagaCPU: %p", rafagaCPU);
-    //destruirTemporizador(rafagaCPU); TODO: DESTRUIR
-    //log_info(logger, "Pasa destruirTemporizador");
+    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
     log_info(logger, "Pasa modificarMotivoDesalojo");
-    enviarContextoBeta(socketClienteDispatch, contextoEjecucion); 
+    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion); //TODO: HACER CON INTERRUPT
     free (terminado);
     log_info(logger, "fin exit_c");
+    flag_bloqueante = 1;
 }
 
-
+/*Leo el valor almacenado en la direccion fisica de memoria y lo almaceno en el registro*/
 void mov_in(char* registro, char* direccionLogica){
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
+    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    int last_addr = first_addr + tamRegistro-1;
+    printf("last_addr: %d\n", last_addr);   
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) 
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
 
-    char* valorAInsertar;
-    uint32_t tamRegistro = (uint32_t)obtenerTamanioReg(registro);
-    uint32_t dirFisica = UINT32_MAX;
-    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
-
-    log_info(logger, "Direccion fisica: %d", dirFisica);
-
-    if(dirFisica!=UINT32_MAX){
-        t_paquete* peticion = crearPaquete();
-        peticion->codigo_operacion = READ;
-        agregarAPaquete(peticion,&contextoEjecucion->pid, sizeof(uint32_t));
-        agregarAPaquete(peticion,&dirFisica, sizeof(uint32_t));
-        agregarAPaquete(peticion,&tamRegistro,sizeof(uint32_t));
-        enviarPaquete(peticion, conexionAMemoria);    
-        eliminarPaquete (peticion);
-
-        recibirOperacion(conexionAMemoria);
-        valorAInsertar = recibirMensaje(conexionAMemoria);
-
-        dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
-        
-        log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", nroSegmento, dirFisica, valorAInsertar);
-        free (valorAInsertar);
-    }else {
-        log_info(logger, "Error: Dirección física inválida\n");
+    int longitud=0;
+    char *cadenacompleta = malloc(tamRegistro);
+    for(int i=0; i<num_pages; i++){
+        if (i==0)
+            cadenacompleta[0]='\0';
+        enviarDireccionTamano2(direccionesFisicas[i],bytes_por_pagina[i],contextoEjecucion->pid,conexionAMemoria);
+        char recibido[100];
+		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        recibido[bytes] = '\0';
+        log_info(logger, "Recibido: %s", recibido);
+        strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
+		longitud+=bytes_por_pagina[i];
+        int numeros=0;
+        memcpy(&numeros, recibido,bytes_por_pagina[i]);
+        log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+        // mem_hexdump(&numeros, bytes_por_pagina[i]);
+    }
+    log_info(logger, "Cadena completa: %s", cadenacompleta);
+    int numTotal=0;
+    memcpy(&numTotal, cadenacompleta, strlen(cadenacompleta));
+    log_info(logger, "Valor total: %d", numTotal);
+    //paso numTotal a string
+    char* numTotalStr = malloc(sizeof(char) * 10);
+    sprintf(numTotalStr, "%d", numTotal);
+    free(cadenacompleta);
+    dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(numTotalStr));
+    free(numTotalStr);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 };
 
+/*Escribo en la direccion fisica de memoria el valor almacenado en el registro*/
 void mov_out(char* direccionLogica, char* registro){
+    char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
+    char* valorRegistro=dictionary_get(contextoEjecucion->registrosCPU, registro);
+    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
+    uint32_t valorReg= atoi(valorRegistro);
+    log_warning(logger, "Valor del registro: %u", valorReg);
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int first_addr = atoi(regDireccion);
+    //printf("first_addr: %d\n", first_addr);
+    int last_addr = first_addr + tamRegistro-1;
+    //printf("last_addr: %d\n", last_addr);
+    int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
+    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
+    int bytes_por_pagina[paginasALeer];
+    int num_pages;
+    calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
+    //printf("Bytes a escribir en cada página:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
+    //calcular las direcciones logicas para cada página
+    int direccionesLogicas[num_pages];
+    direccionesLogicas[0] = first_addr;
+    for (int i = 1; i < num_pages; i++) 
+        direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
+    //imprimo las direcciones lógicas
+    printf("Direcciones lógicas:\n");
+    for (int i = 0; i < num_pages; i++) 
+        printf("Página %d: %d\n", i, direccionesLogicas[i]);
+   //hago las traducciones a direcciones fisicas con la mmu
+    uint32_t direccionesFisicas[num_pages];
+    for (int i = 0; i < num_pages; i++) {
+        direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
+        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
+    }
 
-    void * valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    int tamRegistro = obtenerTamanioReg(registro);
+    if (tamRegistro == 1){
+        uint8_t registro_ext = valorReg;
+        void* registro_ext_puntero = &registro_ext;
+        char *palabra=malloc(1);
+        int tamanotexto=0;
+        for(int i=0; i<num_pages; i++){
+            printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
+            memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
+            palabra[bytes_por_pagina[i]] = '\0';
+            printf("Palabra: %s\n", palabra); 
+            int numeros=0;
+            memcpy(&numeros, palabra,bytes_por_pagina[i]);
+            log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+            tamanotexto += strlen(palabra);
+            enviarAImprimirAMemoria(palabra,direccionesFisicas[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
+            //recibir un mensaje de confirmacion de que se escribio en memoria
+            char recibido[100];
+            recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        }
+        free(palabra);
+    }
+    else{
+        uint32_t registro_ext = valorReg;
+        void* registro_ext_puntero = &registro_ext;
+        char *palabra=malloc(4);
+        int tamanotexto=0;
+        for(int i=0; i<num_pages; i++){
+            printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
+            memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
+            palabra[bytes_por_pagina[i]] = '\0';
+            printf("Palabra: %s\n", palabra); 
+            int numeros=0;
+            memcpy(&numeros, palabra, bytes_por_pagina[i]);
+            log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
+            tamanotexto += strlen(palabra);
+            enviarAImprimirAMemoria(palabra,direccionesFisicas[i], conexionAMemoria, contextoEjecucion->pid);//estos datos se deben escribir en la direccion de memoria
+            //recibir un mensaje de confirmacion de que se escribio en memoria
+            char recibido[100];
+            recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        }
+        free(palabra);
+    }
 
-    uint32_t dirFisica = UINT32_MAX;
-    dirFisica = 0; //mmu(direccionLogica, tamRegistro); //TODO: pasar TLB? 
-
-    if(dirFisica != UINT32_MAX){    
-    t_paquete* peticion = crearPaquete();
-    peticion->codigo_operacion = WRITE;
-
-    agregarAPaquete(peticion, &(contextoEjecucion->pid), sizeof(uint32_t));
-    agregarAPaquete(peticion, &(dirFisica), sizeof(int));
-    agregarAPaquete(peticion, valor, sizeof(char) * tamRegistro + 1); 
-
-    enviarPaquete(peticion, conexionAMemoria);
-    eliminarPaquete (peticion);
-
-    recibirOperacion(conexionAMemoria);
-    char * respuesta = recibirMensaje(conexionAMemoria);
-    free (respuesta);
-
-    log_info(logger, "PID: <%d> - Accion: <%s> - Segmento: <%d> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", nroSegmento, dirFisica, (char *)valor);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 };
 
 // Funciones grales
 
-void destruirTemporizador (t_temporal * temporizador) {
-    temporal_stop(temporizador); 
-}
-
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
     contextoEjecucion->motivoDesalojo->motivo = comando;
-    log_info(logger, "numero de parametros en motivo de EXIT %d", numParametros);
+    log_info(logger, "numero de parametros en motivo de %d :%d",comando, numParametros);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
     for (int i = 0; i < numParametros; i++){
      
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     
-    log_info(logger, "parametro EXIT %s" , contextoEjecucion->motivoDesalojo->parametros[i] );
+    log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
+    //
     }
+    //string_array_destroy(contextoEjecucion->motivoDesalojo->parametros);
 }
 
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-    log_info(logger,"Memoria liberada!");
+    free(instruccionAEjecutar); //ver si va aca
+    log_warning(logger,"Memoria liberada!");
 }
 
 char* recibirValor(int socket) {
@@ -358,38 +1187,36 @@ char* recibirValor(int socket) {
 }
 
 int obtenerTamanioReg(char* registro){
-    if(string_starts_with(registro, "E")) return 8;
-    else if(string_starts_with(registro, "R")) return 16;
-    else return 4;
+    if(string_starts_with(registro, "E") || strcmp(registro,"SI")==0 || strcmp(registro,"DI")==0) return 4;
+    else return 1;
 }
 
 void execute() {
-    log_info(logger, "inicio execute");
+    //log_info(logger, "inicio execute");
 
     switch(cantParametros) {
         case 0:
-            log_info(logger, "case 0 PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);
             break;
         case 1:
-            log_info(logger, "case 1 PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> -  <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1]);
             break;
         case 2:   
-            log_info(logger, "case 2 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case 3:
-            log_info(logger, "case 3 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3]);
             break; 
         case 4:
-            log_info(logger, "case 4 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4]);
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4]);
             break;
         case 5:
-            log_info(logger, "case 5 PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
+            log_info(logger, "PID: <%d> - Ejecutando: <%s> - <%s>, <%s>, <%s>, <%s>, <%s>", contextoEjecucion->pid, listaComandos[instruccionActual], elementosInstruccion[1], elementosInstruccion[2], elementosInstruccion[3], elementosInstruccion[4], elementosInstruccion[5]);
             break;
     }
-    log_info(logger, "instruccionActual: %d", instruccionActual);
+    //log_info(logger, "instruccionActual: %d", instruccionActual);
     switch(instruccionActual){//TODO: Completar con instrucciones restantes
         case SET: 
-            log_info(logger, "entre aca al SET con elementosInstruccion[1]: %s y elementosInstruccion[2]: %s", elementosInstruccion[1], elementosInstruccion[2]);
             set_c(elementosInstruccion[1], elementosInstruccion[2]);
             break;
         case SUM:

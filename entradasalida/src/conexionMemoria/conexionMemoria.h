@@ -12,8 +12,6 @@
 #include <contextoEjecucion/contextoEjecucion.h>
 #include <./main/entradasalida.h>
 
-
-
-void conexionMemoria(); 
-
+void conexionIOMemoria(char **argv);
+void enviarHandshakeMemoria();
 #endif

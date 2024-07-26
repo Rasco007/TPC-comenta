@@ -6,23 +6,17 @@ void detenerYDestruirCronometro(t_temporal *cronometroReady){
 }
 
 void planificarACortoPlazoSegunAlgoritmo(){
-    log_info(logger, "Planificadior a corto plazo");
     char *algoritmoPlanificador = obtenerAlgoritmoPlanificacion();
-    
+     
     if (!strcmp(algoritmoPlanificador, "FIFO"))
     {
-        //contextoEjecucion->algoritmo=FIFO;
-        log_info(logger, "Ejecutando FIFO");
         planificarACortoPlazo(proximoAEjecutarFIFO);
     } else if(!strcmp(algoritmoPlanificador, "RR")){
-        contextoEjecucion->algoritmo=RR;
-        log_info(logger, "Ejecutando RR");
         planificarACortoPlazo(proximoAEjecutarRR);
     } else if(!strcmp(algoritmoPlanificador, "VRR")){
-        contextoEjecucion->algoritmo=VRR;
-        log_info(logger, "Ejecutando VRR");
         planificarACortoPlazo(proximoAEjecutarVRR);
     } else {
+        loggerError=cambiarNombre(loggerError,"Errores Kernel-Algoritmos CP");
         log_error(loggerError, "Algoritmo invalido");
         abort();
     }
@@ -30,13 +24,16 @@ void planificarACortoPlazoSegunAlgoritmo(){
 }
 
 t_pcb *proximoAEjecutarFIFO(){
-    return desencolar(pcbsREADY);
+    t_pcb *pcbActual=desencolar(pcbsREADY); //Desencolo el primer pcb de READY
+    pcbActual->algoritmo=FIFO;
+    return pcbActual;
 }
 
 t_pcb *proximoAEjecutarRR(){
-    int *quantumConfig = obtenerQuantum(); //Obtengo el quantum desde el config
+    int64_t quantumConfig = obtenerQuantum(); //Obtengo el quantum desde el config
 
     t_pcb *pcbActual = desencolar(pcbsREADY); //desencolo el primer pcb de READY 
+    pcbActual->algoritmo=RR;
     pcbActual->quantum=quantumConfig; 
     //Como el quantum es conocido por el pcb y el contexto de ejcucion lleva la cuenta de las rafagas
     //Puedo delegar la validacion del quantum en el CPU y despues lo manejo en retornoContexto
@@ -48,16 +45,19 @@ t_pcb *proximoAEjecutarRR(){
 //Van a pcbsREADYaux: los que vuelven de IO (q=qConfig-qConsumido)
 //La llegada de los procesos a las colas se delega a syscalls
 t_pcb *proximoAEjecutarVRR(){
-    int *quantumConfig = obtenerQuantum();
+    int64_t quantumConfig = obtenerQuantum();
+    
     if(list_is_empty(pcbsREADYaux)){
         t_pcb *pcbActual = desencolar(pcbsREADY);
         pcbActual->quantum = quantumConfig;
+        pcbActual->algoritmo=VRR;
         return pcbActual;
     }
     else{
         t_pcb *pcbActual = desencolar(pcbsREADYaux);
-        int quantumConsumido=pcbActual->tiempoDeUsoCPU;
+        int64_t quantumConsumido=contextoEjecucion->tiempoDeUsoCPU;
         pcbActual->quantum = quantumConfig-quantumConsumido;
+        pcbActual->algoritmo=VRR;
         return pcbActual;
     }
 }

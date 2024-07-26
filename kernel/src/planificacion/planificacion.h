@@ -32,6 +32,10 @@ extern sem_t semGradoMultiprogramacion;
 extern int gradoMultiprogramacion; 
 extern int *instanciasRecursos;
 extern bool pausaPlanificacion;
+extern int flag_exit;
+
+extern pthread_mutex_t pausaMutex;
+extern pthread_cond_t pausaCond;
 
 extern char *estadosProcesos[5];
 
@@ -73,6 +77,7 @@ void ingresarANew(t_pcb *pcb);
 t_pcb *obtenerSiguienteAReady();
 
 void ingresarAReady(t_pcb *pcb);
+void ingresarAReadyAux(t_pcb *pcb);
 
 void loggearCambioDeEstado(uint32_t pid, estadoProceso anterior, estadoProceso actual); 
 

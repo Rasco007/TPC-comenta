@@ -22,7 +22,7 @@ char* PUERTO_MEMORIA ;
 char* PATH_BASE_DIALFS ;
 int BLOCK_SIZE ;
 int BLOCK_COUNT ;
-
+int RETRASO_COMPACTACION;
 // yo lo corro con: ./bin/entradasalida IntX entradasalida.config
 int main(int argc, char** argv) {
 
@@ -35,13 +35,38 @@ int main(int argc, char** argv) {
 
 	atexit(terminarPrograma); //cuando se haga exit, se llamara a terminarPrograma. esto es lo que hace atexit
 
-	conexionMemoria();
-	conexionKernel();
-
+	conexionIOMemoria(argv);
+	conexionKernel(argv);
+	if (strcmp(TIPO_INTERFAZ, "DialFS") == 0){
+		crearCarpetaSiNoExiste(PATH_BASE_DIALFS);
+    	create_bitmap_file("bitmap.dat", BLOCK_COUNT/8);
+    	create_bloques_file("bloques.dat", BLOCK_COUNT*BLOCK_SIZE);
+	}
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
+
+	pthread_t hilo_memoria;
+	pthread_create(&hilo_memoria, NULL, (void*) io_atender_memoria, NULL);
+
     pthread_join(hilo_kernel, NULL);
- 
+	pthread_join(hilo_memoria, NULL);
+
 	return EXIT_SUCCESS;
 	 
+}
+
+void crearCarpetaSiNoExiste(const char *path) {
+    struct stat st = {0};
+
+    // Verificar si la carpeta existe
+    if (stat(path, &st) == -1) {
+        // Crear la carpeta con permisos 0755
+        if (mkdir(path, 0755) == 0) {
+            printf("Carpeta creada exitosamente: %s\n", path);
+        } else {
+            perror("Error al crear la carpeta");
+        }
+    } else {
+        printf("La carpeta ya existe: %s\n", path);
+    }
 }

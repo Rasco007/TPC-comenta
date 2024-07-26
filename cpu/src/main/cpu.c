@@ -8,9 +8,9 @@ solicitar una llamada al Kernel, o deber ser desalojado (interrupción).*/
 
 #include <main/cpu.h>
 
-TLB tlb;
-uint64_t tiempo_actual = 0; // Contador de tiempo para LRU
-
+//TLB tlb;
+//uint64_t tiempo_actual = 0; // Contador de tiempo para LRU
+int flag_bloqueante;
 
 int main(void){
 	
@@ -24,9 +24,11 @@ int main(void){
 	conexionMemoria(); 
 
 	char * nombre = string_duplicate("CPU-KERNEL");
-	cambiarNombre(logger, nombre);
+	//cambiarNombre(logger, nombre);
 
     char *algoritmoTLB = obtenerAlgoritmoTLB();
+    int cantidadEntradasTLB = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
+    if (cantidadEntradasTLB > 0)
 	inicializar_tlb(algoritmoTLB); 
 
 	

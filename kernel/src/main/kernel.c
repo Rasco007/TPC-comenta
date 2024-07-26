@@ -10,10 +10,11 @@ int socketCliente;
 t_log* logger;
 t_log* loggerError;
 t_config* config;
-pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h;
-
+pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h, ejecutarIO_h;
+Kernel_io kernel;
 void escucharAlIO();
-
+pthread_mutex_t mutex_lista_global;
+t_list * lista_global_io;
 int main () {
     //Inicializar variables
     logger = iniciarLogger("kernel.log", "Kernel");
@@ -25,22 +26,25 @@ int main () {
 	atexit (destruirSemaforos);
 	inicializarListasPCBs(); 
 	atexit (destruirListasPCBs);
+	inicializarStructsIO(&kernel);
+	atexit (destruirStructsIO);
 
 	conexionMemoria(); 
 	conexionCPU();
 	
     char * nombre = string_duplicate("CPU-KERNEL");
-	cambiarNombre(logger, nombre);
-    escucharAlIO();
+	//cambiarNombre(logger, nombre);
 	free (nombre);
 
     //ejecutarConsola();
-
+	lista_global_io = list_create();
+    pthread_mutex_init(&mutex_lista_global, NULL) ;
     //Inicializar Hilos
-	int opCodes [3] = {
+	int opCodes [4] = {
 		pthread_create(&planificadorLargoPlazo_h, NULL, (void*) planificarALargoPlazo, NULL),
 		pthread_create(&planificadorCortoPlazo_h, NULL, (void*) planificarACortoPlazoSegunAlgoritmo, NULL),
-		pthread_create(&ejecutarConsola_h,NULL,(void*)ejecutarConsola,NULL)
+		pthread_create(&ejecutarConsola_h,NULL,(void*)ejecutarConsola,NULL),
+		pthread_create(&ejecutarIO_h,NULL,(void*) escucharAlIO,NULL)
 	};
 
     if (opCodes [0]) {
@@ -52,6 +56,9 @@ int main () {
 	if (opCodes [2]){
 		log_error(logger,"Error al generar hilo para ejecutar la consola, terminando el programa.");
 	}
+	if (opCodes [3]){
+		log_error(logger,"Error al generar hilo para ejecutar el IO, terminando el programa.");
+	}
 		
 	//Hilo Planificador Largo Plazo -> Mueve procesos de NEW a READY
 	pthread_join(planificadorLargoPlazo_h,NULL);
@@ -59,6 +66,8 @@ int main () {
 	pthread_join(planificadorCortoPlazo_h,NULL);
 	//Hilo para consola	
 	pthread_join(ejecutarConsola_h,NULL);
-
+	//Hilo para IOOO
+	pthread_join(ejecutarIO_h,NULL);
     exit (0);
 }
+

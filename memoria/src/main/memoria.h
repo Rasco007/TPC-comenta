@@ -23,7 +23,7 @@
 
 
 extern t_log* loggerError; 
-extern sem_t path;
-extern int sockets[3];
-
+extern int sockets[2];
+extern int server_fd;
+//extern MemoriaFisica *mf;
 #endif

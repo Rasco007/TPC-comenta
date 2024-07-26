@@ -1,11 +1,13 @@
 /* KERNEL- cliente | MEMORIA - servidor*/
 #include <conexiones/conexionMemoria.h>
+#include <semaphore.h>
+#include <conexiones/conexionCPU.h>
 
 int conexionAMemoria;
 int numeroInstrucciones;
 
 void conexionMemoria() {
-    logger = cambiarNombre (logger,"Kernel-Memoria");
+    //logger = cambiarNombre (logger,"Kernel-Memoria");
     loggerError = cambiarNombre (loggerError, "Errores Kernel-Memoria");
 
     while(1){
@@ -25,7 +27,7 @@ void conexionMemoria() {
 
 void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     char * nombreAnterior = duplicarNombre(logger);
-    logger = cambiarNombre(logger,"Kernel-Memoria");
+    //logger = cambiarNombre(logger,"Kernel-Memoria");
     
     t_paquete* peticion = crearPaquete(); 
     peticion->codigo_operacion = NEWPCB; 
@@ -35,31 +37,25 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     eliminarPaquete (peticion);
 
     //Recibo respuesta memoria
-    char buffer[2048];
-    int bytes_recibidos = recv(conexionAMemoria, buffer, sizeof(buffer), 0);
+    recv(conexionAMemoria,&numeroInstrucciones,sizeof(int),0);
+    log_info(logger, "SE RECIBIERON %d", numeroInstrucciones);
+    pcb->numeroInstrucciones=numeroInstrucciones;
     
-    if (bytes_recibidos < 0) {
-        perror("Error al recibir el mensaje");
-        return;
-    }
-
-    memcpy(&numeroInstrucciones ,buffer+sizeof(op_code), sizeof(int));
-    log_info(logger, "SE RECIBIERON %d", numeroInstrucciones); //No se por que recibe otro valor
-
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
-    //recibirOperacion (conexionAMemoria);
-    logger = cambiarNombre(logger, nombreAnterior);
+    
+    sem_post(&memoriaOK); //Le doy la senhal a cpu para que prosiga
+    //logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }
 
 void enviarPathDeInstrucciones(char* path){
     char * nombreAnterior = duplicarNombre(logger);
-    logger = cambiarNombre(logger,"Kernel-Memoria");
+    //logger = cambiarNombre(logger,"Kernel-Memoria");
 
     enviarMensaje(path,conexionAMemoria);
     
-    log_info(logger,"Se envio el path de instrucciones a memoria.");
-    logger = cambiarNombre(logger, nombreAnterior);
+    //log_info(logger,"Se envio el path de instrucciones a memoria.");
+    //logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 }
 
@@ -67,10 +63,10 @@ void enviarPathDeInstrucciones(char* path){
 void liberarMemoriaPCB(t_pcb* proceso){
     
     char * nombreAnterior = duplicarNombre(logger);
-    logger = cambiarNombre(logger,"Kernel-Memoria");
+    //logger = cambiarNombre(logger,"Kernel-Memoria");
 
     log_info(logger, "PID <%d>: Se envia señal para eliminar estructuras en memoria.", proceso->pid);
-    logger = cambiarNombre(logger, nombreAnterior);
+    //logger = cambiarNombre(logger, nombreAnterior);
     free (nombreAnterior);
 
     t_paquete* peticion = crearPaquete(); 
