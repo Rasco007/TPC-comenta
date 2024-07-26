@@ -13,7 +13,6 @@ void str_to_upper(char *str) {
 //Se reciben dos archivos:El script con las funciones de kernel y el archivo de instrucciones
 int ejecutarConsola () {
     char *linea;
-    pcbsParaExit = list_create();
     //logger=cambiarNombre(logger,"Consola-Kernel");
     //log_info(logger,"Consola iniciada. Por favor ingrese un comando. Puede ingresar MENU para ver los comandos disponibles.");
     while (1) {
@@ -25,7 +24,6 @@ int ejecutarConsola () {
         if (!strncmp(linea, "EXIT", 4)) {
             free(linea);
             exit(EXIT_SUCCESS);
-            list_destroy_and_destroy_elements(pcbsParaExit, free);
             break;
         }
         //Si escribo los comandos....
@@ -190,11 +188,16 @@ void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de n
 
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){
-    log_info(logger, "Busco");   
-    t_pcb* pcb = buscarPID(pcbsParaExit,pid); //TODO: esto deberia ser la cola de pcbsParaExit ! 
-    log_info(logger, "Destruyo");   
-    destruirPCB(pcb);
-    log_info(logger, "Finaliza el proceso <%d> - Motivo: < INTERRUPTED_BY_USER>", pid);    
+    if (buscarYEliminarProceso(pcbsNEW, pid) ||
+        buscarYEliminarProceso(pcbsREADY, pid) ||
+        buscarYEliminarProceso(pcbsREADYaux, pid) ||
+        buscarYEliminarProceso(pcbsExec, pid) ||
+        buscarYEliminarProceso(pcbsBloqueados, pid) ||
+        buscarYEliminarProceso(pcbsParaExit, pid)) {
+        log_info(logger, "Finaliza el proceso <%d> - Motivo: <INTERRUPTED_BY_USER>", pid);
+    } else {
+        log_info(logger, "No se encontró el proceso <%d> en ninguna lista", pid);
+    }   
 }
 
 //DETENER_PLANIFICACION
@@ -221,7 +224,7 @@ void procesoEstado(){
     log_info(logger, "Procesos en READY");
     imprimirListaPCBs(pcbsREADY);
     log_info(logger, "Procesos en EXEC");
-    imprimirListaPCBs(pcbsEnMemoria);
+    imprimirListaPCBs(pcbsExec);
     log_info(logger, "Procesos en BLOCKED:");
     listarPIDS(pcbsBloqueados);
     log_info(logger, "Procesos en EXIT");

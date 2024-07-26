@@ -7,13 +7,16 @@ pthread_cond_t pausaCond;
 t_list *pcbsNEW;
 t_list *pcbsREADY;
 t_list *pcbsREADYaux;
-t_list *pcbsEnMemoria;
+t_list *pcbsExec;
 t_list *pcbsBloqueados;
 t_list *pcbsParaExit;
 int32_t procesosCreados = 0;
 pthread_mutex_t mutexListaNew;
 pthread_mutex_t mutexListaReady;
-pthread_mutex_t mutexListaReadyAux; 
+pthread_mutex_t mutexListaReadyAux;
+pthread_mutex_t mutexListaExec;
+pthread_mutex_t mutexListaExit;
+pthread_mutex_t mutexListaBloqueados; 
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 bool pausaPlanificacion =false; //Flag para manejar el pausado de la planificacion desde consola
@@ -54,7 +57,6 @@ void planificarALargoPlazo(){
         estadoProceso anterior = pcb->estado;
         pcb->estado = READY; //Lo cambio a estado ready
 
-        //list_add(pcbsEnMemoria, pcb);
         loggearCambioDeEstado(pcb->pid, anterior, pcb->estado);
         ingresarAReady(pcb);  
     }
@@ -86,7 +88,11 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
          
         t_pcb *aEjecutar = proximoAEjecutar(); //Desencola de Ready segun un algoritmo
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
-        
+
+        pthread_mutex_lock(&mutexListaExec);
+        list_add(pcbsExec,aEjecutar);
+        pthread_mutex_unlock(&mutexListaExec);
+
         //Paso el proceso a EXEC
         estadoProceso estadoAnterior = aEjecutar->estado;
         aEjecutar->estado = EXEC;
@@ -113,6 +119,10 @@ void inicializarSemaforos(){
     pthread_mutex_init(&mutexListaNew, NULL);
     pthread_mutex_init(&mutexListaReady,NULL); 
     pthread_mutex_init(&mutexListaReadyAux,NULL);
+    pthread_mutex_init(&mutexListaExec,NULL);
+    pthread_mutex_init(&mutexListaExit,NULL);
+    pthread_mutex_init(&mutexListaBloqueados,NULL);
+    pthread_mutex_init(&list_mutex,NULL);
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
@@ -123,6 +133,10 @@ void destruirSemaforos () {
     pthread_mutex_destroy(&mutexListaNew);
     pthread_mutex_destroy(&mutexListaReady);
     pthread_mutex_destroy(&mutexListaReadyAux);
+    pthread_mutex_destroy(&mutexListaExec);
+    pthread_mutex_destroy(&mutexListaExit);
+    pthread_mutex_destroy(&mutexListaBloqueados);
+    pthread_mutex_destroy(&list_mutex);
     sem_close(&hayProcesosNuevos);
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);

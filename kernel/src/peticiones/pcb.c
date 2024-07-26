@@ -1,5 +1,6 @@
 #include <peticiones/pcb.h>
 #include "../conexiones/conexionMemoria.h"
+#include <planificacion/planificacion.h>
 #include <pthread.h>
 char* pidsInvolucrados; 
 pthread_mutex_t list_mutex;
@@ -26,7 +27,9 @@ t_pcb *crearPCB(){
 void destruirPCB(t_pcb *pcb){
     //logger=cambiarNombre(logger,"Kernel-Destruccion PCB");
     int pid_copia = pcb->pid;
+    pthread_mutex_lock(&mutexListaExit);
     list_add(pcbsParaExit, (void*)(uintptr_t)pid_copia);
+    pthread_mutex_unlock(&mutexListaExit);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
     log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
     free(pcb->recursosAsignados);
@@ -57,7 +60,7 @@ void inicializarListasPCBs(){
     pcbsNEW = list_create();
     pcbsREADY = list_create();
     pcbsREADYaux=list_create();
-    pcbsEnMemoria = list_create();
+    pcbsExec = list_create();
     pcbsBloqueados=list_create();
     pcbsParaExit=list_create();
 }
@@ -65,7 +68,7 @@ void inicializarListasPCBs(){
 void destruirListasPCBs () {
     destruirListaPCB(pcbsNEW);
     destruirListaPCB(pcbsREADY);
-    destruirListaPCB(pcbsEnMemoria);
+    destruirListaPCB(pcbsExec);
     destruirListaPCB(pcbsBloqueados);
     destruirListaPCB(pcbsREADYaux);
     destruirListaPCB(pcbsParaExit);
@@ -114,18 +117,20 @@ void imprimirListaExit(t_list *idsExit){
     }
 }
 
-t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid){
-    
-    int cantProcesos = list_size(listaPCBs); 
-     
-    t_pcb* pcb;
-    for(int i=0;i<cantProcesos;i++){
-        
-        pcb = list_get(listaPCBs, i);
-        if(pcb->pid == pid) return pcb;
+bool buscarYEliminarProceso(t_list* lista, int pid) {
+    bool encontrado = false;
+    pthread_mutex_lock(&list_mutex);
+    for (int i = 0; i < list_size(lista); i++) {
+        t_pcb* pcb = list_get(lista, i);
+        if (pcb->pid == pid) {
+            list_remove(lista, i);
+            // Aquí puedes agregar cualquier lógica adicional para finalizar el proceso
+            encontrado = true;
+            break;
+        }
     }
-
-    return NULL;
+    pthread_mutex_unlock(&list_mutex);
+    return encontrado;
 }
 
 

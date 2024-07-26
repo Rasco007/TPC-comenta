@@ -567,7 +567,6 @@ void exit_s(t_pcb *proceso,char **parametros){
 
     flag_exit=1;
     liberarMemoriaPCB(proceso);
-    list_remove_element(pcbsEnMemoria, proceso);
     destruirPCB(proceso); 
     destroyContextoUnico();
     sem_post(&semGradoMultiprogramacion);
