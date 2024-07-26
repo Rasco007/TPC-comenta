@@ -142,3 +142,13 @@ bool asignar_pagina(MemoriaFisica *mf, Proceso *proceso, int numero_pagina) {
     log_error(loggerError, "Error: No hay marcos libres para asignar.");
     return false;
 }
+
+void *obtenerPagina(TablaPaginas *tabla, int numeroPaginaVirtual, void *memoriaContigua, int tamanioPagina) {
+    for (int i = 0; i < tabla->paginas_asignadas; i++) {
+        if (tabla->entradas[i].valido && tabla->entradas[i].numero_pagina == numeroPaginaVirtual) {
+            int numeroMarco = tabla->entradas[i].numero_marco;
+            return (char *)memoriaContigua + numeroMarco * tamanioPagina;
+        }
+    }
+    return NULL; // Página no encontrada
+}

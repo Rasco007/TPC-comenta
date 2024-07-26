@@ -27,7 +27,7 @@ void recibirEnteros2(int socket, int *pid, int *indice) {
 
 // Recibo peticiones de CPU y mando respuesta
 int ejecutarServidorCPU(int *socketCliente) {
-    tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
+    tiempo = confGetInt("RETARDO_RESPUESTA");
     while (1) {
         int peticion = recibirOperacion(*socketCliente);
         log_info(logger, "Se recibió petición %d del CPU", peticion);
@@ -88,6 +88,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
         }
     }
+    //sleep(tiempo/1000);
     return EXIT_SUCCESS;
 }
 
@@ -196,6 +197,48 @@ void escribir(char* valor, int32_t direccionFisica, int tamanio) {
 
     free(valor);
 }
+
+// Escribir datos en el espacio de usuario
+void escribir2(int numeroPaginaVirtualInicial, int direccion_fisica, const char *datos, int tamanio) {
+    int paginaActual = numeroPaginaVirtualInicial;
+    int offsetActual = direccion_fisica;
+    int bytesEscritos = 0;
+
+    while (bytesEscritos < tamanio) {
+        int bytesPorEscribir = TAM_PAGINA - offsetActual;
+        if (bytesPorEscribir > tamanio - bytesEscritos) {
+            bytesPorEscribir = tamanio - bytesEscritos;
+        }
+
+        void *direccion = obtenerPagina(paginaActual);
+        if (direccion == NULL) { // La página no está asignada
+            asignarPagina(paginaActual);
+            direccion = obtenerPagina(paginaActual);
+        }
+
+        strncpy((char *)direccion + offsetActual, datos + bytesEscritos, bytesPorEscribir);
+
+        bytesEscritos += bytesPorEscribir;
+        paginaActual++;
+        offsetActual = 0; // El offset solo es relevante para la primera página
+    }
+}
+
+/* FUNCION TOMY
+void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, const void *data, size_t size) {
+    if (direccion_fisica < 0 || direccion_fisica + size > tamano_memoria_total) {
+        log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
+        return;
+    }
+
+    memcpy((char *)mf->memoria + direccion_fisica, data, size);
+
+    // Log del acceso de escritura
+    log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección física: %d - Tamaño: %zu",
+             proceso->pid, direccion_fisica, size);
+    
+    log_info(logger, "Escritura en memoria EXITOSA");
+}*/
 
 Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_tamano) {
     int tam_pagina = confGetInt("TAM_PAGINA");

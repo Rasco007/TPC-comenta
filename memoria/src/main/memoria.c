@@ -18,11 +18,11 @@ int main() {
     logger = iniciarLogger ("memoria.log", "Memoria");
 	loggerError = iniciarLogger ("memoriaErrores.log","Memoria (Errores)"); 
 	config = iniciarConfiguracion ("memoria.config");
-  
+    mf = inicializar_memoria_fisica();
 	atexit (terminarPrograma);
 	log_info (logger, "Memoria lista para recibir conexiones.");
   
-	 server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
+    server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
   
 	sockets[0] = esperarCliente(server_fd);
 	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
