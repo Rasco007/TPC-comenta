@@ -216,7 +216,7 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
             entry->last_used = tiempo_actual;
             entry->time_added = tiempo_actual;
             tiempo_actual++;
-            log_info(logger, "Se agregó la entrada %ld\n", i);
+            log_info(logger, "Se agregó la entrada %ld", i);
             return;
         }
     }
@@ -252,5 +252,5 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
     entry->last_used = tiempo_actual;
     entry->time_added = tiempo_actual;
     tiempo_actual++;
-    log_info(logger, "Se reemplazó la entrada %ld\n", reemplazo);
+    log_info(logger, "Se reemplazó la entrada %ld", reemplazo);
 }

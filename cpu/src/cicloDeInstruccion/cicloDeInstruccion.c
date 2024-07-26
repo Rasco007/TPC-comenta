@@ -247,9 +247,9 @@ void io_fs_delete(char* interfaz,char* nombreArchivo){
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, RegistroTamanio);
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+    /*temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
     contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro*/
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1;
@@ -306,8 +306,7 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    free(bytes_por_pagina_str);
-    free(direccionesFisicas_str);
+
 
     if(check_interrupt()){
         contextoEjecucion->fin_de_quantum=true;
@@ -326,6 +325,8 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
@@ -597,8 +598,6 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    free(bytes_por_pagina_str);
-    free(direccionesFisicas_str);
 
     if(check_interrupt()){
         contextoEjecucion->fin_de_quantum=true;
@@ -617,6 +616,8 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 void enviarDireccionTamano2(int direccion,int tamano, int pid, int socket) {
    t_paquete *paquete = malloc(sizeof(t_paquete));
@@ -1162,7 +1163,7 @@ void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
     free(instruccionAEjecutar); //ver si va aca
-    //log_info(logger,"Memoria liberada!");
+    log_warning(logger,"Memoria liberada!");
 }
 
 char* recibirValor(int socket) {
