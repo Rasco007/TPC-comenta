@@ -404,6 +404,7 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
     char nombre[100];
     int longitud=bytes_recibidos-sizeof(op_code)-2*sizeof(int);
     memcpy(nombre, buffer+sizeof(op_code)+2*sizeof(int), longitud);
+    nombre[longitud] = '\0';
     log_info(logger, "PID: <%d> - Operacion: <GEN SLEEP>", pid);
     log_info(logger, "Nombre recibido: %s", nombre);
 	log_info(logger, "Tiempo a dormir recibido: %d", unidades); 
