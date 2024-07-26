@@ -571,7 +571,6 @@ void exit_s(t_pcb *proceso,char **parametros){
     if(contextoEjecucion!=NULL){
         destroyContextoUnico();
     } 
-    log_info(logger, "finalizo el exit");
     sem_post(&semGradoMultiprogramacion);
     log_info(logger, "finalizo el exit");
 }
