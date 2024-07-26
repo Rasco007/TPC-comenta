@@ -51,12 +51,12 @@ int ejecutarConsola () {
             token = strtok(NULL, " ");
             if (token != NULL) {
                 char* path = token;
-                if (access(path, F_OK) != -1) {
+                //if (access(path, F_OK) != -1) {
                     iniciarProceso(path);
-                } else {
+               // } else {
                     // El archivo no existe o no es accesible
-                    log_error(logger, "El archivo especificado no existe o no es accesible: %s", path);
-                }
+              //      log_error(logger, "El archivo especificado no existe o no es accesible: %s", path);
+              //  }
             } else {
                 log_info(logger, "No se proporcionó un path para INICIAR_PROCESO");
                 ejecutarConsola ();

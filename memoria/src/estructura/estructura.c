@@ -35,7 +35,7 @@ void liberar_tabla_paginas(TablaPaginas *tp) {
         // No es necesario liberar cada entrada individualmente ya que es un array estático
         // Solo liberamos la estructura TablaPaginas
         free(tp);
-        log_info(logger, "Tabla de páginas liberada");
+        //log_info(logger, "Tabla de páginas liberada");
     } else {
         log_warning(logger, "Tabla de páginas es NULL");
     }
