@@ -16,6 +16,7 @@ t_pcb *crearPCB(){
     nuevoPCB->registrosCPU = crearDiccionarioDeRegistros();
     nuevoPCB->recursosAsignados = list_create();
     nuevoPCB->fin_de_quantum=false;
+    nuevoPCB->numeroInstrucciones=0;
     recibirEstructurasInicialesMemoria(nuevoPCB); //Mando señal a memoria para que reserve espacio para el PCB
     log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     

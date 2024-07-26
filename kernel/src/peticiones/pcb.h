@@ -30,6 +30,7 @@ typedef struct {
     int64_t quantum;
     t_algoritmo algoritmo;
     bool fin_de_quantum;
+    int numeroInstrucciones;
 } t_pcb; 
 
 extern t_list *pcbsNEW;

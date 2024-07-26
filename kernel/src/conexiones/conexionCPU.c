@@ -80,14 +80,11 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     }
 
 void actualizarPCB(t_pcb* proceso){
-	//list_destroy_and_destroy_elements(proceso->instrucciones, free);
-    //proceso->instrucciones = list_duplicate(contextoEjecucion->instrucciones);
     proceso->pid = contextoEjecucion->pid;
     proceso->programCounter = contextoEjecucion->programCounter;
+    proceso->numeroInstrucciones=contextoEjecucion->instruccionesLength;
 	dictionary_destroy_and_destroy_elements(proceso->registrosCPU, free);
     proceso->registrosCPU = registrosDelCPU(contextoEjecucion->registrosCPU);
-    // list_destroy_and_destroy_elements (proceso->tablaDePaginas, free);
-    //proceso->tablaDePaginas = list_duplicate(contextoEjecucion->tablaDePaginas);
     proceso->tiempoDeUsoCPU=contextoEjecucion->tiempoDeUsoCPU;
     proceso->algoritmo=contextoEjecucion->algoritmo;
     
@@ -98,9 +95,7 @@ void actualizarPCB(t_pcb* proceso){
 }
 
 void asignarPCBAContexto(t_pcb* proceso){
-    //list_destroy_and_destroy_elements(contextoEjecucion->instrucciones, free);
-    //contextoEjecucion->instrucciones = list_duplicate(proceso->instrucciones);
-    contextoEjecucion->instruccionesLength = numeroInstrucciones;//list_size(contextoEjecucion->instrucciones);
+    contextoEjecucion->instruccionesLength = proceso->numeroInstrucciones;
     contextoEjecucion->pid = proceso->pid;
     contextoEjecucion->programCounter = proceso->programCounter;
     dictionary_destroy_and_destroy_elements(contextoEjecucion->registrosCPU, free);
@@ -112,27 +107,6 @@ void asignarPCBAContexto(t_pcb* proceso){
         log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
         contextoEjecucion->fin_de_quantum=proceso->fin_de_quantum;
     }
-    
-    //list_destroy_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
-    //contextoEjecucion->tablaDePaginas = list_duplicate(proceso->tablaDePaginas);
-    //contextoEjecucion->tablaDePaginasSize = list_size(contextoEjecucion->tablaDePaginas);
-
- 
-  /*log_info(logger, "PID: %u", contextoEjecucion->pid);
-    log_info(logger, "Program Counter: %d", contextoEjecucion->programCounter);
-    log_info(logger, "SI: %u", contextoEjecucion->SI);
-    log_info(logger, "DI: %u", contextoEjecucion->DI);
-    log_info(logger, "Instrucciones Length: %u", contextoEjecucion->instruccionesLength);
-   
-    log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
-
-    // Loguear motivo de desalojo
-    log_info(logger, "Motivo de Desalojo: %d", contextoEjecucion->motivoDesalojo->motivo);
-    log_info(logger, "Motivo de Desalojo Parámetros Length: %u", contextoEjecucion->motivoDesalojo->parametrosLength);
-    for (int i = 0; i < contextoEjecucion->motivoDesalojo->parametrosLength; i++) {
-        log_info(logger, "Motivo de Desalojo Parámetro %d: %s", i, contextoEjecucion->motivoDesalojo->parametros[i]);
-    }
-   log_info(logger, "--------------------------------" );*/
 }
 
 t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {

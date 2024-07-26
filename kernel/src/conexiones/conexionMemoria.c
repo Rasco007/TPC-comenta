@@ -39,7 +39,8 @@ void recibirEstructurasInicialesMemoria(t_pcb* pcb) {
     //Recibo respuesta memoria
     recv(conexionAMemoria,&numeroInstrucciones,sizeof(int),0);
     log_info(logger, "SE RECIBIERON %d", numeroInstrucciones);
-
+    pcb->numeroInstrucciones=numeroInstrucciones;
+    
     log_info(logger,"PID <%d>: Se esta solicitando estructuras iniciales de memoria.", pcb->pid);
     
     sem_post(&memoriaOK); //Le doy la senhal a cpu para que prosiga
