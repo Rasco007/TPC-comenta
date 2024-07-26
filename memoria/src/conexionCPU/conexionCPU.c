@@ -45,7 +45,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 enviarMensaje("OK", *socketCliente);
                 break;
             case MMU:
-                log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
+                //log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
                 int pid,pag;
                 char marco[sizeof(int)];
                 recibirEnteros(*socketCliente,&pid,&pag);
@@ -81,7 +81,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 proceso = ajustar_tamano_proceso(mf, proceso, nuevo_tamano);
                 enviarMensaje(mensajeResize, *socketCliente);
                 break;
-            case 104: // PARA LEER POR COPY STRING
+            case 104: // PARA LEER POR COPY STRING O MOV IN
                 usleep(1000*1000);
                 log_info(logger, "MEMORIA envía mensaje a CPU segun direccion y tamaño");
                 int dir2, tamano, pid2;
@@ -94,7 +94,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 send(*socketCliente, datosLeidos, tamano, 0);
                 free(datosLeidos);
                 break;
-            case 105: //PARA ESCRIBIR POR COPY STRING
+            case 105: //PARA ESCRIBIR POR COPY STRING o MOV OUT
                 usleep(1000*1000);
                 log_info(logger, "CPU envía mensaje a escribir en memoria");
                 int dir, pid3;
@@ -307,8 +307,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
        
             
         for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
-             EntradaTablaPaginas *entrada = malloc(sizeof(EntradaTablaPaginas));
-             entrada=list_get(proceso->tabla_paginas->entradas, i);
+             EntradaTablaPaginas *entrada =list_get(proceso->tabla_paginas->entradas, i);
              int marco = entrada->numero_marco;
 
             //TODDDDO: PONERRRR   EN LISTA DE  MARCOS LOS QUUE AHHHORA ESTAAARIIIAN DISPONIBLESS
@@ -317,6 +316,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
             list_remove(proceso->tabla_paginas->entradas,i);
             list_replace(mf->listaMarcosLibres, marco,false); //creo que se pone - 1 porque es el indice dee una lista y no existe el marco 0
             //reemmplazaaaa vaalor marcando false como  disponible
+            free(entrada);
         }
     }
     // Actualiza el número de páginas asignadas en la tabla de páginas del proceso

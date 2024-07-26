@@ -920,13 +920,14 @@ void mov_in(char* registro, char* direccionLogica){
     }
     log_info(logger, "Cadena completa: %s", cadenacompleta);
     int numTotal=0;
-    memcpy(&numTotal, cadenacompleta, tamRegistro);
+    memcpy(&numTotal, cadenacompleta, strlen(cadenacompleta));
     log_info(logger, "Valor total: %d", numTotal);
     //paso numTotal a string
     char* numTotalStr = malloc(sizeof(char) * 10);
     sprintf(numTotalStr, "%d", numTotal);
     free(cadenacompleta);
     dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(numTotalStr));
+    free(numTotalStr);
 };
 
 /*Escribo en la direccion fisica de memoria el valor almacenado en el registro*/
