@@ -194,7 +194,6 @@ void finalizarProceso(int pid){
         buscarYEliminarProceso(pcbsExec, pid) ||
         buscarYEliminarProceso(pcbsBloqueados, pid) ||
         buscarYEliminarProceso(pcbsParaExit, pid)) {
-        log_info(logger, "Finaliza el proceso <%d> - Motivo: <INTERRUPTED_BY_USER>", pid);
     } else {
         log_info(logger, "No se encontró el proceso <%d> en ninguna lista", pid);
     }   

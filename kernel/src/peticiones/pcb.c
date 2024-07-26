@@ -118,13 +118,14 @@ void imprimirListaExit(t_list *idsExit){
 }
 
 bool buscarYEliminarProceso(t_list* lista, int pid) {
+    char* interrupted_by_user="INTERRUPTED_BY_USER";
     bool encontrado = false;
     pthread_mutex_lock(&list_mutex);
     for (int i = 0; i < list_size(lista); i++) {
         t_pcb* pcb = list_get(lista, i);
         if (pcb->pid == pid) {
             list_remove(lista, i);
-            // Aquí puedes agregar cualquier lógica adicional para finalizar el proceso
+            exit_s(pcb,&interrupted_by_user);
             encontrado = true;
             break;
         }
