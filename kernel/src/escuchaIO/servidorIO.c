@@ -488,8 +488,10 @@ void ejecutar_io_fs_write(Interfaz *interfaz, t_pcb *proceso){
     }
     char *mensaje;
     recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -548,8 +550,10 @@ void ejecutar_io_fs_read(Interfaz *interfaz, t_pcb *proceso){
     send(socketClienteIO, a_enviar, bytes, 0); 
     char *mensaje;
     recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -602,8 +606,10 @@ void ejecutar_io_stdout_write(Interfaz *interfaz, t_pcb *proceso){
     }
     char *buffer;
     recv(socketClienteIO, &buffer, sizeof(buffer), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -663,8 +669,10 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
     }
     char *buffer;
     recv(socketClienteIO, &buffer, sizeof(buffer), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);

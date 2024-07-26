@@ -431,8 +431,6 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    free(bytes_por_pagina_str);
-    free(direccionesFisicas_str);
     
 
     if(check_interrupt()){
@@ -452,6 +450,8 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
@@ -515,8 +515,6 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    free(bytes_por_pagina_str);
-    free(direccionesFisicas_str);
     
     if(check_interrupt()){
         contextoEjecucion->fin_de_quantum=true;
@@ -535,7 +533,8 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
-
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
@@ -1156,7 +1155,9 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     
     log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
+    //
     }
+    //string_array_destroy(contextoEjecucion->motivoDesalojo->parametros);
 }
 
 void liberarMemoria() {

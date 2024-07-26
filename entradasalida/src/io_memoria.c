@@ -4,7 +4,7 @@ extern int cantidadglobal;
 void io_atender_memoria(){
 	bool control=1;
 	int i=0;
-	char* cadenaCompleta=malloc(256);
+	char* cadenaCompleta=malloc(126);
 	int longitud=0;
     //int size;
 	while (control) {
@@ -31,6 +31,7 @@ void io_atender_memoria(){
     				send(fd_kernel, &mensje, sizeof(mensje), 0);
 					i=0;
 			}
+			//free(recibido);
 			}
 			//else
 			//	enviarMensaje("OK", fd_kernel); 
