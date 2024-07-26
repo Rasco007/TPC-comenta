@@ -13,7 +13,8 @@ t_config* config;
 pthread_t planificadorLargoPlazo_h, planificadorCortoPlazo_h, ejecutarConsola_h, ejecutarIO_h;
 Kernel_io kernel;
 void escucharAlIO();
-
+pthread_mutex_t mutex_lista_global;
+t_list * lista_global_io;
 int main () {
     //Inicializar variables
     logger = iniciarLogger("kernel.log", "Kernel");
@@ -36,7 +37,8 @@ int main () {
 	free (nombre);
 
     //ejecutarConsola();
-
+	lista_global_io = list_create();
+    pthread_mutex_init(&mutex_lista_global, NULL) ;
     //Inicializar Hilos
 	int opCodes [4] = {
 		pthread_create(&planificadorLargoPlazo_h, NULL, (void*) planificarALargoPlazo, NULL),
