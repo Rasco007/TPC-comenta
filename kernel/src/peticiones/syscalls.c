@@ -567,11 +567,13 @@ void exit_s(t_pcb *proceso,char **parametros){
 
     flag_exit=1;
     liberarMemoriaPCB(proceso);
-    destruirPCB(proceso); 
-    destroyContextoUnico();
+    destruirPCB(proceso);
+    if(contextoEjecucion!=NULL){
+        destroyContextoUnico();
+    } 
+    log_info(logger, "finalizo el exit");
     sem_post(&semGradoMultiprogramacion);
     log_info(logger, "finalizo el exit");
-    //TODO: ver de encolar en pcbsParaExit
 }
 
 
