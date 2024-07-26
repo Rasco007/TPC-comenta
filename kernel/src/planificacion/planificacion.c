@@ -12,7 +12,8 @@ t_list *pcbsBloqueados;
 t_list *pcbsParaExit;
 int32_t procesosCreados = 0;
 pthread_mutex_t mutexListaNew;
-pthread_mutex_t mutexListaReady; 
+pthread_mutex_t mutexListaReady;
+pthread_mutex_t mutexListaReadyAux; 
 sem_t semGradoMultiprogramacion;
 int64_t rafagaCPU;
 bool pausaPlanificacion =false; //Flag para manejar el pausado de la planificacion desde consola
@@ -111,6 +112,7 @@ void inicializarSemaforos(){
     gradoMultiprogramacion = obtenerGradoMultiprogramacion();
     pthread_mutex_init(&mutexListaNew, NULL);
     pthread_mutex_init(&mutexListaReady,NULL); 
+    pthread_mutex_init(&mutexListaReadyAux,NULL);
     sem_init(&hayProcesosNuevos, 0, 0);
     sem_init(&hayProcesosReady, 0, 0);
     sem_init(&semGradoMultiprogramacion, 0, gradoMultiprogramacion);
@@ -120,6 +122,7 @@ void inicializarSemaforos(){
 void destruirSemaforos () {
     pthread_mutex_destroy(&mutexListaNew);
     pthread_mutex_destroy(&mutexListaReady);
+    pthread_mutex_destroy(&mutexListaReadyAux);
     sem_close(&hayProcesosNuevos);
     sem_close(&hayProcesosReady);
     sem_close(&semGradoMultiprogramacion);
@@ -157,6 +160,19 @@ void ingresarAReady(t_pcb *pcb){
     pidsInvolucrados = string_new();
     listarPIDS(pcbsREADY);
     log_info(logger, "Cola Ready <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
+    free(pidsInvolucrados);
+}
+
+void ingresarAReadyAux(t_pcb *pcb){
+    pthread_mutex_lock(&mutexListaReadyAux);
+    encolar(pcbsREADYaux, pcb);
+    pthread_mutex_unlock(&mutexListaReadyAux);
+
+    sem_post(&hayProcesosReady);
+
+    pidsInvolucrados = string_new();
+    listarPIDS(pcbsREADY);
+    log_info(logger, "Ready Prioridad <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
     free(pidsInvolucrados);
 }
 

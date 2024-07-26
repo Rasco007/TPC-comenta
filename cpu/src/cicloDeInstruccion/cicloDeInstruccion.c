@@ -28,23 +28,13 @@ char* instruccionAEjecutar;
 char** elementosInstruccion; 
 int instruccionActual; 
 int cantParametros;
-int tiempoEspera;
-int flag_check_interrupt=0;
 
-t_temporal* rafagaCPU; 
 int64_t rafagaCPUEjecutada; 
 
 void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
-
-    //Cuando le seteo en uno por el desalojo, no entraria al check interupt
-    if(flag_check_interrupt==0){
-        check_interrupt();//control de quantum
-    }
-    flag_check_interrupt=0;
-
     liberarMemoria();
     usleep(200);  //VER ESTO!!!!
 }
@@ -156,7 +146,7 @@ int buscar(char *elemento, char **lista) {
     return (i > string_array_size(lista)) ? -1 : i;
 }
  
-void check_interrupt(){
+bool check_interrupt(){
     //log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
@@ -166,15 +156,10 @@ void check_interrupt(){
         log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
-            log_info(logger,"FIN DE QUANTUM");
-            temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-            contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-            temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-            modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
-            enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-            flag_bloqueante = 1;
-        }
-    }
+            log_warning(logger,"FIN DE QUANTUM");
+            return true;
+        } else return false;
+    } else return false;
 }
 // Función para calcular la cantidad de páginas a leer
 int calcularPaginasALeer(int first_addr, int last_addr, int page_size){ 
@@ -240,13 +225,23 @@ int obtenerTamanoPagina(char* path){
 }
 // Instrucciones
 void io_fs_delete(char* interfaz,char* nombreArchivo){
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_DELETE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
@@ -311,42 +306,73 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     free(bytes_por_pagina_str);
     free(direccionesFisicas_str);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDOUT_WRITE, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, RegistroTamanio);
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, regTamanio, "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, regTamanio, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_TRUNCATE, 3, interfaz, nombreArchivo, regTamanio, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_fs_create(char* interfaz, char* nombreArchivo){
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_CREATE, 2, interfaz, nombreArchivo, "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
     char* regPunteroArchivo=dictionary_get(contextoEjecucion->registrosCPU, registroPunteroArchivo);
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
 
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
@@ -404,21 +430,33 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     free(bytes_por_pagina_str);
     free(direccionesFisicas_str);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_WRITE, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
     char* regPunteroArchivo=dictionary_get(contextoEjecucion->registrosCPU, registroPunteroArchivo);
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
 
    int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
@@ -476,21 +514,32 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-
-    modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     free(bytes_por_pagina_str);
     free(direccionesFisicas_str);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_FS_READ, 5, interfaz, nombreArchivo, direccionesFisicas_str, bytes_por_pagina_str, regPunteroArchivo);
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     printf("Tamaño de página: %d\n", tamPagina);
     int first_addr = atoi(regDireccion);
@@ -548,12 +597,26 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
     free(bytes_por_pagina_str);
     free(direccionesFisicas_str);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_STDIN_READ, 3, interfaz, direccionesFisicas_str, bytes_por_pagina_str, "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 void enviarDireccionTamano2(int direccion,int tamano, int pid, int socket) {
    t_paquete *paquete = malloc(sizeof(t_paquete));
@@ -688,7 +751,16 @@ void copy_string(char* tamanio){
     }
     free(datosLeidos2);
     free(cadenacompleta);
-    log_warning(logger, "FIN DE COPY_STRING");
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 /*Le pido a memoria ajustar el tamanio del proceso*/
 void resize(char* tamanio){
@@ -700,13 +772,13 @@ void resize(char* tamanio){
 			char* mensaje=recibirMensaje(conexionAMemoria);
             //log_info(logger, "Mensaje recibido: %s", mensaje);
             if(strcmp(mensaje,"OUT_OF_MEMORY")==0){
+                contextoEjecucion->fin_de_quantum=false;
                 temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
                 contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
                 temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
                 modificarMotivoDesalojo (RESIZE, 0, "","", "", "","");
                 enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
                 flag_bloqueante = 1;
-                flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
                 return;  
             }
             free(mensaje);
@@ -715,6 +787,16 @@ void resize(char* tamanio){
             log_warning(logger,"Operacion desconocida.");
 			break;
 	}
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 /*Le asigno al registro el valor que se indica*/
@@ -725,6 +807,17 @@ void set_c(char* registro, char* valor){
         return;
     }else{
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
+    }
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+        //free(tiempoDeUsoCPU);
     }
 }
 
@@ -744,7 +837,15 @@ void sum_c(char* registro_destino, char* registro_origen){
     sprintf(resultadoStr,"%d", resultado);
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
     dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
-    log_info(logger, "fin sum_c");
+    
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    }
 }
 
 /*RD=RD-RO*/
@@ -763,6 +864,15 @@ void sub_c(char* registro_destino, char* registro_origen){
     sprintf(resultadoStr, "%d", resultado);
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
     dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    }
 }
 
 /*Me fijo que el registro sea distinto de 0. Si lo es, seteo el PC con la instruccion indicada*/
@@ -785,38 +895,78 @@ void jnz(char* registro, char* instruccion){
 
         contextoEjecucion->programCounter = atoi(instruccion);
     }
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+    }
 }
 /*Desalojo el proceso y kernel le indica a IO que haga un sleep en una interfaz indicada y un tiempo indicado*/
 void io_gen_sleep(char* interfaz, char* unidades_trabajo){ 
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else {
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (IO_GEN_SLEEP, 3, interfaz, unidades_trabajo, "GENERICA", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
+    
 }
 
 /*Desalojo el proceso y le pido a kernel que asigne una instancia del recurso indicado*/
 void wait_c(char* recurso){
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (WAIT, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 /*Desalojo el proceso y le pido a kernel que libere una instancia del recurso indicado*/
 void signal_c(char* recurso){
-    temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
-    modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
-    enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
-    flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    } else{
+        contextoEjecucion->fin_de_quantum=false;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (SIGNAL, 1, recurso, "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 }
 
 /*Desalojo el proceso y kernel se encarga de mover el proceso a EXIT*/
@@ -831,46 +981,10 @@ void exit_c () {
     free (terminado);
     log_info(logger, "fin exit_c");
     flag_bloqueante = 1;
-    flag_check_interrupt=1; //Si lo desalojo, entonces no entra el check interrupt
 }
 
 /*Leo el valor almacenado en la direccion fisica de memoria y lo almaceno en el registro*/
 void mov_in(char* registro, char* direccionLogica){
-    /*uint32_t pid=contextoEjecucion->pid;
-    char* valorAInsertar;
-    char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
-    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
-    uint32_t dirFisica = UINT32_MAX;
-    dirFisica = mmu(pid,dirLogica, tamRegistro); 
-    log_info(logger, "Direccion fisica: %d", dirFisica);
-    //Mando pid, dirFisica y tamanio de registro a memoria
-    if(dirFisica!=UINT32_MAX){
-        t_paquete* paquete=crearPaquete();
-        paquete->codigo_operacion=READ;
-        paquete->buffer = malloc(sizeof(t_buffer));
-        paquete->buffer->size = sizeof(uint32_t)*3;
-        paquete->buffer->stream = malloc(paquete->buffer->size);
-        memcpy(paquete->buffer->stream, &pid, sizeof(uint32_t));
-        memcpy(paquete->buffer->stream + sizeof(uint32_t), &dirFisica, sizeof(uint32_t));
-        memcpy(paquete->buffer->stream + sizeof(uint32_t)*2, &tamRegistro, sizeof(uint32_t));
-        int bytes=sizeof(op_code)+sizeof(paquete->buffer->size)+paquete->buffer->size;
-        void *a_enviar = serializarPaquete(paquete, bytes);
-        if (send(conexionAMemoria, a_enviar, bytes, 0) != bytes) {
-            perror("Error al enviar datos al servidor");
-            exit(EXIT_FAILURE); 
-        }
-        free(paquete->buffer->stream);
-        free(paquete->buffer);
-        free(paquete);
-        free(a_enviar);    
-        valorAInsertar=recibirMensaje(conexionAMemoria);
-        dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro, free); 
-        dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valorAInsertar));
-        log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "LEER", dirFisica, valorAInsertar);
-        free (valorAInsertar);
-    }else {
-        log_info(logger, "Error: Dirección física inválida\n");
-    }*/
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
     uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
     int tamPagina = obtenerTamanoPagina("../memoria"); 
@@ -928,47 +1042,19 @@ void mov_in(char* registro, char* direccionLogica){
     free(cadenacompleta);
     dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(numTotalStr));
     free(numTotalStr);
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
+    }
 };
 
 /*Escribo en la direccion fisica de memoria el valor almacenado en el registro*/
 void mov_out(char* direccionLogica, char* registro){
-    /*uint32_t pid=contextoEjecucion->pid;
-    void * valor = dictionary_get(contextoEjecucion->registrosCPU, registro);
-    uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
-    char* dirLogica=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
-    uint32_t dirFisica = UINT32_MAX;
-    //printf("Direccion logica: %s\n", dirLogica);
-    //printf("tamRegistro: %d\n", tamRegistro); ver esto!
-    dirFisica = mmu(pid,dirLogica, tamRegistro);
-    //Mando pid, dirFisica y tamanio de registro a memoria
-    if(dirFisica != UINT32_MAX){ 
-        t_paquete* paquete=crearPaquete();
-        paquete->codigo_operacion=WRITE;
-        paquete->buffer = malloc(sizeof(t_buffer));
-
-        paquete->buffer->size = sizeof(uint32_t)*3;
-        paquete->buffer->stream = malloc(paquete->buffer->size);
-        memcpy(paquete->buffer->stream, &pid, sizeof(uint32_t));
-        memcpy(paquete->buffer->stream + sizeof(uint32_t), &dirFisica, sizeof(uint32_t));
-        memcpy(paquete->buffer->stream + sizeof(uint32_t)*2, &tamRegistro, sizeof(uint32_t));
-
-        int bytes=sizeof(op_code)+sizeof(paquete->buffer->size)+paquete->buffer->size;
-        void *a_enviar = serializarPaquete(paquete, bytes);
-        if (send(conexionAMemoria, a_enviar, bytes, 0) != bytes) {
-            perror("Error al enviar datos al servidor");
-            exit(EXIT_FAILURE); 
-        }
-        
-        free(paquete->buffer->stream);
-        free(paquete->buffer);
-        free(paquete);
-        free(a_enviar);
-
-        char* respuesta=recibirMensaje(conexionAMemoria);
-        free(respuesta);
-
-        log_info(logger, "PID: <%d> - Accion: <%s> - Direccion Fisica: <%d> - Valor: <%s>", contextoEjecucion->pid, "WRITE", dirFisica, (char *)valor);
-    }*/
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, direccionLogica);
     char* valorRegistro=dictionary_get(contextoEjecucion->registrosCPU, registro);
     uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
@@ -1044,6 +1130,16 @@ void mov_out(char* direccionLogica, char* registro){
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
         }
         free(palabra);
+    }
+
+    if(check_interrupt()){
+        contextoEjecucion->fin_de_quantum=true;
+        temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
+        contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
+        temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
+        modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
+        enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 };
 

@@ -29,6 +29,7 @@ typedef struct {
     t_list* recursosAsignados;
     int64_t quantum;
     t_algoritmo algoritmo;
+    bool fin_de_quantum;
 } t_pcb; 
 
 extern t_list *pcbsNEW;

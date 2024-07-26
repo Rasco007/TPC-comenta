@@ -7,19 +7,29 @@ char* invalidInterface = "INVALID_INTERFACE";
 char* outOfMemory = "OUT_OF_MEMORY";
 estadoProceso estadoAnterior; 
 
-void pasarAReady(t_pcb *proceso)
-{
+//Seria para las funciones de IO
+void pasarAReady(t_pcb *proceso){
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    if(proceso->algoritmo==VRR){ //Para los procesos que vuelven de hacer IO
-        encolar(pcbsREADYaux,proceso);
-        pidsInvolucrados = string_new();
-        listarPIDS(pcbsREADYaux);
-        log_info(logger, "Ready Prioridad <%s>: [%s]", obtenerAlgoritmoPlanificacion(), pidsInvolucrados);
-        free(pidsInvolucrados);
-        sem_post(&hayProcesosReady);
-    } else ingresarAReady(proceso);
+    if(proceso->algoritmo==FIFO){
+        ingresarAReady(proceso);
+    }
+
+    //Si estoy en RR, no importa si hay o no fin de q; paso el proceso a ready siempre
+    if(proceso->algoritmo==RR){
+        ingresarAReady(proceso);
+    }
+    
+    //Si estoy en VRR y hubo fin de q, el proceso vuelve a ready con el q reseteado
+    if(proceso->algoritmo==VRR && proceso->fin_de_quantum==true){ 
+        ingresarAReady(proceso);
+    }
+
+    //Si estoy en VRR, pero no hubo fin de q, el proceso va a la cola prioritaria con el q modificado
+    if(proceso->algoritmo==VRR && proceso->fin_de_quantum==false){
+        ingresarAReadyAux(proceso);
+    } 
 }
 
 void recibirMsjIO(int socketClienteIO){
@@ -120,7 +130,10 @@ void wait_s(t_pcb *proceso,char **parametros){
         loggearBloqueoDeProcesos(proceso, recurso);
     } else {//Si no, vuelve a cpu
         list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
-        pasarAReady(proceso);
+        estadoAnterior = proceso->estado;
+        proceso->estado = READY;
+        loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+        ingresarAReady(proceso);
     }
 }
 
@@ -157,7 +170,7 @@ void signal_s(t_pcb *proceso,char **parametros){
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
         loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado); 
-        pasarAReady(pcbDesbloqueado); 
+        ingresarAReady(pcbDesbloqueado);
     }
     
     //Si invoco signal para liberar los recursos, termino la funcion. Si no, paso el proceso a ready
@@ -165,7 +178,10 @@ void signal_s(t_pcb *proceso,char **parametros){
         return;
     } else{
         list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
-        pasarAReady(proceso);
+        estadoAnterior = proceso->estado;
+        proceso->estado = READY;
+        loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+        ingresarAReady(proceso);
     }
 }
 
@@ -679,7 +695,7 @@ typedef struct{
     t_pcb* proceso;
     char* interfaz;
     char* nombreArchivo;
-    char* direccion; //logica o fisica?
+    char* direccion; 
     char* tamanio;
     char* punteroArchivo;
     t_queue* colaBloqueados;
@@ -792,7 +808,7 @@ typedef struct{
     t_pcb* proceso;
     char* interfaz;
     char* nombreArchivo;
-    char* direccion; //logica o fisica?
+    char* direccion;
     char* tamanio;
     char* punteroArchivo;
     t_queue* colaBloqueados;

@@ -77,6 +77,7 @@ void ingresarANew(t_pcb *pcb);
 t_pcb *obtenerSiguienteAReady();
 
 void ingresarAReady(t_pcb *pcb);
+void ingresarAReadyAux(t_pcb *pcb);
 
 void loggearCambioDeEstado(uint32_t pid, estadoProceso anterior, estadoProceso actual); 
 

@@ -67,7 +67,6 @@ int ejecutarServidorCPU(int socketCliente){
 						//log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
 					 } 
-					//temporal_destroy (rafagaCPU);
 					break;
 				default:
 					log_warning(loggerError,"Operacion desconocida.");

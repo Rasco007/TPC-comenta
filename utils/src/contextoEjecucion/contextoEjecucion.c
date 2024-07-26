@@ -27,8 +27,8 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     //calculo tamaño de tiempo de cpu
     paquete->buffer->size  += sizeof(contextoEjecucion->tiempoDeUsoCPU);
 
-    //calculo para quantum y algoritmo
-    paquete->buffer->size+=sizeof(contexto->quantum)+sizeof(contexto->algoritmo);
+    //calculo para quantum, algoritmo y el flag de fin de quantum
+    paquete->buffer->size+=sizeof(contexto->quantum)+sizeof(contexto->algoritmo)+sizeof(contexto->fin_de_quantum);
 
     paquete->buffer->stream = malloc(paquete->buffer->size);
 
@@ -87,6 +87,10 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     //serializo el tiempo de cpu
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
     desplazamiento += sizeof(contexto->tiempoDeUsoCPU);
+
+    //serializo el flag de fin de quantum
+    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->fin_de_quantum), sizeof(contexto->fin_de_quantum));
+    desplazamiento += sizeof(contexto->fin_de_quantum);
 
 log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
@@ -223,6 +227,10 @@ void recibirContextoBeta(int socket) {
     memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
     desplazamiento += sizeof(contextoEjecucion->tiempoDeUsoCPU);
 
+    //Deserializar flag de fin de quantum
+    memcpy(&(contextoEjecucion->fin_de_quantum), buffer + desplazamiento, sizeof(contextoEjecucion->fin_de_quantum));
+    desplazamiento += sizeof(contextoEjecucion->fin_de_quantum);
+
     log_info(logger, "termino de recibir todo");
     
 }
@@ -273,4 +281,5 @@ void iniciarContexto(){
     contextoEjecucion->motivoDesalojo->motivo = 0;
 	contextoEjecucion->quantum=0;
     contextoEjecucion->algoritmo=0;
+    contextoEjecucion->fin_de_quantum=false;
 }

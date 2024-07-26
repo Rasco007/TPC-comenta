@@ -18,18 +18,12 @@
     #include <conexionMemoria/conexionMemoria.h>
     #include <escuchaKernel/servidorKernel.h>
     #include <mmu/mmu.h>
-
-    #define obtenerTiempoEspera() config_get_int_value(config, "RETARDO_INSTRUCCION")
     
-
-    
-
     extern char *listaComandos[];
     extern char* instruccionAEjecutar; 
     extern char** elementosInstruccion; 
     extern int instruccionActual; 
     extern int cantParametros;
-    extern int tiempoEspera;
     extern int conexionAMemoria;
     extern int socketClienteDispatch;
     extern int socketClienteInterrupt;
@@ -41,7 +35,7 @@
     void decode();
     void execute();
     void liberarMemoria();
-    void check_interrupt();
+    bool check_interrupt();
     int buscar(char *elemento, char **lista); 
 
     

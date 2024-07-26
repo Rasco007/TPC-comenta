@@ -33,6 +33,7 @@ typedef struct {
     int64_t tiempoDeUsoCPU;
     int64_t quantum;
     t_algoritmo algoritmo;
+    bool fin_de_quantum;
 } t_contexto;
 
 extern t_contexto* contextoEjecucion;

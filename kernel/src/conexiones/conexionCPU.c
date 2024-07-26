@@ -93,6 +93,7 @@ void actualizarPCB(t_pcb* proceso){
     
     if(proceso->algoritmo != FIFO){
         proceso->quantum=contextoEjecucion->quantum;
+        proceso->fin_de_quantum=contextoEjecucion->fin_de_quantum;
     }
 }
 
@@ -109,6 +110,7 @@ void asignarPCBAContexto(t_pcb* proceso){
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
         log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
+        contextoEjecucion->fin_de_quantum=proceso->fin_de_quantum;
     }
     
     //list_destroy_and_destroy_elements (contextoEjecucion->tablaDePaginas, free);
