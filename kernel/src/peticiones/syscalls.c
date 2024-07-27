@@ -100,8 +100,10 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
         case FIN_DE_QUANTUM:
             finDeQuantum(proceso);
+            break;
         case USER_INTERRUPTION:
             exit_s(proceso,&interrupted_by_user);
+            break;
         default:
             log_error(loggerError, "Comando incorrecto");
             break;
@@ -655,6 +657,7 @@ void finDeQuantum(t_pcb *proceso){
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     //No importa si es RR o VRR, siempre se encola en READY
+
     ingresarAReady(proceso); 
 }
 

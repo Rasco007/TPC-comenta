@@ -163,8 +163,10 @@ t_comando check_interrupt(){
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
             log_warning(logger,"FIN DE QUANTUM");
             return FIN_DE_QUANTUM;
-        } else return VOID;
-    } else return VOID;
+        } 
+    }
+
+    return VOID;
 }
 // Función para calcular la cantidad de páginas a leer
 int calcularPaginasALeer(int first_addr, int last_addr, int page_size){ 
@@ -1207,7 +1209,7 @@ void mov_in(char* registro, char* direccionLogica){
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
-};
+}
 
 /*Escribo en la direccion fisica de memoria el valor almacenado en el registro*/
 void mov_out(char* direccionLogica, char* registro){
@@ -1306,7 +1308,7 @@ void mov_out(char* direccionLogica, char* registro){
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
-};
+}
 
 // Funciones grales
 
@@ -1326,7 +1328,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     mensajeInterrupcion="";
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
-    free(elementosInstruccion);
+    //free(elementosInstruccion);
     free(instruccionAEjecutar);
     log_warning(logger,"Memoria liberada!");
 }
