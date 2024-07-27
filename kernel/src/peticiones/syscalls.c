@@ -5,6 +5,7 @@ char **nombresRecursos;
 char* invalidResource = "INVALID_RESOURCE";
 char* invalidInterface = "INVALID_INTERFACE";
 char* outOfMemory = "OUT_OF_MEMORY";
+char* interrupted_by_user="INTERRUPTED_BY_USER";
 estadoProceso estadoAnterior; 
 void eliminarProcesoAsociado(t_pcb *proceso){
     for (size_t i = 0; i < list_size(pcbsBloqueados); i++)
@@ -99,6 +100,8 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
         case FIN_DE_QUANTUM:
             finDeQuantum(proceso);
+        case USER_INTERRUPTION:
+            exit_s(proceso,&interrupted_by_user);
         default:
             log_error(loggerError, "Comando incorrecto");
             break;

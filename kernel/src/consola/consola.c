@@ -196,11 +196,7 @@ void finalizarProceso(int pid){
         eliminarProceso(pcbsREADYaux,pid);
     } else if (buscarProceso(pcbsExec,pid)){
         log_error(logger, "se envia MENSAJE a CPU para que finalice el proceso");
-        enviarMensaje2("USER_INTERRUPT",conexionAMemoria);
-        char *recibido;
-        recibido=recibirMensaje(conexionACPUInterrupt);
-        log_warning(logger, "Mensaje recibido: %s", recibido);
-        eliminarProceso(pcbsExec, pid);
+        enviarMensaje2("USER_INTERRUPT",conexionACPUInterrupt);
     } else if (buscarProceso(pcbsBloqueados,pid)){
         eliminarProceso(pcbsBloqueados,pid);
     } else log_info(logger, "No se encontró el proceso <%d> en ninguna lista", pid); 

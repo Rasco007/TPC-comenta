@@ -55,12 +55,6 @@ int ejecutarServidorKernel(int *socketCliente) {
                 //log_info(logger,"Path de instrucciones recibido: %s",pathInstrucciones);
                 break;
             }
-            case 150: 
-                char *mensaje = recibirMensaje(*socketCliente);
-                log_warning(logger, "Mensaje recibido: %s", mensaje);
-                enviarMensaje2(mensaje, sockets[0]);
-               // free(mensaje);
-                break;
             case -1:
                 log_error(logger, "El Kernel se desconectó");
                 return EXIT_FAILURE;
