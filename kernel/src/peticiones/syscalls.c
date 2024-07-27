@@ -6,9 +6,23 @@ char* invalidResource = "INVALID_RESOURCE";
 char* invalidInterface = "INVALID_INTERFACE";
 char* outOfMemory = "OUT_OF_MEMORY";
 estadoProceso estadoAnterior; 
-
+void eliminarProcesoAsociado(t_pcb *proceso){
+    for (size_t i = 0; i < list_size(pcbsBloqueados); i++)
+    {
+        t_pcb *procesoABuscar = list_get(pcbsBloqueados,i);
+        if (proceso->pid == procesoABuscar->pid)
+        {
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_remove(pcbsBloqueados,i);              
+            pthread_mutex_unlock(&mutexListaBloqueados);
+        }
+    }
+}
 //Seria para las funciones de IO
 void pasarAReady(t_pcb *proceso){
+
+    eliminarProcesoAsociado(proceso);
+    
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
@@ -124,6 +138,10 @@ void wait_s(t_pcb *proceso,char **parametros){
         estadoAnterior = proceso->estado;
         proceso->estado = BLOCKED;
 
+        pthread_mutex_lock(&mutexListaBloqueados);
+        list_add(pcbsBloqueados,proceso);
+        pthread_mutex_unlock(&mutexListaBloqueados);
+
         list_add(colaBloqueadosRecurso,(void*)proceso);
 
         loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
@@ -160,16 +178,17 @@ void signal_s(t_pcb *proceso,char **parametros){
     eliminarRecursoLista(proceso->recursosAsignados,recurso); 
 
     instanciasRecursos[indexRecurso]=instancRecurso;
-
+    log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
     if(instancRecurso <= 0){
         t_list *colaBloqueadosRecurso = (t_list *)list_get(recursos, indexRecurso);
         t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
-
+        instancRecurso++;
         list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
 
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
-        loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado); 
+        loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado);
+        eliminarProcesoAsociado(proceso); 
         ingresarAReady(pcbDesbloqueado);
     }
     
@@ -177,10 +196,10 @@ void signal_s(t_pcb *proceso,char **parametros){
     if(!strncmp(parametros[2],"EXIT",4)){
         return;
     } else{
-        list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+        //list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
         estadoAnterior = proceso->estado;
         proceso->estado = READY;
-        loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
+        loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado); 
         ingresarAReady(proceso);
     }
 }
@@ -198,6 +217,12 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
             // en caso de validar() sea 1, hacemos io_gen_sleep
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
+
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
             loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
@@ -250,11 +275,19 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ",proceso->pid);
 
+
+           //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
+
             io_global->parametro1 = contextoEjecucion->motivoDesalojo->parametros[1];
             io_global->parametro2 = contextoEjecucion->motivoDesalojo->parametros[2];
-            log_info(logger, "parametro 1 %s", io_global->parametro1);
-               log_info(logger, "parametro 2222 %s", io_global->parametro2);
-             log_info(logger, "Puntero io_global: %p", (void*)io_global);
+
+            // log_info(logger, "parametro 1 %s", io_global->parametro1);
+            //    log_info(logger, "parametro 2222 %s", io_global->parametro2);
+            //  log_info(logger, "Puntero io_global: %p", (void*)io_global);
              ///////////pthread_mutex_lock(&io_global->mutex_cola_procesos);
             queue_push( io_global->cola_procesos_io,proceso);
              //pthread_mutex_unlock(&io_global->mutex_cola_procesos);
@@ -296,6 +329,11 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_STDOUT_WRITE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDOUT_WRITE",proceso->pid);
+
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
              io_global->parametro1 = parametros[1];
             io_global->parametro2 = parametros[2];
@@ -341,6 +379,12 @@ void io_fs_create(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_CREATE",proceso->pid);
 
+
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
             io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
              io_global->funcion= IO_FS_CREATE;
@@ -382,6 +426,11 @@ Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesaloj
             loggearBloqueoDeProcesos(proceso, "IO_FS_DELETE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_DELETE",proceso->pid);
+
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
              io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
@@ -425,6 +474,11 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_TRUNCATE",proceso->pid);
+
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
              io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
@@ -470,6 +524,11 @@ void io_fs_write(t_pcb *proceso,char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_WRITE",proceso->pid);
+
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
             io_global->parametro1 = parametros[1];
             io_global->parametro2 = parametros[2];
@@ -519,6 +578,11 @@ void io_fs_read(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_READ",proceso->pid);
 
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+            
             io_global->parametro1 = parametros[1];
             io_global->parametro2 = parametros[2];
             io_global->parametro3 = parametros[3];

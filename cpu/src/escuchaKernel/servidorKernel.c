@@ -39,10 +39,13 @@ int ejecutarServidorCPU(int socketCliente){
     instruccionActual = -1;
 	int codOP = recibirOperacion(socketCliente);
 		switch (codOP) {
-				case MENSAJE:
+				case 150:
 					log_info(logger, "Mensaje recibido.");
 					char* mensaje = recibirMensaje(socketCliente);
 					log_info(logger, "Mensaje: %s", mensaje);
+					if(strcmp(mensaje,"USER_INTERRUPT")==0){
+						flag_user_interruption=1;
+					}
 					break;
 				case -1:
 					log_info(logger, "El Kernel se desconecto.");

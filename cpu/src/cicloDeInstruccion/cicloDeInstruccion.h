@@ -27,7 +27,7 @@
     extern int conexionAMemoria;
     extern int socketClienteDispatch;
     extern int socketClienteInterrupt;
-
+    extern int flag_user_interruption;
     extern t_contexto* contextoEjecucion;
 
     void cicloDeInstruccion();

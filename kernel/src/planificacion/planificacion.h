@@ -30,6 +30,7 @@ extern sem_t hayProcesosNuevos;
 extern pthread_mutex_t mutexListaNew;
 extern pthread_mutex_t mutexListaReady;
 extern pthread_mutex_t mutexListaExit; 
+extern pthread_mutex_t mutexListaBloqueados; 
 extern sem_t semGradoMultiprogramacion; 
 extern int gradoMultiprogramacion; 
 extern int *instanciasRecursos;

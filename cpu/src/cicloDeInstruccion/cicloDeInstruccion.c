@@ -28,8 +28,9 @@ char* instruccionAEjecutar;
 char** elementosInstruccion; 
 int instruccionActual; 
 int cantParametros;
-
-int64_t rafagaCPUEjecutada; 
+int flag_user_interruption=0;
+int64_t rafagaCPUEjecutada;
+char* mensajeInterrupcion=""; 
 
 void cicloDeInstruccion(){
     fetch();//busca la próxima instruccion a ejecutar. Lista en pcb
@@ -104,7 +105,11 @@ void fetch() {
 			instruccionAEjecutar=recibirMensaje(conexionAMemoria);
             //log_info(logger, "Instruccion recibida: %s", instruccionAEjecutar);
 			break;
-		default:
+        case 150:
+            mensajeInterrupcion = recibirMensaje(conexionAMemoria);	
+            log_warning(logger, "Mensaje de interrupcion: %s", mensajeInterrupcion);
+            break;	
+        default:
             log_warning(logger,"Operacion desconocida.");
 			break;
 	}
@@ -147,7 +152,18 @@ int buscar(char *elemento, char **lista) {
 }
  
 bool check_interrupt(){
-    //log_info(logger, "Algoritmo: %d", contextoEjecucion->algoritmo);
+    if(strcmp(mensajeInterrupcion,"USER_INTERRUPT")==0){
+        char *mensaje = "OK";
+        enviarMensaje(mensaje, socketClienteInterrupt);
+        return true;
+    }
+
+    /*if(flagKernel==1){
+        log_warning(logger,"FLAG KERNEL=1"); 
+        flagKernel=0;
+        return true;
+    }*/
+    //log_error(logger,"valor del flagKernel: %d",flagKernel);
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
@@ -1162,7 +1178,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-    free(instruccionAEjecutar); //ver si va aca
+   // free(instruccionAEjecutar); //ver si va aca
     log_warning(logger,"Memoria liberada!");
 }
 

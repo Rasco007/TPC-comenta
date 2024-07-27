@@ -71,7 +71,7 @@ int tamanioArrayCharDoble (char **arreglo){
 
 void liberarRecursosAsignados(t_pcb* proceso){
     int cantRecursos = list_size(proceso->recursosAsignados);
-
+    log_error(logger,"La cant de recursos es %d",(cantRecursos));
     int i;
     if(cantRecursos!=0){
         for(i=0; i<cantRecursos;cantRecursos--){
@@ -84,15 +84,17 @@ void liberarRecursosAsignados(t_pcb* proceso){
 
 void eliminarRecursoLista(t_list* recursos, char* recurso){
     int cantRecursos = list_size(recursos);
-    log_debug(logger,"La cant de recursos es %d",(cantRecursos));
-    log_debug(logger,"el recurso es %s",(recurso));
+    log_warning(logger,"La cant de recursos es %d",(cantRecursos));
+    log_warning(logger,"el recurso es %s",(recurso));
     int i;
     
     for(i=0;i<cantRecursos;i++){ 
-        log_debug(logger,"Mi lista tiene %s",(char*)list_get(recursos, i));
+        log_warning(logger,"Mi lista tiene %s",(char*)list_get(recursos, i));
         
         if(!strcmp((char*)list_get(recursos,i), recurso)){
             list_remove_and_destroy_element(recursos,i,free);
+            int cantidadRecursos = list_size(recursos);
+            log_warning(logger,"La cant de recursos es %d",(cantidadRecursos));
             return;  
         }
     }

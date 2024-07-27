@@ -188,15 +188,22 @@ void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de n
 
 //FINALIZAR_PROCESO
 void finalizarProceso(int pid){
-    if (buscarYEliminarProceso(pcbsNEW, pid) ||
-        buscarYEliminarProceso(pcbsREADY, pid) ||
-        buscarYEliminarProceso(pcbsREADYaux, pid) ||
-        buscarYEliminarProceso(pcbsExec, pid) ||
-        buscarYEliminarProceso(pcbsBloqueados, pid) ||
-        buscarYEliminarProceso(pcbsParaExit, pid)) {
-    } else {
-        log_info(logger, "No se encontró el proceso <%d> en ninguna lista", pid);
-    }   
+    if(buscarProceso(pcbsNEW,pid)){
+        eliminarProceso(pcbsNEW,pid);
+    } else if(buscarProceso(pcbsREADY,pid)){
+        eliminarProceso(pcbsREADY,pid);
+    } else if(buscarProceso(pcbsREADYaux,pid)){
+        eliminarProceso(pcbsREADYaux,pid);
+    } else if (buscarProceso(pcbsExec,pid)){
+        log_error(logger, "se envia MENSAJE a CPU para que finalice el proceso");
+        enviarMensaje2("USER_INTERRUPT",conexionAMemoria);
+        char *recibido;
+        recibido=recibirMensaje(conexionACPUInterrupt);
+        log_warning(logger, "Mensaje recibido: %s", recibido);
+        eliminarProceso(pcbsExec, pid);
+    } else if (buscarProceso(pcbsBloqueados,pid)){
+        eliminarProceso(pcbsBloqueados,pid);
+    } else log_info(logger, "No se encontró el proceso <%d> en ninguna lista", pid); 
 }
 
 //DETENER_PLANIFICACION

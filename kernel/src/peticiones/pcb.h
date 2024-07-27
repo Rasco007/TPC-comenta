@@ -96,7 +96,8 @@ void listarPIDS(t_list *pcbs);
 void imprimirListaPCBs(t_list *pcbs);
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid);
 void imprimirListaExit(t_list *idsExit);
-bool buscarYEliminarProceso(t_list* lista, int pid);
+bool buscarProceso(t_list* lista, int pid);
+void eliminarProceso(t_list* lista, int pid);
 
 
 #endif
