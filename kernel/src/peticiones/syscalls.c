@@ -133,7 +133,7 @@ void wait_s(t_pcb *proceso,char **parametros){
 
     //Si el numero de instancias es menor a 0 el proceso se bloquea
     if(instanciaRecurso<0){
-        t_list *colaBloqueadosRecurso=(t_list*)list_get(recursos,indexRecurso);
+        t_list *colaBloqueadosRecurso=list_get(recursos,indexRecurso);
 
         estadoAnterior = proceso->estado;
         proceso->estado = BLOCKED;
@@ -142,7 +142,7 @@ void wait_s(t_pcb *proceso,char **parametros){
         list_add(pcbsBloqueados,proceso);
         pthread_mutex_unlock(&mutexListaBloqueados);
 
-        list_add(colaBloqueadosRecurso,(void*)proceso);
+        list_add(colaBloqueadosRecurso,proceso);
 
         loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
         loggearBloqueoDeProcesos(proceso, recurso);
@@ -180,11 +180,15 @@ void signal_s(t_pcb *proceso,char **parametros){
     instanciasRecursos[indexRecurso]=instancRecurso;
     log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
     if(instancRecurso <= 0){
-        t_list *colaBloqueadosRecurso = (t_list *)list_get(recursos, indexRecurso);
-        t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
         instancRecurso++;
-        list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
 
+        pthread_mutex_lock(&mutexListaBloqueados);
+        t_list *colaBloqueadosRecurso = list_get(recursos, indexRecurso);
+        t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
+        
+
+        list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
+        pthread_mutex_lock(&mutexListaBloqueados);
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
         loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado);

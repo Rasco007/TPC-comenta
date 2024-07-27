@@ -21,7 +21,7 @@ void crearColasBloqueo()
         instanciasRecursos[i]=instanciasConvertEntero;
 
         t_list *colaBloqueo = list_create();
-        list_add(recursos, (void *)colaBloqueo);
+        list_add(recursos, colaBloqueo);
     }
 
     destruirArrayCharDoble(cantInstanciasRecursos);
