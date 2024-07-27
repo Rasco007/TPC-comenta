@@ -19,7 +19,7 @@ void conexionCPU() {
            break;
         }
         else {
-            log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPU);
+            log_warning(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPU);
             sleep(5);
         }
     }
@@ -32,7 +32,7 @@ void conexionCPU() {
             break;
         }
         else {
-            log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPUInterrupt);
+            log_warning(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPUInterrupt);
             sleep(5);
         }
     }
