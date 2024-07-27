@@ -91,7 +91,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         //detenerYDestruirCronometro(aEjecutar->tiempoDeUsoCPU);
 
         pthread_mutex_lock(&mutexListaExec);
-        list_add(pcbsExec,aEjecutar);
+        encolar(pcbsExec,aEjecutar);
         pthread_mutex_unlock(&mutexListaExec);
 
         //Paso el proceso a EXEC
@@ -102,9 +102,8 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
 
         //Mando el contexto de ejecucion a la CPU por dispatch
         contextoEjecucion = procesarPCB(aEjecutar); 
+        desencolar(pcbsExec);
 
-        //rafagaCPU = contextoEjecucion->tiempoDeUsoCPU; 
-       
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
         log_info(logger, "APAREZCO KERNEL");
