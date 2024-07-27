@@ -27,7 +27,8 @@ int main(void){
 	//cambiarNombre(logger, nombre);
 
     char *algoritmoTLB = obtenerAlgoritmoTLB();
-	inicializar_tlb(algoritmoTLB); 
+	int cantidadEntradasTLB = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
+    if (cantidadEntradasTLB > 0) inicializar_tlb(algoritmoTLB); 
 
     escucharAlKernel();
 

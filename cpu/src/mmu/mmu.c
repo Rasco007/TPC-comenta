@@ -33,9 +33,13 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
     log_info(logger,"PID: <%d> - DIRECCION LOGICA: <%d> - PAGINA: <%d> - OFFSET: <%d>", pid, direccionLogica, page_number, offset);
     int recibo;
     char* valorAInsertar;
-
+    int consulta;
     uint32_t frame_number;
-    int consulta=consultar_tlb(pid, page_number, &frame_number);
+    int cantidadEntradasTLB = config_get_int_value(config, "CANTIDAD_ENTRADAS_TLB");
+    if (cantidadEntradasTLB > 0)
+        consulta=consultar_tlb(pid, page_number, &frame_number);
+    else
+        consulta=0;
     if (consulta==1) {
         // TLB Hit
         log_info(logger, "PID: <%d> - TLB HIT - Pagina: <%d>", pid, page_number);
@@ -45,7 +49,8 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         // TLB Miss
         // Aquí deberías consultar la tabla de páginas en memoria y actualizar la TLB
         // Por ahora, solo indicamos un TLB Miss
-        log_info(logger,"PID: <%d> - TLB MISS - Pagina: <%d>", pid, page_number);
+        if (cantidadEntradasTLB > 0)
+            log_info(logger,"PID: <%d> - TLB MISS - Pagina: <%d>", pid, page_number);
         //log_info(logger,"TLB Miss\n");
         solicitarDireccion((int) pid,(int)page_number,conexionAMemoria);
         //int control = 1;
@@ -70,7 +75,8 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         }
 
         // Agregar la nueva entrada a la TLB
-        agregar_a_tlb(pid, page_number, frame);
+        if (cantidadEntradasTLB > 0)
+            agregar_a_tlb(pid, page_number, frame);
 
         return frame* tamPagina + offset;
         //}
@@ -135,6 +141,7 @@ void inicializar_tlb(char* algoritmoTLB) {
         entry->time_added = -1;
         list_add(tlb->entries, entry);
     }
+    log_info(logger, "TLB inicializada con algoritmo %s.", algoritmoTLB);
 }
 
 int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
