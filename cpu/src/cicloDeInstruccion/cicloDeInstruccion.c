@@ -748,6 +748,7 @@ void copy_string(char* tamanio){
         //recibir un mensaje de confirmacion de que se escribio en memoria
         char recibido[100];
         recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        log_info(logger, "OK DE MEMORIA");
     }
     free(datosLeidos2);
     free(cadenacompleta);
@@ -1107,6 +1108,7 @@ void mov_out(char* direccionLogica, char* registro){
             //recibir un mensaje de confirmacion de que se escribio en memoria
             char recibido[100];
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+            log_info(logger, "OK DE MEMORIA");
         }
         free(palabra);
     }
@@ -1128,6 +1130,7 @@ void mov_out(char* direccionLogica, char* registro){
             //recibir un mensaje de confirmacion de que se escribio en memoria
             char recibido[100];
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+            log_info(logger, "OK DE MEMORIA");
         }
         free(palabra);
     }

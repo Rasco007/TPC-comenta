@@ -2,7 +2,7 @@
 
 //una funcion que reciba un nombre de archivo y un tamanio y lo trunque
 void truncarArchivo2(char* nombre, int tamanio, int pid){
-    usleep(TIEMPO_UNIDAD_TRABAJO*1000);
+    //usleep(TIEMPO_UNIDAD_TRABAJO*1000);
     //log_info(logger, "Truncar archivo: <%s> Tamaño: %d bytes", nombre, tamanio); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO TRUNCO
     char pathArchivo[256];
     strcpy(pathArchivo, PATH_BASE_DIALFS);
@@ -85,7 +85,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
             bloqueslibres++;
         //printf("bloqueslibres: %d\n", bloqueslibres); //cantidad de bloques libres que se encuentran despues del archivo que se quiere agrandar
         if(bloqueslibres>=cantidadBloques-1){
-            printf("Se encontraron suficientes bloques libres para agrandar el archivo.\n");
+            //printf("Se encontraron suficientes bloques libres para agrandar el archivo.\n");
             // Calcular la cantidad de bloques ocupados por el archivo
             int bloquefinalposta = bloqueInicial+cantidadBloques-1;//printf("bloquefinal: %d\n", bloquefinal);
             // Asignar los bloques libres al archivo
@@ -162,7 +162,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
                 perror("Error al abrir el directorio");
                 return ;
             }
-            usleep(RETRASO_COMPACTACION*5);
+            usleep(RETRASO_COMPACTACION*1000);
             for (int i = nuevaposicioninicial; i < nuevaposicioninicial+cantidadBloques-1; i++) 
                 bitarray_set_bit(my_bitmap2, i+1);//posicionBit = i+1;printf("posicionBit: %d\n", posicionBit);
             char *sinextension=obtenerNombreSinExtension(pathMetadatabeta);//printf("nombreSinExtension: %s\n", sinextension);
@@ -184,7 +184,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
 }
 
 void delete_file(const char *nombre) {
-    usleep(TIEMPO_UNIDAD_TRABAJO*1000);
+    //usleep(TIEMPO_UNIDAD_TRABAJO*1000);
    // log_info(logger, "Borrar archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO ELIMINO
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
@@ -246,7 +246,7 @@ void delete_file(const char *nombre) {
 }
 
 void crearArchivo2(char* nombre) {
-    usleep(TIEMPO_UNIDAD_TRABAJO*1000);
+    //usleep(TIEMPO_UNIDAD_TRABAJO*1000);
    // log_info(logger, "Crear archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO CREO
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);

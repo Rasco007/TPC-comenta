@@ -2,7 +2,7 @@
 extern int tamaniosglobales[20];
 extern int cantidadglobal;
 void io_atender_memoria(){
-	bool control=1;
+	/*bool control=1;
 	int i=0;
 	char* cadenaCompleta=malloc(126);
 	int longitud=0;
@@ -45,5 +45,5 @@ void io_atender_memoria(){
    		 	log_warning(logger,"Operacion desconocida. No quieras meter la pata");
    	 		break;
     	}
-	}
+	}*/
 }

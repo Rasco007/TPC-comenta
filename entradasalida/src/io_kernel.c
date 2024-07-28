@@ -6,17 +6,16 @@ int tamaniosglobales[20];
 int cantidadglobal;
 void io_atender_kernel(){
 	bool control=1;
-    //int size;
 	while (control) {
     	int cod_op = recibirOperacion(fd_kernel);
     	switch (cod_op) {
     	case MENSAJE:
    	 		recibirMensaje(fd_kernel);
    	 		break;
-	  	case READ:
+	  	/*case READ:
 		    log_info(logger, "stdin read recibido");
 		    manejarSTDINREAD(fd_kernel);
-		    break;
+		    break;*/
    		case IO_GEN_SLEEP:
    			log_info(logger, "GEN SLEEP recibido");
 			recibir_mensaje_y_dormir(fd_kernel);
@@ -250,7 +249,11 @@ void manejarFS_READ(int socketCliente){
         printf("Datos leidos: %s\n", datosLeidos);
         puntero2+=tamanio[i];
         enviarAImprimirAMemoria(datosLeidos,direccion[i], fd_memoria, pid);
-        usleep(1000*1000);
+        //usleep(1000*1000);
+        char *recibido="";
+        recv(fd_memoria, &recibido, sizeof(recibido), 0);
+        log_info(logger, "OK DE MEMORIA");
+        free(datosLeidos);
     }
     free(direccion);
     free(tamanio);
@@ -309,6 +312,8 @@ void manejarFS_WRITE(int socketCliente){
     int cantidadtotal=cantidaddirec;
     cantidadglobal=cantidadtotal;
     int tamanioTotal=0;
+    char *cadenaCompleta=malloc(126);
+    memset(cadenaCompleta, 0, 126);
     for(int i=0; i<cantidadtotal; i++)
         tamanioTotal+=tamanio[i];
     log_info(logger, "PID: <%d> - Escribir Archivo: <%s> - Tamaño a Escribir: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanioTotal, punteroArchivo);
@@ -317,8 +322,23 @@ void manejarFS_WRITE(int socketCliente){
         log_info(logger, "Direccion recibida: %d", direccion[i]);
         tamaniosglobales[i]=tamanio[i];
         enviarDireccionTamano(direccion[i],tamanio[i],pid,fd_memoria);
-        usleep(1000*1000);
+       // usleep(1000*1000);
+        char* recibido=malloc(256);
+        memset(recibido, 0, 256);
+	    if(i==0)
+	    	cadenaCompleta[0]='\0';
+	    recv(fd_memoria, recibido, tamanio[i], 0);
+	    printf("Mensaje recibido de memoria:%s\n", recibido);
+	    //ir concatenando los mensajes
+	    strncat(cadenaCompleta, recibido, tamanio[i]);
+        free(recibido);
     }
+    printf("Mensaje completo:%s\n", cadenaCompleta);
+	escribirCadenaEnArchivo(archivoWrite, cadenaCompleta, pointerArchivo);
+    char *mensje="ok";
+    send(fd_kernel, &mensje, sizeof(mensje), 0);
+    if(cadenaCompleta!=NULL)
+        free(cadenaCompleta);
     free(direccion);
     free(tamanio);
 }
@@ -342,8 +362,9 @@ void manejarSTDINREAD(int socketCliente) {
     //tengo que dividir el texto ingresado en partes de tamanio maximo tamanios[0]
     //y enviar cada parte a memoria en la direccion direcciones[i]
     // Copiar los datos desde el archivo mapeado al buffer de datos leídos
-    char *datosLeidos = malloc(100);
-    int tamanotexto=0;
+    char *datosLeidos = malloc(126);
+    memset(datosLeidos, 0, 126);
+    int tamanotexto=0; 
     //divido el texto en partes
     for(int i=0; i<cantidad; i++){
         memcpy(datosLeidos, texto + tamanotexto, tamanios[i]);
@@ -352,10 +373,12 @@ void manejarSTDINREAD(int socketCliente) {
         tamanotexto += strlen(datosLeidos);
         enviarAImprimirAMemoria(datosLeidos,direcciones[i], fd_memoria, pid);//estos datos se deben escribir en la direccion de memoria
         //recibir un mensaje de confirmacion de que se escribio en memoria
-        //recv(fd_memoria, NULL, 2, 0);
-        usleep(1000*1000);
+        char *recibido="";
+        recv(fd_memoria, &recibido, sizeof(recibido), 0);
+        log_info(logger, "OK DE MEMORIA");
+        //usleep(1000*1000);
     }
-    //recv(fd_memoria, NULL, 2, 0);
+    //recv(fd_memoria, &recibido, sizeof(recibido), 0);
     // Liberar la memoria reservada
     free(texto);
     free(datosLeidos);
@@ -379,12 +402,27 @@ void manejarSTDOUTWRITE(int socketCliente) {
     }
     cantidadglobal=cantidad;
     log_info(logger, "PID: <%d> - Operacion: <STDOUT WRITE>", pid);
+    char *cadenaCompleta=malloc(126);
+    memset(cadenaCompleta, 0, 126);
     //divido el texto en partes
     for(int i=0; i<cantidad; i++){
         enviarDireccionTamano(direcciones[i],tamanios[i],pid,fd_memoria);
-        //recibir un mensaje de confirmacion de que se escribio en memoria
-        usleep(1000*1200);
+        char* recibido=malloc(256);
+        memset(recibido, 0, 256);
+	    if(i==0)
+	    	cadenaCompleta[0]='\0';
+	    recv(fd_memoria, recibido, tamanios[i], 0);
+	    printf("Mensaje recibido de memoria:%s\n", recibido);
+	    //ir concatenando los mensajes
+	    strncat(cadenaCompleta, recibido, tamanios[i]);
+        //log_error(logger, "mensaje concatenado: %s", cadenaCompleta);
+        free(recibido);
     }
+    printf("Mensaje completo:%s\n", cadenaCompleta);
+	char *mensje="ok";
+    send(fd_kernel, &mensje, sizeof(mensje), 0);
+    if(cadenaCompleta!=NULL)
+        free(cadenaCompleta);
     free(tamanios);
     free(direcciones);
 }
@@ -412,7 +450,6 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
 	log_info(logger, "antes de dormir");
 	sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
 	log_info(logger, "Despues de dormir");
-    
 	//mandar mensaje luego de dormir a kernel
     send(socket_cliente, "OK", 2, 0);
 	//enviarMensaje("OK", socket_cliente);

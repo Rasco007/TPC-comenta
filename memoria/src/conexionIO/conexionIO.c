@@ -46,7 +46,7 @@ void ejecutarServidorIO(){
 void* ejecutarServidor(void* socketCliente) {
     int sock = *(int*)socketCliente;
     free(socketCliente);
-
+    int tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     // Hacer handshake
     hacerHandshake(sock);
 
@@ -66,20 +66,20 @@ void* ejecutarServidor(void* socketCliente) {
         log_debug(logger, "Se recibió petición %d del IO", peticion);
 
         switch (peticion) {
-            case READ:
+            /*case READ:
                 recibirPeticionDeLectura(sock);
                 enviarValorObtenido(sock);
-                break;
+                break;*/
             case MENSAJE:
    	 		    char* mensaje = recibirMensaje(sock);
                 log_info(logger, "Mensaje recibido: %s", mensaje);            
                 break;
-            case WRITE:
+            /*case WRITE:
                 recibirPeticionDeEscritura(sock);
                 enviarMensaje("OK", sock);
-                break;
+                break;*/
             case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN O FS_READ) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
-                //usleep(1000*1000);
+                usleep(tiempo*1000);
                 log_info(logger, "IO envía mensaje a escribir en memoria");
                 int dir, pid;
                 char cadena[2048]="";
@@ -92,18 +92,25 @@ void* ejecutarServidor(void* socketCliente) {
                 datoEscrito[strlen(cadena)] = '\0';
                 printf("Dato escrito: %s\n", datoEscrito);
                 free(datoEscrito);
-                //send(sock, "OK", 2, 0);
+                char *mensaje2;
+               // memset(mensaje2, 0, 3);
+                mensaje2 = "OK";
+                send(sock, &mensaje2, sizeof(mensaje2), 0);
+                //enviarMensaje(mensaje2, sock);
                 break;
             case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT o FS_WRITE)
+                usleep(tiempo*1000);
                 log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
                 int dir2, tamano, pid2;
                 recibirDireccionyTamano(sock, &dir2, &pid2, &tamano);
                 printf("Tamaño: %d\n", tamano);
-                char* datosLeidos = malloc(2048);
+                char* datosLeidos = malloc(256);
+                memset(datosLeidos, 0, 256);
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
                 datosLeidos[tamano]='\0';
                 log_info(logger, "PID: <%d> - Accion: <LEER> - Direccion Física: <%d> - Valor: <%s>", pid2, dir2, datosLeidos);
-                enviarMensaje(datosLeidos, sock);
+                //enviarMensaje(datosLeidos, sock);
+                send(sock, datosLeidos, tamano, 0);
                 free(datosLeidos);
                 break;
             case -1:
