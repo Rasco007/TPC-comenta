@@ -124,11 +124,11 @@ void inicializarStructsIO(Kernel_io *kernel) {
    kernel->interfaces= list_create();
 
 }
-void destruirStructsIO (Kernel_io *kernel) {
-    free(kernel->interfaces);
-    kernel->interfaces = NULL;
 
+void destruirStructsIO(Kernel_io *kernel) {
+    free(kernel);
 }
+
 
 
 Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz) {
