@@ -97,9 +97,9 @@ void agregarPID(void *value){
 }
 
 void listarPIDS(t_list *pcbs) {
-   // pthread_mutex_lock(&list_mutex);
+    pthread_mutex_lock(&list_mutex);
     list_iterate(pcbs, agregarPID);
-   // pthread_mutex_unlock(&list_mutex);
+    pthread_mutex_unlock(&list_mutex);
 }
 
 void imprimirListaPCBs(t_list *pcbs){
@@ -133,16 +133,18 @@ bool buscarProceso(t_list* lista, int pid) {
 
 void eliminarProceso(t_list* lista, int pid){
     char* interrupted_by_user="INTERRUPTED_BY_USER";
-    pthread_mutex_lock(&list_mutex);
+    
     for (int i = 0; i < list_size(lista); i++) {
         t_pcb* pcb = list_get(lista, i);
         if (pcb->pid == pid) {
+            pthread_mutex_lock(&list_mutex);
             list_remove(lista, i);
+             pthread_mutex_unlock(&list_mutex);
             exit_s(pcb,&interrupted_by_user);
             break;
         }
     }
-    pthread_mutex_unlock(&list_mutex);
+   
 }
 
 

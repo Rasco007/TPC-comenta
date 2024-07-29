@@ -186,11 +186,14 @@ void signal_s(t_pcb *proceso,char **parametros){
     log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
     if(instancRecurso <= 0){
         instancRecurso++;
+        instanciasRecursos[indexRecurso]=instancRecurso;
+
 
         pthread_mutex_lock(&mutexListaBloqueados);
         t_list *colaBloqueadosRecurso = list_get(recursos, indexRecurso);
-        t_pcb* pcbDesbloqueado = list_remove(colaBloqueadosRecurso,0);
-        
+        t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
+       
+
 
         list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
         pthread_mutex_unlock(&mutexListaBloqueados);
@@ -202,7 +205,7 @@ void signal_s(t_pcb *proceso,char **parametros){
     }
     
     //Si invoco signal para liberar los recursos, termino la funcion. Si no, paso el proceso a ready
-    if(!strncmp(parametros[2],"EXIT",4)){
+    if(!strncmp(parametros[2],"EXIT",4)){  
         return;
     } else{
         //list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));

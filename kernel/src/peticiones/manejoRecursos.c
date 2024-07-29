@@ -80,6 +80,18 @@ void liberarRecursosAsignados(t_pcb* proceso){
             signal_s(proceso, parametros);
         }
     }
+
+    for(i=0;i<list_size(recursos);i++){
+        t_list* colaBloquadosRecurso=list_get(recursos,i);
+        for(int j=0;j<list_size(colaBloquadosRecurso);j++){
+            t_pcb* pcbBloqueado=list_get(colaBloquadosRecurso,j);
+            if(pcbBloqueado->pid==proceso->pid){
+                instanciasRecursos[j]++;
+                list_remove(colaBloquadosRecurso,j);
+                log_warning(logger,"Se elimina el pid <%d> de las colas de bloqueados",proceso->pid);
+            }
+        }
+    }
 }
 
 void eliminarRecursoLista(t_list* recursos, char* recurso){
@@ -92,7 +104,7 @@ void eliminarRecursoLista(t_list* recursos, char* recurso){
         log_warning(logger,"Mi lista tiene %s",(char*)list_get(recursos, i));
         
         if(!strcmp((char*)list_get(recursos,i), recurso)){
-            list_remove_and_destroy_element(recursos,i,free);
+            list_remove(recursos,i); //SI HAY LEAK DEMAS ,CAMBIARLO POR REEEEMOVE AND DESTROY
             int cantidadRecursos = list_size(recursos);
             log_warning(logger,"La cant de recursos es %d",(cantidadRecursos));
             return;  
