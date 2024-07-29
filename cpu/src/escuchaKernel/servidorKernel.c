@@ -33,7 +33,7 @@ int ejecutarServidorCPU(int socketCliente){
 	int codOP = recibirOperacion(socketCliente);
 		switch (codOP) {
 				case -1:
-					log_info(logger, "El Kernel se desconecto.");
+					log_error(logger, "El Kernel se desconecto.");
 					if (contextoEjecucion != NULL){
 						destroyContexto ();
 					}

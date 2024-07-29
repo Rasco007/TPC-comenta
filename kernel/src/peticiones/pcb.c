@@ -78,6 +78,26 @@ void destruirListaPCB(t_list *pcbs){
     list_destroy_and_destroy_elements(pcbs, (void *)destruirPCB);
 }
 
+
+void destruirListasPCBsExit () {
+    destruirListaPCBExit(pcbsNEW);
+    destruirListaPCBExit(pcbsREADY);
+    destruirListaPCBExit(pcbsExec);
+    destruirListaPCBExit(pcbsBloqueados);
+    destruirListaPCBExit(pcbsREADYaux);
+    destruirListaPCBExit(pcbsParaExit);
+}
+
+void destruirListaPCBExit(t_list *pcbs){
+    list_destroy_and_destroy_elements(pcbs, (void *)destruirPCBExit);
+}
+
+void destruirPCBExit(t_pcb *pcb){
+    dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
+    free(pcb->recursosAsignados);
+    free(pcb);
+}
+
 void encolar(t_list *pcbs, t_pcb *pcb){
     list_add(pcbs, (void *)pcb);
 }
