@@ -325,8 +325,8 @@ void manejarFS_WRITE(int socketCliente){
        // usleep(1000*1000);
         char* recibido=malloc(256);
         memset(recibido, 0, 256);
-	    if(i==0)
-	    	cadenaCompleta[0]='\0';
+	    //if(i==0)
+	    //	cadenaCompleta[0]='\0';
 	    recv(fd_memoria, recibido, tamanio[i], 0);
 	    printf("Mensaje recibido de memoria:%s\n", recibido);
 	    //ir concatenando los mensajes

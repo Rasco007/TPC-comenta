@@ -1,17 +1,68 @@
 #include <FileSystem/filesystem.h>
 
-//una funcion que reciba un nombre de archivo y un tamanio y lo trunque
+void create_bloques_file(const char *filename, size_t size) {
+    char pathBloques[256];
+    strcpy(pathBloques, PATH_BASE_DIALFS);
+    sprintf(pathBloques, "%s/%s", PATH_BASE_DIALFS, filename);
+    int fd = open(pathBloques, O_RDWR);
+    if (fd == -1) { // El archivo no existe, lo creamos
+        fd = open(pathBloques, O_RDWR | O_CREAT, 0666);
+        if (fd == -1) {
+            perror("Error al crear el archivo bitmap.dat");
+            return;
+        }
+        // Establecer el tamaño del archivo
+        if (ftruncate(fd, size) == -1) {
+            perror("Error al establecer el tamaño del archivo bitmap.dat");
+            close(fd);
+            return;
+        }
+    }
+}
+
+void create_bitmap_file(const char *filename, size_t size) {
+    char pathBitmap[256];
+    strcpy(pathBitmap, PATH_BASE_DIALFS);
+    sprintf(pathBitmap, "%s/%s", PATH_BASE_DIALFS, filename);
+    int fd = open(pathBitmap, O_RDWR);
+    if (fd == -1) {// El archivo no existe, lo creamos
+        fd = open(pathBitmap, O_RDWR | O_CREAT, 0666);
+        if (fd == -1) {
+            perror("Error al crear el archivo bitmap.dat");
+            return;
+        }
+        // Establecer el tamaño del archivo
+        if (ftruncate(fd, size) == -1) {
+            perror("Error al establecer el tamaño del archivo bitmap.dat");
+            close(fd);
+            return;
+        }
+    }
+    // Mapear el archivo en memoria
+    void *bitmap = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (bitmap == MAP_FAILED) {
+        perror("Error al mapear el archivo bitmap.dat");
+        close(fd);
+        return;
+    }
+    // Crear el t_bitarray para manejar el bitmap
+    t_bitarray *my_bitmap = bitarray_create_with_mode(bitmap, size * CHAR_BIT, MSB_FIRST);
+    if (my_bitmap == NULL) {
+        perror("Error al crear el bitarray para el bitmap");
+        munmap(bitmap, size);
+        close(fd);
+        return;
+    }
+    // Destruir el bitarray y liberar recursos
+    bitarray_destroy(my_bitmap);
+    munmap(bitmap, size);
+    close(fd);
+}
+
 void truncarArchivo2(char* nombre, int tamanio, int pid){
-    //usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-    //log_info(logger, "Truncar archivo: <%s> Tamaño: %d bytes", nombre, tamanio); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO TRUNCO
     char pathArchivo[256];
     strcpy(pathArchivo, PATH_BASE_DIALFS);
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
-    /*FILE *file = fopen(pathArchivo, "r+"); // Abrir el archivo en modo lectura-escritura ('r+')
-    if (file == NULL) {
-        perror("Error al abrir el archivo");
-        return;
-    }*/
     int cantidadBloques; //nueva cantidad de bloques que ocupara el archivo
     if (tamanio>BLOCK_SIZE) {
         cantidadBloques = tamanio/BLOCK_SIZE;
@@ -23,9 +74,9 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
     // abrir su metadata para obtener bloque inicial y escribir el nuevo tamanio
     char pathMetadata[128];
     char *nombreSinExtension = obtenerNombreSinExtension(nombre);
-    sprintf(pathMetadata, "%s/%s.metadata",PATH_BASE_DIALFS, nombreSinExtension);
+    sprintf(pathMetadata, "%s/%s.txt",PATH_BASE_DIALFS, nombreSinExtension);
     char pathMetadatabeta[128];
-    sprintf(pathMetadatabeta, "%s.metadata", nombreSinExtension);
+    sprintf(pathMetadatabeta, "%s.txt", nombreSinExtension);
     t_config *config = config_create(pathMetadata);
     if (config == NULL) {
         perror("Error al abrir el archivo de metadata");
@@ -94,7 +145,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
             escribir_metadata(nombreSinExtension, bloqueInicial, tamanio);//modificar metadata
         } else { 
             char* datos=leerDatosDesdeArchivo(nombre, 0, tamanoArchivo);//printf("datos de archivo a agrandar: %s\n", datos);
-            log_info(logger, "PID: %d - Inicio Compactación.", pid);
+            log_info(logger, "PID: <%d> - Inicio Compactación.", pid);
             borrarContenidoArchivo(nombre, tamanoArchivo);
             DIR *dir;
             struct dirent *ent;
@@ -105,7 +156,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
                 while ((ent = readdir(dir)) != NULL) {
                     // Verifica si el nombre del archivo termina con ".metadata"
                     size_t len = strlen(ent->d_name);
-                    if (len >= 9 && strcmp(ent->d_name + len - 9, ".metadata") == 0 && strcmp(ent->d_name, pathMetadatabeta)!=0) {
+                    if (len >= 4 && strcmp(ent->d_name + len - 4, ".txt") == 0 && strcmp(ent->d_name, pathMetadatabeta)!=0) {
                         char pathMetadata[324];//printf("%s\n", ent->d_name);
                         sprintf(pathMetadata, "%s/%s", PATH_BASE_DIALFS, ent->d_name);
                         char otropath[324];
@@ -157,7 +208,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
                     }
                 }
                 closedir(dir); // Cierra el directorio después de leer
-                log_info(logger, "PID: %d - Fin Compactación.", pid);
+                log_info(logger, "PID: <%d> - Fin Compactación.", pid);
             } else {
                 perror("Error al abrir el directorio");
                 return ;
@@ -173,8 +224,6 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
     }
     if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) 
         perror("Error al sincronizar el archivo bitmap.dat");
-   // truncate(pathArchivo, tamanio);
-   // mostrar_tamano_archivo(pathArchivo,nombre);
     printf("FIN TRUNCAR ARCHIVO.....\n");
     // Liberar recursos
     munmap(bitmap, BLOCK_COUNT/8);
@@ -184,15 +233,9 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
 }
 
 void delete_file(const char *nombre) {
-    //usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-   // log_info(logger, "Borrar archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO ELIMINO
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
     //NO hace falta borrar el contenido en bloques.dat
-    /*if (remove(pathArchivo) != 0) {// Eliminar el archivo
-        perror("Error al borrar el archivo");
-        return;
-    } */
     char pathBitmap[128];
     sprintf(pathBitmap, "%s/bitmap.dat", PATH_BASE_DIALFS);
     int fd = open(pathBitmap, O_RDWR);// Abrir el archivo bitmap.dat
@@ -212,7 +255,7 @@ void delete_file(const char *nombre) {
     // abrir su metadata como lectura para obtener bloque inicial y tamanio
     char pathMetadata[256];
     char *nombreSinExtension = obtenerNombreSinExtension(nombre);
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombreSinExtension);
+    sprintf(pathMetadata, "%s/%s.txt", PATH_BASE_DIALFS, nombreSinExtension);
     t_config *config = config_create(pathMetadata);
     if (config == NULL) {
         perror("Error al abrir el archivo de metadata");
@@ -246,15 +289,8 @@ void delete_file(const char *nombre) {
 }
 
 void crearArchivo2(char* nombre) {
-    //usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-   // log_info(logger, "Crear archivo: <%s>", nombre); //ACA FALTA LOGGEAR EL PID DEL PROCESO QUE LO CREO
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/%s", PATH_BASE_DIALFS, nombre);
-    /*FILE *file = fopen(pathArchivo, "w"); // Abrir el archivo en modo escritura ('w')
-    if (file == NULL) {
-        perror("Error al crear el archivo");
-        return;
-    }*/
     char pathBitmap[256];
     sprintf(pathBitmap, "%s/bitmap.dat", PATH_BASE_DIALFS);
     int fd = open(pathBitmap, O_RDWR);
@@ -284,91 +320,9 @@ void crearArchivo2(char* nombre) {
     bitarray_destroy(my_bitmap2);
 }
 
-void create_bitmap_file(const char *filename, size_t size) {
-    char pathBitmap[256];
-    strcpy(pathBitmap, PATH_BASE_DIALFS);
-    sprintf(pathBitmap, "%s/%s", PATH_BASE_DIALFS, filename);
-    int fd = open(pathBitmap, O_RDWR);
-    if (fd == -1) {// El archivo no existe, lo creamos
-        fd = open(pathBitmap, O_RDWR | O_CREAT, 0666);
-        if (fd == -1) {
-            perror("Error al crear el archivo bitmap.dat");
-            return;
-        }
-        // Establecer el tamaño del archivo
-        if (ftruncate(fd, size) == -1) {
-            perror("Error al establecer el tamaño del archivo bitmap.dat");
-            close(fd);
-            return;
-        }
-    }
-    // Mapear el archivo en memoria
-    void *bitmap = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (bitmap == MAP_FAILED) {
-        perror("Error al mapear el archivo bitmap.dat");
-        close(fd);
-        return;
-    }
-    // Crear el t_bitarray para manejar el bitmap
-    t_bitarray *my_bitmap = bitarray_create_with_mode(bitmap, size * CHAR_BIT, MSB_FIRST);
-    if (my_bitmap == NULL) {
-        perror("Error al crear el bitarray para el bitmap");
-        munmap(bitmap, size);
-        close(fd);
-        return;
-    }
-    // Destruir el bitarray y liberar recursos
-    bitarray_destroy(my_bitmap);
-    munmap(bitmap, size);
-    close(fd);
-}
-
-void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo) {
-    // Construir el nombre del archivo de metadata
-    char pathMetadata[128];
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
-    // Crear un archivo de configuración para el metadata
-    t_config *config = config_create(pathMetadata);
-    if (config == NULL) {
-        perror("Error al crear el archivo de metadata");
-        return;
-    }
-    // Convertir los valores a strings y guardarlos en el archivo de metadata
-    char valorBloqueInicial[20], valorTamanoArchivo[20];
-    sprintf(valorBloqueInicial, "%d", bloqueInicial);
-    sprintf(valorTamanoArchivo, "%d", tamanoArchivo);
-    config_set_value(config, "bloqueInicial", valorBloqueInicial);
-    config_set_value(config, "tamanoArchivo", valorTamanoArchivo);
-    // Guardar los cambios en el archivo
-    if (config_save(config) == -1) 
-        perror("Error al guardar el archivo de metadata");
-    // Liberar recursos
-    config_destroy(config);
-}
-
-void create_bloques_file(const char *filename, size_t size) {
-    char pathBloques[256];
-    strcpy(pathBloques, PATH_BASE_DIALFS);
-    sprintf(pathBloques, "%s/%s", PATH_BASE_DIALFS, filename);
-    int fd = open(pathBloques, O_RDWR);
-    if (fd == -1) { // El archivo no existe, lo creamos
-        fd = open(pathBloques, O_RDWR | O_CREAT, 0666);
-        if (fd == -1) {
-            perror("Error al crear el archivo bitmap.dat");
-            return;
-        }
-        // Establecer el tamaño del archivo
-        if (ftruncate(fd, size) == -1) {
-            perror("Error al establecer el tamaño del archivo bitmap.dat");
-            close(fd);
-            return;
-        }
-    }
-}
-
 void crearMetadata(char *nombre, int bloqueInicial){   
     char pathMetadata[128];
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
+    sprintf(pathMetadata, "%s/%s.txt", PATH_BASE_DIALFS, nombre);
     FILE *fileMetadata = fopen(pathMetadata, "w");
     if (fileMetadata == NULL) {
         perror("Error al crear el archivo de metadata");
@@ -393,6 +347,29 @@ void crearMetadata(char *nombre, int bloqueInicial){
     config_destroy(config);
 }
 
+void escribir_metadata(char *nombre, int bloqueInicial, int tamanoArchivo) {
+    // Construir el nombre del archivo de metadata
+    char pathMetadata[128];
+    sprintf(pathMetadata, "%s/%s.txt", PATH_BASE_DIALFS, nombre);
+    // Crear un archivo de configuración para el metadata
+    t_config *config = config_create(pathMetadata);
+    if (config == NULL) {
+        perror("Error al crear el archivo de metadata");
+        return;
+    }
+    // Convertir los valores a strings y guardarlos en el archivo de metadata
+    char valorBloqueInicial[20], valorTamanoArchivo[20];
+    sprintf(valorBloqueInicial, "%d", bloqueInicial);
+    sprintf(valorTamanoArchivo, "%d", tamanoArchivo);
+    config_set_value(config, "bloqueInicial", valorBloqueInicial);
+    config_set_value(config, "tamanoArchivo", valorTamanoArchivo);
+    // Guardar los cambios en el archivo
+    if (config_save(config) == -1) 
+        perror("Error al guardar el archivo de metadata");
+    // Liberar recursos
+    config_destroy(config);
+}
+
 char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t registroPunteroArchivo, size_t registroTamanio) { //FALTA LOGGER
     char pathArchivo[256];
     strcpy(pathArchivo, PATH_BASE_DIALFS);
@@ -405,7 +382,7 @@ char* leerDatosDesdeArchivo(const char *nombreArchivo, off_t registroPunteroArch
     }
     char pathMetadata[128];
     char *nombre = obtenerNombreSinExtension(nombreArchivo);
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
+    sprintf(pathMetadata, "%s/%s.txt", PATH_BASE_DIALFS, nombre);
     t_config *config = config_create(pathMetadata);
     int bloqueInicial = config_get_int_value(config, "bloqueInicial");
     int posicionInicial = bloqueInicial*BLOCK_SIZE+registroPunteroArchivo;
@@ -456,7 +433,7 @@ void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_
     }
     char pathMetadata[128];
     char *nombre = obtenerNombreSinExtension(nombreArchivo);
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
+    sprintf(pathMetadata, "%s/%s.txt", PATH_BASE_DIALFS, nombre);
     t_config *config = config_create(pathMetadata);
     int bloqueInicial = config_get_int_value(config, "bloqueInicial");
     int posicionInicial = bloqueInicial*BLOCK_SIZE+registroPunteroArchivo;
@@ -479,41 +456,6 @@ void escribirCadenaEnArchivo(const char *nombreArchivo, const char *cadena, off_
     close(fd);
 }
 
-void escribirIntEnArchivo(const char *nombreArchivo, int dato, off_t registroPunteroArchivo) { //FALTA LOGGER
-    char pathArchivo[256];
-    strcpy(pathArchivo, PATH_BASE_DIALFS);
-    sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
-    size_t tamanioInt = sizeof(int); // Tamaño del entero
-    // Abrir el archivo
-    int fd = open(pathArchivo, O_RDWR);
-    if (fd == -1) {
-        perror("Error al abrir el archivo");
-        return;
-    }
-    char pathMetadata[128];
-    char *nombre = obtenerNombreSinExtension(nombreArchivo);
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombre);
-    t_config *config = config_create(pathMetadata);
-    int bloqueInicial = config_get_int_value(config, "bloqueInicial");
-    int posicionInicial = bloqueInicial*BLOCK_SIZE+registroPunteroArchivo;
-    // Mapear el archivo en memoria
-    void *map = mmap(NULL, BLOCK_COUNT * BLOCK_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
-    if (map == MAP_FAILED) {
-        perror("Error al mapear el archivo");
-        close(fd);
-        return;
-    }
-    // Escribir el entero en la memoria mapeada
-    memcpy((char *)map + posicionInicial, &dato, tamanioInt);
-    // Sincronizar los cambios con el archivo en disco
-    if (msync(map, BLOCK_COUNT * BLOCK_SIZE, MS_SYNC) == -1)
-        perror("Error al sincronizar los cambios con el archivo");
-    // Desmapear el archivo y cerrar el descriptor de archivo
-    if (munmap(map, BLOCK_COUNT * BLOCK_SIZE) == -1) 
-        perror("Error al desmapear el archivo");
-    close(fd);
-}
-
 void borrarContenidoArchivo(const char *nombreArchivo, size_t cantidadBytes) {
     char pathArchivo[256];
     sprintf(pathArchivo, "%s/bloques.dat", PATH_BASE_DIALFS);
@@ -525,7 +467,7 @@ void borrarContenidoArchivo(const char *nombreArchivo, size_t cantidadBytes) {
     }
     char pathMetadata[128];
     char *nombreSinExtension = obtenerNombreSinExtension(nombreArchivo);
-    sprintf(pathMetadata, "%s/%s.metadata", PATH_BASE_DIALFS, nombreSinExtension);
+    sprintf(pathMetadata, "%s/%s.txt", PATH_BASE_DIALFS, nombreSinExtension);
     t_config *config = config_create(pathMetadata);
     if (config == NULL) {
         perror("Error al abrir el archivo de metadata");
@@ -585,15 +527,4 @@ int obtenerPrimeraPosicionLibre(t_bitarray *bitmap) {
             break;  // Salir del bucle al encontrar el primer bit libre
         }
     return posicion;
-}
-
-void mostrar_tamano_archivo(const char *nombre, const char *path) {
-    const char *pathArchivo = nombre;
-    struct stat st;
-    if (stat(pathArchivo, &st) == 0) {
-        printf("El tamaño del archivo: %s es: %lld bytes\n",path, (long long)st.st_size);
-    } else {
-        perror("stat");
-        return ;
-    }
 }
