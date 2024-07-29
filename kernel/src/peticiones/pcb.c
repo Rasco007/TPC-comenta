@@ -97,9 +97,9 @@ void agregarPID(void *value){
 }
 
 void listarPIDS(t_list *pcbs) {
-    pthread_mutex_lock(&list_mutex);
+   // pthread_mutex_lock(&list_mutex);
     list_iterate(pcbs, agregarPID);
-    pthread_mutex_unlock(&list_mutex);
+   // pthread_mutex_unlock(&list_mutex);
 }
 
 void imprimirListaPCBs(t_list *pcbs){

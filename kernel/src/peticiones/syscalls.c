@@ -189,15 +189,15 @@ void signal_s(t_pcb *proceso,char **parametros){
 
         pthread_mutex_lock(&mutexListaBloqueados);
         t_list *colaBloqueadosRecurso = list_get(recursos, indexRecurso);
-        t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
+        t_pcb* pcbDesbloqueado = list_remove(colaBloqueadosRecurso,0);
         
 
         list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
-        pthread_mutex_lock(&mutexListaBloqueados);
+        pthread_mutex_unlock(&mutexListaBloqueados);
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
         loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado);
-        eliminarProcesoAsociado(proceso); 
+        eliminarProcesoAsociado(pcbDesbloqueado); 
         ingresarAReady(pcbDesbloqueado);
     }
     
