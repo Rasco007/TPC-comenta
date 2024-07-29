@@ -182,7 +182,9 @@ void ejecutarScript(const char* path) {
 //INICIAR_PROCESO[PATH]
 void iniciarProceso(const char* path) {//Creo el pcb y lo ingreso a la cola de new
     enviarPathDeInstrucciones(path);
+    pthread_mutex_lock(&mutexPCB);
     t_pcb* pcb = crearPCB();
+    pthread_mutex_unlock(&mutexPCB);
     ingresarANew(pcb);
 } 
 

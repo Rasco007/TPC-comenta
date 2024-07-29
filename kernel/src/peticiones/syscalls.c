@@ -21,13 +21,13 @@ void eliminarProcesoAsociado(t_pcb *proceso){
 }
 //Seria para las funciones de IO
 void pasarAReady(t_pcb *proceso){
-
+    log_warning(logger, "Proceso <%d> - fin_de_quantum: %d", proceso->pid, proceso->fin_de_quantum);
     eliminarProcesoAsociado(proceso);
     
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    if(proceso->algoritmo==FIFO){
+    if(proceso->algoritmo==FIFO){ //Si es fifo, voy a ready de cualquier forma
         ingresarAReady(proceso);
     }
 
@@ -658,7 +658,7 @@ void finDeQuantum(t_pcb *proceso){
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     //No importa si es RR o VRR, siempre se encola en READY
 
-    ingresarAReady(proceso); 
+    pasarAReady(proceso); 
 }
 
 void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int pid){
