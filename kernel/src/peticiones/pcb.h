@@ -36,12 +36,13 @@ typedef struct {
 extern t_list *pcbsNEW;
 extern t_list *pcbsREADY;
 extern t_list *pcbsREADYaux;
-extern t_list *pcbsEnMemoria;
+extern t_list *pcbsExec;
 extern t_list *pcbsBloqueados;
 extern t_list *pcbsParaExit;
 extern t_log* logger;
 extern int32_t procesosCreados;
 extern char* pidsInvolucrados; 
+extern pthread_mutex_t list_mutex;
 
 t_pcb* crearPCB();
 
@@ -95,7 +96,8 @@ void listarPIDS(t_list *pcbs);
 void imprimirListaPCBs(t_list *pcbs);
 t_pcb* buscarPID(t_list* listaPCBs, uint32_t pid);
 void imprimirListaExit(t_list *idsExit);
-
+bool buscarProceso(t_list* lista, int pid);
+void eliminarProceso(t_list* lista, int pid);
 
 
 #endif

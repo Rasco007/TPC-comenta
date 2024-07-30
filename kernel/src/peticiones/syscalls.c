@@ -5,14 +5,29 @@ char **nombresRecursos;
 char* invalidResource = "INVALID_RESOURCE";
 char* invalidInterface = "INVALID_INTERFACE";
 char* outOfMemory = "OUT_OF_MEMORY";
+char* interrupted_by_user="INTERRUPTED_BY_USER";
 estadoProceso estadoAnterior; 
-
+void eliminarProcesoAsociado(t_pcb *proceso){
+    for (size_t i = 0; i < list_size(pcbsBloqueados); i++)
+    {
+        t_pcb *procesoABuscar = list_get(pcbsBloqueados,i);
+        if (proceso->pid == procesoABuscar->pid)
+        {
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_remove(pcbsBloqueados,i);              
+            pthread_mutex_unlock(&mutexListaBloqueados);
+        }
+    }
+}
 //Seria para las funciones de IO
 void pasarAReady(t_pcb *proceso){
+    log_warning(logger, "Proceso <%d> - fin_de_quantum: %d", proceso->pid, proceso->fin_de_quantum);
+    eliminarProcesoAsociado(proceso);
+
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
-    if(proceso->algoritmo==FIFO){
+    if(proceso->algoritmo==FIFO){ //Si es fifo, voy a ready de cualquier forma
         ingresarAReady(proceso);
     }
 
@@ -85,6 +100,10 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
             break;
         case FIN_DE_QUANTUM:
             finDeQuantum(proceso);
+            break;
+        case USER_INTERRUPTION:
+            exit_s(proceso,&interrupted_by_user);
+            break;
         default:
             log_error(loggerError, "Comando incorrecto");
             break;
@@ -119,12 +138,16 @@ void wait_s(t_pcb *proceso,char **parametros){
 
     //Si el numero de instancias es menor a 0 el proceso se bloquea
     if(instanciaRecurso<0){
-        t_list *colaBloqueadosRecurso=(t_list*)list_get(recursos,indexRecurso);
+        t_list *colaBloqueadosRecurso=list_get(recursos,indexRecurso);
 
         estadoAnterior = proceso->estado;
         proceso->estado = BLOCKED;
+    
+        pthread_mutex_lock(&mutexListaBloqueados);
+        list_add(pcbsBloqueados,proceso);
+        pthread_mutex_unlock(&mutexListaBloqueados);
 
-        list_add(colaBloqueadosRecurso,(void*)proceso);
+        list_add(colaBloqueadosRecurso,proceso);
 
         loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
         loggearBloqueoDeProcesos(proceso, recurso);
@@ -160,24 +183,32 @@ void signal_s(t_pcb *proceso,char **parametros){
     eliminarRecursoLista(proceso->recursosAsignados,recurso); 
 
     instanciasRecursos[indexRecurso]=instancRecurso;
-
+    log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
     if(instancRecurso <= 0){
-        t_list *colaBloqueadosRecurso = (t_list *)list_get(recursos, indexRecurso);
+        instancRecurso++;
+        instanciasRecursos[indexRecurso]=instancRecurso;
+        
+        
+        pthread_mutex_lock(&mutexListaBloqueados);
+        t_list *colaBloqueadosRecurso = list_get(recursos, indexRecurso);
         t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
 
-        list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
 
+
+        list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
+        pthread_mutex_unlock(&mutexListaBloqueados);
         estadoAnterior = pcbDesbloqueado->estado;
         pcbDesbloqueado->estado = READY;
-        loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado); 
+        loggearCambioDeEstado(pcbDesbloqueado->pid,estadoAnterior,pcbDesbloqueado->estado);
+        eliminarProcesoAsociado(pcbDesbloqueado);
         ingresarAReady(pcbDesbloqueado);
     }
     
     //Si invoco signal para liberar los recursos, termino la funcion. Si no, paso el proceso a ready
-    if(!strncmp(parametros[2],"EXIT",4)){
+    if(!strncmp(parametros[2],"EXIT",4)){ 
         return;
     } else{
-        list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
+        //list_add(proceso->recursosAsignados, (void*)string_duplicate(recurso));
         estadoAnterior = proceso->estado;
         proceso->estado = READY;
         loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
@@ -198,6 +229,12 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
             // en caso de validar() sea 1, hacemos io_gen_sleep
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
+            
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
             loggearBloqueoDeProcesos(proceso, "IO_GEN_SLEEP");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
@@ -250,8 +287,16 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ",proceso->pid);
 
+
+           //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
+
             io_global->parametro1 = contextoEjecucion->motivoDesalojo->parametros[1];
             io_global->parametro2 = contextoEjecucion->motivoDesalojo->parametros[2];
+            
             //log_info(logger, "parametro 1 %s", io_global->parametro1);
             //   log_info(logger, "parametro 2222 %s", io_global->parametro2);
             // log_info(logger, "Puntero io_global: %p", (void*)io_global);
@@ -297,6 +342,11 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDOUT_WRITE",proceso->pid);
 
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
              io_global->parametro1 = parametros[1];
             io_global->parametro2 = parametros[2];
 
@@ -341,6 +391,12 @@ void io_fs_create(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_CREATE",proceso->pid);
 
+            
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
             io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
              io_global->funcion= IO_FS_CREATE;
@@ -382,6 +438,11 @@ Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesaloj
             loggearBloqueoDeProcesos(proceso, "IO_FS_DELETE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_DELETE",proceso->pid);
+
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
              io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
@@ -425,6 +486,11 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_TRUNCATE",proceso->pid);
+
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
              io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
@@ -470,6 +536,11 @@ void io_fs_write(t_pcb *proceso,char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_WRITE",proceso->pid);
+
+            //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
 
             io_global->parametro1 = parametros[1];
             io_global->parametro2 = parametros[2];
@@ -519,6 +590,11 @@ void io_fs_read(t_pcb *proceso,char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_READ",proceso->pid);
 
+             //agrego proceso a lista de bloqueados
+            pthread_mutex_lock(&mutexListaBloqueados);
+            list_add(pcbsBloqueados,proceso);
+            pthread_mutex_unlock(&mutexListaBloqueados);
+
             io_global->parametro1 = parametros[1];
             io_global->parametro2 = parametros[2];
             io_global->parametro3 = parametros[3];
@@ -567,14 +643,14 @@ void exit_s(t_pcb *proceso,char **parametros){
 
     flag_exit=1;
     liberarMemoriaPCB(proceso);
-    list_remove_element(pcbsEnMemoria, proceso);
-    destruirPCB(proceso); 
-    destroyContextoUnico();
+    destruirPCB(proceso);
+    if(contextoEjecucion!=NULL){
+        destroyContextoUnico();
+    } 
     sem_post(&semGradoMultiprogramacion);
     log_info(logger, "finalizo el exit");
     //TODO: ver de encolar en pcbsParaExit
 }
-
 
 
 //FIN_DE_QUANTUM
@@ -584,7 +660,8 @@ void finDeQuantum(t_pcb *proceso){
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     //No importa si es RR o VRR, siempre se encola en READY
-    ingresarAReady(proceso); 
+    
+    pasarAReady(proceso); 
 }
 
 void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int pid){

@@ -59,7 +59,8 @@ int ejecutarServidorKernel(int *socketCliente) {
             }
             case -1:
                 log_error(logger, "El Kernel se desconectó");
-                return EXIT_FAILURE;
+                exit(0);
+                break;
             default:
                 log_warning(logger, "Operación desconocida: %d", peticionRealizada);
                 break;
@@ -108,7 +109,7 @@ void eliminarProcesoDeMemoria(int pid) {
             }
         }
         // Libera la memoria del proceso
-        free(proceso); //ver si va aca o no
+        //free(proceso); //ver si va aca o no
 
         //log_info(logger, "Proceso PID: <%d> eliminado correctamente", pid);
     } else {

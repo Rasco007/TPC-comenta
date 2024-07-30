@@ -1,11 +1,11 @@
 /* KERNEL- cliente | CPU - servidor*/
 #include <conexiones/conexionCPU.h>
+#include <pthread.h>
 
-
-t_buffer* bufferContexto;
 int conexionACPU;
 int conexionACPUInterrupt;
 sem_t memoriaOK;
+pthread_mutex_t mutexProcesoEnEjecucion;
 
 void conexionCPU() {
     //CONEXION CPU DISPATCH
@@ -55,10 +55,8 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     if (contextoEjecucion != NULL) destroyContextoUnico ();
 	iniciarContexto ();
     
-    bufferContexto = malloc(sizeof(t_buffer));
-    
     sem_wait(&memoriaOK);
-    
+    pthread_mutex_lock(&mutexProcesoEnEjecucion);
     asignarPCBAContexto(procesoEnEjecucion);
    
     dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
@@ -70,8 +68,8 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     recibirContextoBeta(conexionACPUInterrupt);
     
     actualizarPCB(procesoEnEjecucion);
+    pthread_mutex_unlock(&mutexProcesoEnEjecucion);
     sem_post(&memoriaOK);
-    free(bufferContexto);
     return contextoEjecucion;
 }
 

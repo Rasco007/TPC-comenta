@@ -57,6 +57,7 @@ void io_atender_kernel(){
    			log_error(logger, "Kernel se desconectó. Terminando servidor");
    			control = 0;
    			break;
+            exit(0);
     	default:
    		 	log_warning(logger,"Operacion desconocida. No quieras meter la pata");
    	 		break;

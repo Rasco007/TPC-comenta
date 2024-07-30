@@ -46,6 +46,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;*/
             case MMU:
                 //log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
+                usleep(tiempo*1000);
                 int pid,pag;
                 char marco[sizeof(int)];
                 recibirEnteros(*socketCliente,&pid,&pag);
@@ -57,6 +58,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 return EXIT_FAILURE;
                 break;
             case PAQUETE:
+                usleep(tiempo*1000); //Agrego retardo
                 //Se usaria el indice para buscar en la lista donde almacenemos las instrucciones
                 //log_info(logger, "Se recibió la peticion de CPU"); 
                 recibirEnteros2(*socketCliente, &pid, &indice);
@@ -65,7 +67,6 @@ int ejecutarServidorCPU(int *socketCliente) {
                 //log_info(logger, "Proc: %d",proceso->pid);
                 instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
                 //log_info(logger, "Instruccion: %s",instruccion);
-                usleep(tiempo*1000); //Agrego retardo
                 enviarMensaje(instruccion,*socketCliente); 
                 break;
             case RESIZE: //VER

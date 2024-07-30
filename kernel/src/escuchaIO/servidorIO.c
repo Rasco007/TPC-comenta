@@ -124,23 +124,23 @@ void inicializarStructsIO(Kernel_io *kernel) {
    kernel->interfaces= list_create();
 
 }
-void destruirStructsIO (Kernel_io *kernel) {
-    free(kernel->interfaces);
-    kernel->interfaces = NULL;
 
+void destruirStructsIO(Kernel_io *kernel) {
+    free(kernel);
 }
 
 
+
 Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz) {
-     log_info(logger, "nombre requerido %s",nombre_interfaz);
-      log_info(logger, "largo lista %d",list_size(kernel->interfaces));
+    // log_info(logger, "nombre requerido %s",nombre_interfaz);
+     // log_info(logger, "largo lista %d",list_size(kernel->interfaces));
 
     for (size_t i = 0; i < list_size(kernel->interfaces); i++) {
         Interfaz *interfaz= list_get(kernel->interfaces,i);
-         log_info(logger, "nombre    que  tengo %ss", interfaz->nombre_interfaz);
+       //  log_info(logger, "nombre    que  tengo %ss", interfaz->nombre_interfaz);
          //log_info(logger, "Puntero deeeee la interfaz de kernel: %p", (void*)&interfaz);
         if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) {
-            log_info(logger, "llamaaa %s", interfaz->nombre_interfaz);
+         //   log_info(logger, "llamaaa %s", interfaz->nombre_interfaz);
 
             return interfaz;
         }
@@ -260,8 +260,8 @@ void ejecutarServidorKernel(Interfaz *interfaz_actual){
      //log_info(logger, "Puntero io_global_actual: %p", (void*)io_global_actual);
     //log_info(logger, "Puntero interfaz?actual: %p", (void*)interfaz_actual);
 
-      log_info(logger,"tipo de la innterfaz conectada:  %s", interfaz_actual->tipo_interfaz);
-        log_info(logger,"socket de la innterfaz conectada:  %d", interfaz_actual->socket_interfaz); 
+      //log_info(logger,"tipo de la innterfaz conectada:  %s", interfaz_actual->tipo_interfaz);
+        //log_info(logger,"socket de la innterfaz conectada:  %d", interfaz_actual->socket_interfaz); 
     while(true) {
         //log_info(logger,"antes de estar en la cola");
         sem_wait(&interfaz_actual->semaforo_cola_procesos);
@@ -625,9 +625,9 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
     char* direccionFisica=interfaz->parametro1;
     char* tamanio=interfaz->parametro2;
     int socketClienteIO = interfaz->socket_interfaz;
-    log_info(logger, "direeeccion %s",interfaz->parametro1);
-     log_info(logger, "tamanio %s",interfaz->parametro2);
-      log_info(logger, "sockett %d",interfaz->socket_interfaz);
+    //log_info(logger, "direeeccion %s",interfaz->parametro1);
+    // log_info(logger, "tamanio %s",interfaz->parametro2);
+    //  log_info(logger, "sockett %d",interfaz->socket_interfaz);
     //int tamanioInt = atoi(tamanio);
     //int direccionFisicaInt = atoi(direccionFisica);
     int pid = proceso->pid;
