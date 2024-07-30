@@ -59,7 +59,8 @@ int ejecutarServidorKernel(int *socketCliente) {
             }
             case -1:
                 log_error(logger, "El Kernel se desconectó");
-                return EXIT_FAILURE;
+                exit(0);
+                break;
             default:
                 log_warning(logger, "Operación desconocida: %d", peticionRealizada);
                 break;

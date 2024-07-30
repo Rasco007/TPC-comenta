@@ -25,7 +25,7 @@ int main () {
 	inicializarSemaforos();
 	atexit (destruirSemaforos);
 	inicializarListasPCBs(); 
-	atexit (destruirListasPCBs);
+	atexit (destruirListasPCBsExit);
 	inicializarStructsIO(&kernel);
 	//atexit (destruirStructsIO);
 

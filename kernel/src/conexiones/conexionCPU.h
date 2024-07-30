@@ -12,10 +12,11 @@
 #include <semaphore.h>
 
 extern int conexionACPU;
+extern int conexionACPUInterrupt;
 extern t_log* loggerError; 
 extern t_contexto* contextoEjecucion;
 extern sem_t memoriaOK;
-
+extern pthread_mutex_t mutexProcesoEnEjecucion;
 
 void conexionCPU();
 void asignarPCBAContexto(t_pcb* procesoEnEjecucion);
