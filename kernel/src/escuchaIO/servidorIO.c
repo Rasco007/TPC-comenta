@@ -96,7 +96,7 @@ void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char *nombreInterfaz, c
     pthread_t thread;
     pthread_create(&thread, NULL, (void*)ejecutarServidorKernel, nuevaInterfaz);
     pthread_detach(thread);
-    log_info(logger, "Hilo para ejecutar el servidor kernel creado y desatado");
+    //log_info(logger, "Hilo para ejecutar el servidor kernel creado y desatado");
 
     // Incrementar la cantidad de interfaces
 
@@ -138,7 +138,7 @@ Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz)
     for (size_t i = 0; i < list_size(kernel->interfaces); i++) {
         Interfaz *interfaz= list_get(kernel->interfaces,i);
          log_info(logger, "nombre    que  tengo %ss", interfaz->nombre_interfaz);
-         log_info(logger, "Puntero deeeee la interfaz de kernel: %p", (void*)&interfaz);
+         //log_info(logger, "Puntero deeeee la interfaz de kernel: %p", (void*)&interfaz);
         if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) {
             log_info(logger, "llamaaa %s", interfaz->nombre_interfaz);
 
@@ -258,18 +258,18 @@ void ejecutarServidorKernel(Interfaz *interfaz_actual){
   list_add(lista_global_io, interfaz_actual);
   pthread_mutex_lock(&mutex_lista_global);
      //log_info(logger, "Puntero io_global_actual: %p", (void*)io_global_actual);
-    log_info(logger, "Puntero interfaz?actual: %p", (void*)interfaz_actual);
+    //log_info(logger, "Puntero interfaz?actual: %p", (void*)interfaz_actual);
 
       log_info(logger,"tipo de la innterfaz conectada:  %s", interfaz_actual->tipo_interfaz);
         log_info(logger,"socket de la innterfaz conectada:  %d", interfaz_actual->socket_interfaz); 
     while(true) {
-        log_info(logger,"antes de estar en la cola");
+        //log_info(logger,"antes de estar en la cola");
         sem_wait(&interfaz_actual->semaforo_cola_procesos);
         log_info(logger,"hay proceso en la cola");
         t_pcb *pcb;
         pcb = queue_pop(interfaz_actual->cola_procesos_io);
 
-        log_info(logger, "Puntero proceso servidor: %p", (void*)pcb);
+        //log_info(logger, "Puntero proceso servidor: %p", (void*)pcb);
         ejecutar_io(interfaz_actual, pcb);
         /*if (respuesta_ok) {
             ...
@@ -488,8 +488,10 @@ void ejecutar_io_fs_write(Interfaz *interfaz, t_pcb *proceso){
     }
     char *mensaje;
     recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -548,8 +550,10 @@ void ejecutar_io_fs_read(Interfaz *interfaz, t_pcb *proceso){
     send(socketClienteIO, a_enviar, bytes, 0); 
     char *mensaje;
     recv(socketClienteIO, &mensaje, sizeof(mensaje), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -602,8 +606,10 @@ void ejecutar_io_stdout_write(Interfaz *interfaz, t_pcb *proceso){
     }
     char *buffer;
     recv(socketClienteIO, &buffer, sizeof(buffer), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);
@@ -663,8 +669,10 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
     }
     char *buffer;
     recv(socketClienteIO, &buffer, sizeof(buffer), 0);
-    free(direcciones);
-    free(tamanios);
+    //free(direcciones);
+    //free(tamanios);
+    string_array_destroy(direcciones);
+    string_array_destroy(tamanios);
     free(paquete->buffer->stream);
     free(paquete->buffer);
     free(paquete);

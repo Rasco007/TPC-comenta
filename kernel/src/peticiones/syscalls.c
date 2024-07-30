@@ -296,10 +296,6 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
 
             io_global->parametro1 = contextoEjecucion->motivoDesalojo->parametros[1];
             io_global->parametro2 = contextoEjecucion->motivoDesalojo->parametros[2];
-
-            // log_info(logger, "parametro 1 %s", io_global->parametro1);
-            //    log_info(logger, "parametro 2222 %s", io_global->parametro2);
-            //  log_info(logger, "Puntero io_global: %p", (void*)io_global);
              ///////////pthread_mutex_lock(&io_global->mutex_cola_procesos);
             queue_push( io_global->cola_procesos_io,proceso);
              //pthread_mutex_unlock(&io_global->mutex_cola_procesos);

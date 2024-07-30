@@ -13,26 +13,26 @@ void conexionCPU() {
     loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU");
 
     while(1){
-        conexionACPU = conexion("CPU_DISPATCH");
-        
+       
+        conexionACPU = crearConexion(confGet("IP_CPU"), confGet("PUERTO_CPU_DISPATCH"));
         if(conexionACPU != -1){
            break;
         }
         else {
-            log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPU);
+            log_warning(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPU);
             sleep(5);
         }
     }
 
     //CONEXION CPU INTERRUPT
     while(1){
-        conexionACPUInterrupt = conexion("CPU_INTERRUPT");
+        conexionACPUInterrupt = crearConexion(confGet("IP_CPU"), confGet("PUERTO_CPU_INTERRUPT"));
         
         if(conexionACPUInterrupt != -1){
             break;
         }
         else {
-            log_error(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPUInterrupt);
+            log_warning(loggerError, "No se pudo conectar al servidor, socket %d, esperando 5 segundos y reintentando.", conexionACPUInterrupt);
             sleep(5);
         }
     }

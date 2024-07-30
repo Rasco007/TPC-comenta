@@ -35,7 +35,7 @@ int ejecutarServidorCPU(int *socketCliente) {
         //log_info(logger, "Se recibió petición %d del CPU", peticion);
 
         switch (peticion) {
-            case READ:
+            /*case READ:
             log_info(logger, "Llegue al case READ");
                 recibirPeticionDeLectura(*socketCliente);
                 enviarValorObtenido(*socketCliente);
@@ -43,7 +43,7 @@ int ejecutarServidorCPU(int *socketCliente) {
             case WRITE:
                 recibirPeticionDeEscritura(*socketCliente);
                 enviarMensaje("OK", *socketCliente);
-                break;
+                break;*/
             case MMU:
                 //log_info(logger, "Llegue al case MMU, numero de case: %d", peticion);
                 int pid,pag;
@@ -65,11 +65,12 @@ int ejecutarServidorCPU(int *socketCliente) {
                 //log_info(logger, "Proc: %d",proceso->pid);
                 instruccion = obtener_instruccion(proceso,indice); //Obtengo la instruccion correspondiente
                 //log_info(logger, "Instruccion: %s",instruccion);
-                sleep(config_get_int_value(config, "RETARDO_RESPUESTA")/1000); //Agrego retardo
+                usleep(tiempo*1000); //Agrego retardo
                 enviarMensaje(instruccion,*socketCliente); 
                 break;
             case RESIZE: //VER
                 //log_info(logger, "Se recibió la petición de CPU para redimensionar un proceso");
+                usleep(tiempo*1000);
                 int nuevo_tamano;
                 recibirEnteros2(*socketCliente, &pid, &nuevo_tamano);
                 log_info(logger, "PID: %d - Nuevo tamaño: %d", pid, nuevo_tamano);
@@ -82,7 +83,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 enviarMensaje(mensajeResize, *socketCliente);
                 break;
             case 104: // PARA LEER POR COPY STRING O MOV IN
-                usleep(1000*1000);
+                usleep(tiempo*1000);
                 log_info(logger, "MEMORIA envía mensaje a CPU segun direccion y tamaño");
                 int dir2, tamano, pid2;
                 recibirDireccionyTamano(*socketCliente, &dir2, &pid2, &tamano);
@@ -95,7 +96,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 free(datosLeidos);
                 break;
             case 105: //PARA ESCRIBIR POR COPY STRING o MOV OUT
-                usleep(1000*1000);
+                usleep(tiempo*1000);
                 log_info(logger, "CPU envía mensaje a escribir en memoria");
                 int dir, pid3;
                 char cadena[2048]="";
@@ -152,7 +153,7 @@ void BuscarYEnviarMarco (int pid, int pagina,char* marco,int socketCliente){
     enviarMensaje(marco, socketCliente);
 }
 
-char* leer(uint32_t pid, uint32_t direccionFisica, uint32_t tamanio) {
+/*char* leer(uint32_t pid, uint32_t direccionFisica, uint32_t tamanio) {
     if (direccionFisica < 0 || direccionFisica + tamanio > TAM_MEMORIA) {
         log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
         return NULL;
@@ -172,7 +173,7 @@ char* leer(uint32_t pid, uint32_t direccionFisica, uint32_t tamanio) {
     }
     //Falta la lectura
  
-}
+}*/
 
 /*FUNCION TOMY
 void *leer_memoria(Proceso *proceso, int direccion_fisica, size_t size) {
@@ -196,7 +197,7 @@ void *leer_memoria(Proceso *proceso, int direccion_fisica, size_t size) {
     return buffer;
 }*/
 
-void recibirPeticionDeLectura(int socketCPU) {
+/*void recibirPeticionDeLectura(int socketCPU) {
     uint32_t size, desplazamiento = 0, pid, tamanio;
     int32_t direccionFisica;
 
@@ -235,7 +236,7 @@ void recibirPeticionDeEscritura(int socketCPU) {
 
     log_info(logger, "PID: <%d> - Acción: <%s> - Dirección física: <%d> - Valor: <%s>", pid, "ESCRIBIR", direccionFisica, valorAEscribir);
     free(buffer);
-}
+}*/
 
 void enviarValorObtenido(int socketCPU) {
     enviarMensaje(valorLeido, socketCPU);
@@ -243,7 +244,7 @@ void enviarValorObtenido(int socketCPU) {
     log_info(logger, "Envie valor a CPU");
 }
 
-void escribir(char* valor, uint32_t direccionFisica, uint32_t tamanio) {
+/*void escribir(char* valor, uint32_t direccionFisica, uint32_t tamanio) {
     if (direccionFisica < 0 || direccionFisica + tamanio > TAM_MEMORIA) {
         log_error(loggerError, "Error: Dirección física fuera de los límites de la memoria.");
         return;
@@ -254,7 +255,7 @@ void escribir(char* valor, uint32_t direccionFisica, uint32_t tamanio) {
     memcpy(punteroADirFisica, valor, tamanio); //Escribo el valor. Inicio=DF y el tamanio es el desplazamiento
 
     free(valor);
-}
+}*/
 
 /* FUNCION TOMY
 void escribir_memoria(MemoriaFisica *mf, Proceso *proceso, int direccion_fisica, const void *data, size_t size) {

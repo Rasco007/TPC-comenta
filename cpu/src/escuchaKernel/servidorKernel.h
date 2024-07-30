@@ -16,7 +16,7 @@
 extern t_log* loggerError; 
 
 void escucharAlKernel(); 
-int ejecutarServidorCPU();
+int ejecutarServidorCPU(int socketCliente);
 int noEsBloqueante(t_comando instruccionActual);
 extern int socketClienteDispatch;
 extern int socketClienteInterrupt;

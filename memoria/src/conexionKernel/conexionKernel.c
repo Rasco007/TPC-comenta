@@ -25,12 +25,13 @@ uint32_t recibirPID(int socketCliente) {
 
 int ejecutarServidorKernel(int *socketCliente) {
     //logger=cambiarNombre(logger,"conexion con kernel - Memoria");
+    int tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     cantidadMaximaPaginas = confGetInt("TAM_PAGINA");
     while (1) {
         int peticionRealizada = recibirOperacion(*socketCliente);
         switch (peticionRealizada) {
             case NEWPCB: {
-                usleep(1000*1000);
+                usleep(tiempo*1000);
                 PID = recibirPID(*socketCliente);
                 //enviarTablaPaginas(procesoNuevo);
                 Proceso *proceso = inicializar_proceso(PID, pathInstrucciones);
@@ -43,11 +44,12 @@ int ejecutarServidorKernel(int *socketCliente) {
                 break;
             }
             case ENDPCB: {
+                usleep(tiempo*1000);
                 PID = recibirPID(*socketCliente);
                 log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
                 log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
                 eliminarProcesoDeMemoria(PID);
-                //free(pathInstrucciones);
+                //free(pathInstrucciones); //ver si va o no
                 break;
             }
             case MENSAJE:{
@@ -107,7 +109,7 @@ void eliminarProcesoDeMemoria(int pid) {
             }
         }
         // Libera la memoria del proceso
-        //free(proceso);
+        free(proceso); //ver si va aca o no
 
         //log_info(logger, "Proceso PID: <%d> eliminado correctamente", pid);
     } else {

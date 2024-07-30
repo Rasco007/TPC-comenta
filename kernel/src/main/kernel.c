@@ -27,7 +27,7 @@ int main () {
 	inicializarListasPCBs(); 
 	atexit (destruirListasPCBsExit);
 	inicializarStructsIO(&kernel);
-	atexit (destruirStructsIO);
+	//atexit (destruirStructsIO);
 
 	conexionMemoria(); 
 	conexionCPU();
@@ -68,6 +68,7 @@ int main () {
 	pthread_join(ejecutarConsola_h,NULL);
 	//Hilo para IOOO
 	pthread_join(ejecutarIO_h,NULL);
+	destruirStructsIO(&kernel);
     exit (0);
 }
 

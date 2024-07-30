@@ -7,7 +7,7 @@ void iniciar_io(char** argv){
 }
 
 void iniciar_logs(){
-    logger = log_create("entradasalida.log", "LOGGER_IO", true, LOG_LEVEL_INFO);
+    logger = log_create("entradasalida.log", "IO", true, LOG_LEVEL_INFO);
 	if( logger == NULL){
 		perror ("error al crear log");
 		exit(EXIT_FAILURE);
@@ -15,7 +15,7 @@ void iniciar_logs(){
         //log_info (logger, "[IO] Log iniciado correctamente");
     }
 
-    loggerError = log_create("errores.log", "LOGGER__ERROR_IO", true, LOG_LEVEL_INFO);
+    loggerError = log_create("errores.log", "ERROR_IO", true, LOG_LEVEL_INFO);
 	if( loggerError == NULL){
 		perror ("error al crear log error");
 		exit(EXIT_FAILURE);

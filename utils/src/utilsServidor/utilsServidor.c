@@ -15,9 +15,8 @@ int iniciarServidor(char *puerto){
 
 	// Creamos el socket de escucha del servidor
 	socketServidor = socket(servinfo->ai_family, servinfo->ai_socktype,servinfo->ai_protocol);
-	int temp = 1;
-	setsockopt(socketServidor, SOL_SOCKET, SO_REUSEADDR, &(temp), sizeof(int));
-
+	setsockopt(socketServidor, SOL_SOCKET, SO_REUSEADDR, &(int){1}, sizeof(int));
+	setsockopt(socketServidor, SOL_SOCKET, SO_REUSEPORT, &(int){1}, sizeof(int));
 	// Asociamos el socket a un puerto
 	bind(socketServidor, servinfo->ai_addr, servinfo->ai_addrlen);
 

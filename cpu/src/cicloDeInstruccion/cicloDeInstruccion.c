@@ -474,8 +474,6 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    free(bytes_por_pagina_str);
-    free(direccionesFisicas_str);
     
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
@@ -503,6 +501,8 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, char* registroTamanio, char* registroPunteroArchivo){
@@ -566,8 +566,6 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     }
     //imprimo las direcciones fisicas
     printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    free(bytes_por_pagina_str);
-    free(direccionesFisicas_str);
     
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
@@ -595,7 +593,8 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
-
+    free(bytes_por_pagina_str);
+    free(direccionesFisicas_str);
 }
 
 void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamanio){
@@ -818,6 +817,7 @@ void copy_string(char* tamanio){
         //recibir un mensaje de confirmacion de que se escribio en memoria
         char recibido[100];
         recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+        log_info(logger, "OK DE MEMORIA");
     }
     free(datosLeidos2);
     free(cadenacompleta);
@@ -1265,6 +1265,7 @@ void mov_out(char* direccionLogica, char* registro){
             //recibir un mensaje de confirmacion de que se escribio en memoria
             char recibido[100];
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+            log_info(logger, "OK DE MEMORIA");
         }
         free(palabra);
     }
@@ -1286,6 +1287,7 @@ void mov_out(char* direccionLogica, char* registro){
             //recibir un mensaje de confirmacion de que se escribio en memoria
             char recibido[100];
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+            log_info(logger, "OK DE MEMORIA");
         }
         free(palabra);
     }
@@ -1322,7 +1324,9 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
         contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
     
     log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
+    //
     }
+    //string_array_destroy(contextoEjecucion->motivoDesalojo->parametros);
 }
 
 void liberarMemoria() {
