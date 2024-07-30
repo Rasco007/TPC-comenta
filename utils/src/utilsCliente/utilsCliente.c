@@ -62,25 +62,7 @@ void enviarMensaje(char *mensaje, int socket)
 	free(a_enviar);
 	eliminarPaquete(paquete);
 }
-void enviarMensaje2(char *mensaje, int socket)
-{
-	t_paquete *paquete = malloc(sizeof(t_paquete));
 
-	paquete->codigo_operacion = 150;
-	paquete->buffer = malloc(sizeof(t_buffer));
-	paquete->buffer->size = strlen(mensaje) + 1;
-	paquete->buffer->stream = malloc(paquete->buffer->size);
-	memcpy(paquete->buffer->stream, mensaje, paquete->buffer->size);
-
-	int bytes = paquete->buffer->size + 2 * sizeof(int);
-
-	void *a_enviar = serializarPaquete(paquete, bytes);
-
-	send(socket, a_enviar, bytes, 0);
-
-	free(a_enviar);
-	eliminarPaquete(paquete);
-}
 //lo que hacen las funciones crear buffer y crear paquete ya lo hace la funcion enviar mensaje
 void crearBuffer(t_paquete *paquete)
 {

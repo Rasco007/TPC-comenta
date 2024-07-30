@@ -134,5 +134,5 @@ void crearBuffer(t_paquete *paquete);
  * @return Se retorna el formato serializado como un void*.
  */
 void *serializarPaquete(t_paquete *paquete, int bytes);
-void enviarMensaje2(char *mensaje, int socket);
+
 #endif /* UTILS_H_ */

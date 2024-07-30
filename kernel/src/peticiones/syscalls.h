@@ -18,6 +18,7 @@ extern int *instanciasRecursos;
 extern int conexionAMemoria; 
 extern int tiempoIO; 
 extern t_list *recursos;
+extern t_list* pcbsEnMemoria;
 extern t_contexto* contextoEjecucion;
 typedef struct{
     t_pcb* proceso;

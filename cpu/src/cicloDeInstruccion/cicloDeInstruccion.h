@@ -27,16 +27,15 @@
     extern int conexionAMemoria;
     extern int socketClienteDispatch;
     extern int socketClienteInterrupt;
-    extern int flag_user_interruption;
+
     extern t_contexto* contextoEjecucion;
-    extern char* mensajeInterrupcion;
 
     void cicloDeInstruccion();
     void fetch();
     void decode();
     void execute();
     void liberarMemoria();
-    t_comando check_interrupt();
+    bool check_interrupt();
     int buscar(char *elemento, char **lista); 
 
     

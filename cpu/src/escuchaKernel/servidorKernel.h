@@ -23,5 +23,4 @@ extern int socketClienteInterrupt;
 extern t_contexto* contextoEjecucion;
 extern int flag_bloqueante;
 extern t_temporal* tiempoDeUsoCPU;
-void atenderInterrupcionDeUsuario();
 #endif

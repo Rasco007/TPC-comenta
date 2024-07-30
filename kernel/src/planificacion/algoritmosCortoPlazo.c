@@ -55,7 +55,7 @@ t_pcb *proximoAEjecutarVRR(){
     }
     else{
         t_pcb *pcbActual = desencolar(pcbsREADYaux);
-        int64_t quantumConsumido=pcbActual->tiempoDeUsoCPU;
+        int64_t quantumConsumido=contextoEjecucion->tiempoDeUsoCPU;
         pcbActual->quantum = quantumConfig-quantumConsumido;
         pcbActual->algoritmo=VRR;
         return pcbActual;

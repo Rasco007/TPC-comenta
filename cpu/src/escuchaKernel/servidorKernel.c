@@ -1,5 +1,4 @@
 #include <escuchaKernel/servidorKernel.h>
-#include <pthread.h>
 
 int socketClienteDispatch;
 int socketClienteInterrupt;
@@ -18,22 +17,35 @@ void escucharAlKernel() {
 	log_info(logger, "Kernel conectado (interrupt), en socket: %d", socketClienteInterrupt);
 
     log_info(logger,"Conexiones CPU-Kernel OK!");
-
     ejecutarServidorCPU(socketClienteDispatch);
 }
 
+int noEsBloqueante(t_comando instruccionActual) {
+	t_comando instruccionesBloqueantes[13] = {
+		IO_FS_CREATE, IO_FS_DELETE, IO_FS_READ, IO_FS_TRUNCATE,
+		IO_FS_WRITE, IO_GEN_SLEEP, IO_STDIN_READ, IO_STDOUT_WRITE, WAIT, SIGNAL 
+	};
+
+	for (int i = 0; i < 13; i++) 
+		if (instruccionActual == instruccionesBloqueantes[i]) return 0;
+
+	return 1;
+}
 
 
 //CPU recibe instrucciones del Kernel para hacer el ciclo de instruccion
 int ejecutarServidorCPU(int socketCliente){
-	pthread_t atenderInterrupcionKernel;
-	pthread_create(&atenderInterrupcionKernel,NULL, (void*) atenderInterrupcionDeUsuario,NULL);
 	while(1){
     instruccionActual = -1;
 	int codOP = recibirOperacion(socketCliente);
 		switch (codOP) {
+				case MENSAJE:
+					log_info(logger, "Mensaje recibido.");
+					char* mensaje = recibirMensaje(socketCliente);
+					log_info(logger, "Mensaje: %s", mensaje);
+					break;
 				case -1:
-					log_error(logger, "El Kernel se desconecto.");
+					log_info(logger, "El Kernel se desconecto.");
 					if (contextoEjecucion != NULL){
 						destroyContexto ();
 					}
@@ -54,23 +66,13 @@ int ejecutarServidorCPU(int socketCliente){
 					 	
 						//log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 	cicloDeInstruccion();
-					 }
-
+					 } 
 					break;
 				default:
 					log_warning(loggerError,"Operacion desconocida.");
 						break;
 			}
 	}
-	pthread_join(atenderInterrupcionKernel,NULL);
 	return EXIT_SUCCESS;
 }
 
-void atenderInterrupcionDeUsuario(){
-	while(1){
-		int peticion = recibirOperacion(socketClienteInterrupt);
-		if(peticion==150){
-			mensajeInterrupcion = recibirMensaje(socketClienteInterrupt);	
-		}
-	}
-}
