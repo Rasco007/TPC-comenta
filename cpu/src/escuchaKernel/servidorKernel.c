@@ -1,6 +1,7 @@
 #include <escuchaKernel/servidorKernel.h>
 #include <pthread.h>
 
+
 int socketClienteDispatch;
 int socketClienteInterrupt;
 t_temporal* tiempoDeUsoCPU;
@@ -36,7 +37,7 @@ int ejecutarServidorCPU(int socketCliente){
 					log_error(logger, "El Kernel se desconecto.");
 					if (contextoEjecucion != NULL){
 						destroyContexto ();
-					}
+					}				
 					return EXIT_FAILURE;
 				case CONTEXTOEJECUCION:
 					log_info(logger,"APAREZCO DESDE CPU");
