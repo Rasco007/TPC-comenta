@@ -7,11 +7,6 @@
 TLB *tlb;
 uint64_t tiempo_actual=0; // Contador de tiempo para LRU
 
-void limpiarBuffer(int socketCliente){
-    int size;
-    void* buffer = recibirBuffer(socketCliente, &size);
-    free(buffer);
-}
 int obtenerTamanoPagina2(char* path){
     char *pathConfig=malloc(PATH_MAX);
     pathConfig[0]='\0';
@@ -51,13 +46,9 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
         // Por ahora, solo indicamos un TLB Miss
         if (cantidadEntradasTLB > 0)
             log_info(logger,"PID: <%d> - TLB MISS - Pagina: <%d>", pid, page_number);
-        //log_info(logger,"TLB Miss\n");
         solicitarDireccion((int) pid,(int)page_number,conexionAMemoria);
-        //int control = 1;
-        // while(control) {
         recibo = recibirOperacion(conexionAMemoria);
         int frame;
-        //log_info(logger,"numero de case??? %d", recibo);
         switch (recibo){
             case 0:
                 valorAInsertar = recibirMensaje(conexionAMemoria);
@@ -65,8 +56,6 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
                 frame=atoi(valorAInsertar);
                 log_info(logger,"PID: <%d> - OBTENER MARCO - Página: <%d> - Marco: <%d>",pid,page_number,frame);
                 free(valorAInsertar);
-                //control=0;
-                //limpiarBuffer(conexionAMemoria);
                 break;
             case -1:
                 log_error(logger, "ERROR OPCODE");
@@ -79,15 +68,6 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
             agregar_a_tlb(pid, page_number, frame);
 
         return frame* tamPagina + offset;
-        //}
-        //return frame_number * PAGE_SIZE + offset;
-        /*log_info(logger,"Recibo de memoria: %d\n", recibo);
-
-        valorAInsertar = recibirMensaje(conexionAMemoria);
-
-        log_info(logger,"valorAInsertar de memoria: %s\n", valorAInsertar);*/
-
-        //return UINT32_MAX; // Indica que no se encontró
     }
 }
 

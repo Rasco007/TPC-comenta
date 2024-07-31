@@ -175,7 +175,7 @@ int calcularPaginasALeer(int first_addr, int last_addr, int page_size){
     return end_page - start_page + 1;
 }
 // Función para calcular la cantidad de bytes a escribir/leer en cada página
-void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
+/*void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
     int total_bytes = last_addr - first_addr + 1;
     int start_page = first_addr / page_size;
     int start_offset = first_addr % page_size;
@@ -186,7 +186,7 @@ void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *b
         bytes_por_pagina[i] = page_size;
     }
     bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;
-}
+}*/
 void calcularBytesPorPagina2(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
     int total_bytes = last_addr - first_addr+1; // Calcula el total de bytes a leer
 
@@ -270,13 +270,9 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //convierto la variable bytes_por_pagina a un string
     char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
     bytes_por_pagina_str[0] = '\0';
@@ -289,25 +285,16 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
             strcat(bytes_por_pagina_str, ",");
         }
     }
-    //imprimo el string
-    printf("Bytes por página: %s\n", bytes_por_pagina_str);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
     for (int i = 1; i < num_pages; i++) {
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
     }
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) {
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
-    }
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
     //convierto a char* las direcciones fisicas
     char* direccionesFisicas_str = malloc(sizeof(char) * 100);
     direccionesFisicas_str[0] = '\0';
@@ -320,8 +307,6 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
             strcat(direccionesFisicas_str, ",");
         }
     }
-    //imprimo las direcciones fisicas
-    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
 
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
@@ -422,13 +407,9 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //convierto la variable bytes_por_pagina a un string
     char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
     bytes_por_pagina_str[0] = '\0';
@@ -441,25 +422,16 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
             strcat(bytes_por_pagina_str, ",");
         }
     }
-    //imprimo el string
-    printf("Bytes por página: %s\n", bytes_por_pagina_str);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
-    for (int i = 1; i < num_pages; i++) {
+    for (int i = 1; i < num_pages; i++) 
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
-    }
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) {
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
-    }
+
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++)
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
     //convierto a char* las direcciones fisicas
     char* direccionesFisicas_str = malloc(sizeof(char) * 100);
     direccionesFisicas_str[0] = '\0';
@@ -472,10 +444,6 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
             strcat(direccionesFisicas_str, ",");
         }
     }
-    //imprimo las direcciones fisicas
-    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
-    
-
 
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
@@ -516,13 +484,9 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //convierto la variable bytes_por_pagina a un string
     char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
     bytes_por_pagina_str[0] = '\0';
@@ -535,25 +499,15 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
             strcat(bytes_por_pagina_str, ",");
         }
     }
-    //imprimo el string
-    printf("Bytes por página: %s\n", bytes_por_pagina_str);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
-    for (int i = 1; i < num_pages; i++) {
+    for (int i = 1; i < num_pages; i++)
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
-    }
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) {
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
-    }
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
     //convierto a char* las direcciones fisicas
     char* direccionesFisicas_str = malloc(sizeof(char) * 100);
     direccionesFisicas_str[0] = '\0';
@@ -566,8 +520,6 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
             strcat(direccionesFisicas_str, ",");
         }
     }
-    //imprimo las direcciones fisicas
-    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
     
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
@@ -603,17 +555,12 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
     int tamPagina = obtenerTamanoPagina("../memoria"); 
-    printf("Tamaño de página: %d\n", tamPagina);
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1; 
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //convierto la variable bytes_por_pagina a un string
     char* bytes_por_pagina_str = malloc(sizeof(char) * 100);
     bytes_por_pagina_str[0] = '\0';
@@ -626,25 +573,16 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
             strcat(bytes_por_pagina_str, ",");
         }
     }
-    //imprimo el string
-    printf("Bytes por página: %s\n", bytes_por_pagina_str);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
     for (int i = 1; i < num_pages; i++) {
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
     }
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) {
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
-    }
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
     //convierto a char* las direcciones fisicas
     char* direccionesFisicas_str = malloc(sizeof(char) * 100);
     direccionesFisicas_str[0] = '\0';
@@ -657,8 +595,6 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
             strcat(direccionesFisicas_str, ",");
         }
     }
-    //imprimo las direcciones fisicas
-    printf("Direcciones físicas: %s\n", direccionesFisicas_str);
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -738,29 +674,18 @@ void copy_string(char* tamanio){
     int first_addr = pointer;
     int last_addr = first_addr + tamanioInt-1; 
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
     for (int i = 1; i < num_pages; i++) 
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
-    int longitud=0;
     char *cadenacompleta = malloc(tamanioInt);
     for(int i=0; i<num_pages; i++){
         if (i==0)
@@ -773,7 +698,6 @@ void copy_string(char* tamanio){
         recibido[bytes] = '\0';
         //log_info(logger, "Recibido: %s", recibido);
         strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
-			longitud+=bytes_por_pagina[i];
         log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", contextoEjecucion->pid, direccionesFisicas[i], recibido);
     }
     log_info(logger, "Cadena completa: %s", cadenacompleta);
@@ -783,28 +707,18 @@ void copy_string(char* tamanio){
     int first_addr2 = pointer2;
     int last_addr2 = first_addr2 + tamanioInt-1; 
     int paginasALeer2 = calcularPaginasALeer(first_addr2, last_addr2, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer2);
     int bytes_por_pagina2[paginasALeer2];
     int num_pages2;
     calcularBytesPorPagina2(first_addr2, last_addr2, tamPagina, bytes_por_pagina2, &num_pages2);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages2; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina2[i]);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas2[num_pages2];
     direccionesLogicas2[0] = first_addr2;
     for (int i = 1; i < num_pages2; i++) 
         direccionesLogicas2[i] = direccionesLogicas2[i - 1] + bytes_por_pagina2[i - 1];
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages2; i++) 
-        printf("Página %d: %d\n", i, direccionesLogicas2[i]);
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas2[num_pages2];
-    for (int i = 0; i < num_pages2; i++) {
+    for (int i = 0; i < num_pages2; i++) 
         direccionesFisicas2[i] =  mmu(contextoEjecucion->pid, direccionesLogicas2[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas2[i]);
-    }
     char *datosLeidos2 = malloc(100);
     int tamanotexto=0;
     //divido el texto en partes
@@ -1127,7 +1041,7 @@ void exit_c () {
     log_info(logger, "Pasa modificarMotivoDesalojo");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion); //TODO: HACER CON INTERRUPT
     free (terminado);
-    log_info(logger, "fin exit_c");
+    //log_info(logger, "fin exit_c");
     flag_bloqueante = 1;
 }
 
@@ -1138,32 +1052,20 @@ void mov_in(char* registro, char* direccionLogica){
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + tamRegistro-1;
-    printf("last_addr: %d\n", last_addr);   
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
     for (int i = 1; i < num_pages; i++) 
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
 
-    int longitud=0;
     char *cadenacompleta = malloc(tamRegistro);
     for(int i=0; i<num_pages; i++){
         if (i==0)
@@ -1174,7 +1076,6 @@ void mov_in(char* registro, char* direccionLogica){
         recibido[bytes] = '\0';
         log_info(logger, "Recibido: %s", recibido);
         strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
-		longitud+=bytes_por_pagina[i];
         int numeros=0;
         memcpy(&numeros, recibido,bytes_por_pagina[i]);
         log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
@@ -1220,32 +1121,20 @@ void mov_out(char* direccionLogica, char* registro){
     log_warning(logger, "Valor del registro: %u", valorReg);
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
-    //printf("first_addr: %d\n", first_addr);
     int last_addr = first_addr + tamRegistro-1;
-    //printf("last_addr: %d\n", last_addr);
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
-    log_info(logger, "Cant. de paginas a leer: %d", paginasALeer);
     int bytes_por_pagina[paginasALeer];
     int num_pages;
     calcularBytesPorPagina2(first_addr, last_addr, tamPagina, bytes_por_pagina, &num_pages);
-    //printf("Bytes a escribir en cada página:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d bytes\n", i, bytes_por_pagina[i]);
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
     direccionesLogicas[0] = first_addr;
     for (int i = 1; i < num_pages; i++) 
         direccionesLogicas[i] = direccionesLogicas[i - 1] + bytes_por_pagina[i - 1];
-    //imprimo las direcciones lógicas
-    printf("Direcciones lógicas:\n");
-    for (int i = 0; i < num_pages; i++) 
-        printf("Página %d: %d\n", i, direccionesLogicas[i]);
    //hago las traducciones a direcciones fisicas con la mmu
     uint32_t direccionesFisicas[num_pages];
-    for (int i = 0; i < num_pages; i++) {
+    for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-        printf("Dirección física de la página %d: %d\n", i, direccionesFisicas[i]);
-    }
 
     if (tamRegistro == 1){
         uint8_t registro_ext = valorReg;
@@ -1331,7 +1220,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-    free(instruccionAEjecutar);
+    //free(instruccionAEjecutar); OJO CON ESTE FREE EN LA PRUEBA SALVAJE!!!!!!!
     log_warning(logger,"Memoria liberada!");
 }
 

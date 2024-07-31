@@ -27,22 +27,6 @@ void ejecutarServidorIO(){
     //return EXIT_SUCCESS;
 }
 
-
-//enviarMensaje2("OK", sock);
-/*void enviarMensaje2(char* mensaje, int socket) {
-    // Enviar el mensaje al servidor
-    int bytes_enviados = send(socket, mensaje, strlen(mensaje), 0);
-    if (bytes_enviados < 0) {
-        perror("Error al enviar el mensaje");
-        return;
-    }
-    if (bytes_enviados == 0) {
-        printf("Conexión cerrada por el servidor\n");
-        return;
-    }
-    //printf("Mensaje enviado: %s\n", mensaje);
-}*/
-
 void* ejecutarServidor(void* socketCliente) {
     int sock = *(int*)socketCliente;
     free(socketCliente);
@@ -66,18 +50,10 @@ void* ejecutarServidor(void* socketCliente) {
         log_debug(logger, "Se recibió petición %d del IO", peticion);
 
         switch (peticion) {
-            /*case READ:
-                recibirPeticionDeLectura(sock);
-                enviarValorObtenido(sock);
-                break;*/
             case MENSAJE:
    	 		    char* mensaje = recibirMensaje(sock);
                 log_info(logger, "Mensaje recibido: %s", mensaje);            
                 break;
-            /*case WRITE:
-                recibirPeticionDeEscritura(sock);
-                enviarMensaje("OK", sock);
-                break;*/
             case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN O FS_READ) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
                 usleep(tiempo*1000);
                 log_info(logger, "IO envía mensaje a escribir en memoria");

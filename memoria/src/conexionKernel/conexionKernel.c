@@ -7,8 +7,6 @@ uint32_t direccionBasePagina;
 uint32_t tamanioPagina;
 char* pathInstrucciones;
 
-
-
 uint32_t recibirPID(int socketCliente) {
 
 	int size, desplazamiento=0; 
@@ -33,9 +31,7 @@ int ejecutarServidorKernel(int *socketCliente) {
             case NEWPCB: {
                 usleep(tiempo*1000);
                 PID = recibirPID(*socketCliente);
-                //enviarTablaPaginas(procesoNuevo);
                 Proceso *proceso = inicializar_proceso(PID, pathInstrucciones);
-
                 //Mando el numero de instrucciones a kernel
                 int n=proceso->numero_instrucciones;
                 //log_info(logger,"Cantidad de instrucciones: %d",n);

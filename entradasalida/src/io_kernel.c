@@ -12,10 +12,6 @@ void io_atender_kernel(){
     	case MENSAJE:
    	 		recibirMensaje(fd_kernel);
    	 		break;
-	  	/*case READ:
-		    log_info(logger, "stdin read recibido");
-		    manejarSTDINREAD(fd_kernel);
-		    break;*/
    		case IO_GEN_SLEEP:
    			log_info(logger, "GEN SLEEP recibido");
 			recibir_mensaje_y_dormir(fd_kernel);

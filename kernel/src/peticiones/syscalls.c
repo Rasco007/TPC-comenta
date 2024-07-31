@@ -645,7 +645,7 @@ void exit_s(t_pcb *proceso,char **parametros){
     liberarMemoriaPCB(proceso);
     destruirPCB(proceso);
     if(contextoEjecucion!=NULL){
-        destroyContextoUnico();
+        destroyContexto(); //ver esto
     } 
     sem_post(&semGradoMultiprogramacion);
     log_info(logger, "finalizo el exit");
