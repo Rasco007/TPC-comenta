@@ -18,16 +18,16 @@ void conexionIOMemoria(char **argv) {
 }
 
 void enviarHandshakeMemoria() {
-    size_t bytes;
+    //size_t bytes;
 
     int32_t handshake = 1;
     int32_t result;
 
     log_info(logger, "Enviando handshake a memoria");
-    bytes = send(fd_memoria, &handshake, sizeof(int32_t), 0);
+    send(fd_memoria, &handshake, sizeof(int32_t), 0);
 
 
-    bytes = recv(fd_memoria, &result, sizeof(int32_t), MSG_WAITALL);
+    recv(fd_memoria, &result, sizeof(int32_t), MSG_WAITALL);
     //log_info(logger, "Handshake recibido: %d", result);
     if (result == 0) {
         log_info(logger, "Handshake OK");

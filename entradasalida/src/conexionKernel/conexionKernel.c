@@ -19,13 +19,13 @@ void conexionKernel(char **argv) {
 }
  void enviarHandshake(char *nombreInterfaz)
 {
-    size_t bytes;
+    //size_t bytes;
 
     int32_t handshake = 1;
     int32_t result;
 
-    bytes = send(fd_kernel, &handshake, sizeof(int32_t), 0);
-    bytes = recv(fd_kernel, &result, sizeof(int32_t), MSG_WAITALL);
+    send(fd_kernel, &handshake, sizeof(int32_t), 0);
+    recv(fd_kernel, &result, sizeof(int32_t), MSG_WAITALL);
 
     if (result == 0)
     {

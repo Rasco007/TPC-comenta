@@ -115,7 +115,7 @@ void* ejecutarServidor(void* socketCliente) {
                 break;
             case -1:
                 log_error(logger, "IO se desconectó");
-                return EXIT_FAILURE;
+                return NULL;
                 break;
             default:
                 log_warning(logger, "Operación desconocida del IO. Peticion %d", peticion);
@@ -127,19 +127,19 @@ void* ejecutarServidor(void* socketCliente) {
 }
 
 void hacerHandshake(int socketClienteIO){
-    size_t bytes;
+    //size_t bytes;
 
    int32_t handshake;
     int32_t resultOk = 0;
     int32_t resultError = -1;
 
-    bytes = recv(socketClienteIO, &handshake, sizeof(int32_t), MSG_WAITALL);
+    recv(socketClienteIO, &handshake, sizeof(int32_t), MSG_WAITALL);
    
     if (handshake == 1) {
        
-        bytes = send(socketClienteIO, &resultOk, sizeof(int32_t), 0);
+        send(socketClienteIO, &resultOk, sizeof(int32_t), 0);
     } else {
-        bytes = send(socketClienteIO, &resultError, sizeof(int32_t), 0);
+        send(socketClienteIO, &resultError, sizeof(int32_t), 0);
     }
    
 }
