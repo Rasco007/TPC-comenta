@@ -37,7 +37,7 @@ void cicloDeInstruccion(){
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
     liberarMemoria();
-    usleep(200);  //VER ESTO!!!!
+   // usleep(200);  //VER ESTO!!!!
 }
 void solicitarInstruccion(int pid, int indice, int socket){
     t_paquete *paquete = malloc(sizeof(t_paquete));
@@ -1320,7 +1320,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
     for (int i = 0; i < numParametros; i++){
      
-        contextoEjecucion->motivoDesalojo->parametros[i] = string_duplicate(parametros[i]);
+        contextoEjecucion->motivoDesalojo->parametros[i] = parametros[i]; //VER SI ES NECESARIO
     
     log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
     //
@@ -1330,7 +1330,7 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 
 void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
-    //free(elementosInstruccion);
+    free(elementosInstruccion);
     free(instruccionAEjecutar);
     log_warning(logger,"Memoria liberada!");
 }

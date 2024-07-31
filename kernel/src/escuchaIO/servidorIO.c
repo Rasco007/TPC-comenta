@@ -161,10 +161,10 @@ int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
 int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tipoRequerido){
     for (size_t i = 0; i < list_size(kernel->interfaces); i++) {
          Interfaz *interfaz= list_get(kernel->interfaces,i);
-        log_info(logger, "nombre interfaz: %s", interfaz->nombre_interfaz);
+        /*log_info(logger, "nombre interfaz: %s", interfaz->nombre_interfaz);
         log_info(logger, "tipo interfaz: %s", interfaz->tipo_interfaz);
         log_info(logger, "tipo requerido: %s", tipoRequerido);
-        log_info(logger, "nombre requerido: %s", tipoRequerido);
+        log_info(logger, "nombre requerido: %s", tipoRequerido);*/
         if (strcmp(interfaz->nombre_interfaz, nombreInterfaz) == 0) {
             if (strcmp(interfaz->tipo_interfaz, tipoRequerido) == 0) {
                 return 1;
@@ -265,7 +265,7 @@ void ejecutarServidorKernel(Interfaz *interfaz_actual){
     while(true) {
         //log_info(logger,"antes de estar en la cola");
         sem_wait(&interfaz_actual->semaforo_cola_procesos);
-        log_info(logger,"hay proceso en la cola");
+        //log_info(logger,"hay proceso en la cola");
         t_pcb *pcb;
         pcb = queue_pop(interfaz_actual->cola_procesos_io);
 

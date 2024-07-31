@@ -332,10 +332,10 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     }
     log_info(logger,"Marcos libres: %d",marcosLibres);
     //indicar en que posicion de la lista de marcos libres se encuentran los marcos ocupados
-    for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
+    /*for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
         if (list_get(mf->listaMarcosLibres,i) == true)
             log_info(logger,"Marco ocupado: %d",i);
-    }
+    }*/
     mensajeResize="OK";
     return proceso;    
 }
