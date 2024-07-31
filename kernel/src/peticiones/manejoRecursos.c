@@ -86,7 +86,7 @@ void liberarRecursosAsignados(t_pcb* proceso){
         for(int j=0;j<list_size(colaBloquadosRecurso);j++){
             t_pcb* pcbBloqueado=list_get(colaBloquadosRecurso,j);
             if(pcbBloqueado->pid==proceso->pid){
-                instanciasRecursos[j]++;
+                instanciasRecursos[i]++;
                 list_remove(colaBloquadosRecurso,j);
                 log_warning(logger,"Se elimina el pid <%d> de las colas de bloqueados",proceso->pid);
             }

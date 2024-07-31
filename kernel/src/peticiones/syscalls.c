@@ -185,7 +185,7 @@ void signal_s(t_pcb *proceso,char **parametros){
     instanciasRecursos[indexRecurso]=instancRecurso;
     log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
     if(instancRecurso <= 0){
-        instancRecurso++;
+        //instancRecurso++;
         instanciasRecursos[indexRecurso]=instancRecurso;
         
         
