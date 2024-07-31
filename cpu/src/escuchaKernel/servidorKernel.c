@@ -39,7 +39,7 @@ int ejecutarServidorCPU(int socketCliente){
 					}
 					return EXIT_FAILURE;
 				case CONTEXTOEJECUCION:
-					log_info(logger,"APAREZCO DESDE CPU");
+					//log_info(logger,"APAREZCO DESDE CPU");
 					recibirContextoBeta(socketCliente);
 					//Inicio el cronometro del tiempo de uso de CPU
 					log_info(logger,"luego de recibir contexto de kernel");

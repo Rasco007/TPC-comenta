@@ -112,7 +112,7 @@ void planificarACortoPlazo(t_pcb *(*proximoAEjecutar)()){
         
         //Recibo el contexto actualizado
         retornoContexto(aEjecutar, contextoEjecucion);
-        log_info(logger, "APAREZCO KERNEL");
+        //log_info(logger, "APAREZCO KERNEL");
         if(flag_exit==1) continue;
     }
 }

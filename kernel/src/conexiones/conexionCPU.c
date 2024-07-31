@@ -59,7 +59,7 @@ t_contexto* procesarPCB(t_pcb* procesoEnEjecucion) {
     pthread_mutex_lock(&mutexProcesoEnEjecucion);
     asignarPCBAContexto(procesoEnEjecucion);
    
-    dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
+    //dictionary_iterator(contextoEjecucion->registrosCPU, log_registro);
 
     enviarContextoBeta(conexionACPU, contextoEjecucion);
 

@@ -41,7 +41,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->programCounter), sizeof(contexto->programCounter));
     desplazamiento += sizeof(contexto->programCounter);
  
-    log_info(logger, "cantidad de instrucciones mandadas %d",contexto->instruccionesLength);
+    //log_info(logger, "cantidad de instrucciones mandadas %d",contexto->instruccionesLength);
    memcpy(paquete->buffer->stream + desplazamiento, &(contexto->instruccionesLength), sizeof(contexto->instruccionesLength));
     desplazamiento += sizeof(contexto->instruccionesLength);
 
@@ -82,7 +82,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     //Serializacion de algoritmo
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->algoritmo),sizeof(contexto->algoritmo));
     desplazamiento +=sizeof(contexto->algoritmo);
-    log_info(logger,"ALGORITMO: %d", contexto->algoritmo);
+    //log_info(logger,"ALGORITMO: %d", contexto->algoritmo);
 
     //serializo el tiempo de cpu
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->tiempoDeUsoCPU), sizeof(contexto->tiempoDeUsoCPU));
@@ -92,7 +92,7 @@ void enviarContextoBeta(int socket, t_contexto* contexto) {
     memcpy(paquete->buffer->stream + desplazamiento, &(contexto->fin_de_quantum), sizeof(contexto->fin_de_quantum));
     desplazamiento += sizeof(contexto->fin_de_quantum);
 
-log_info(logger,"---------------------");
+//log_info(logger,"---------------------");
     // Calcular el tamaño total del paquete a enviar
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
     
@@ -141,9 +141,9 @@ void recibirContextoBeta(int socket) {
 
     memcpy(&(contextoEjecucion->instruccionesLength), buffer + desplazamiento, sizeof(contextoEjecucion->instruccionesLength));
     desplazamiento += sizeof(contextoEjecucion->instruccionesLength);
-    log_info(logger,"cantidad de instrucciones RECIBIDAS %u", contextoEjecucion->instruccionesLength);
+    //log_info(logger,"cantidad de instrucciones RECIBIDAS %u", contextoEjecucion->instruccionesLength);
 
-    printf("Recibido PID: %u PC: %d \n", contextoEjecucion->pid, contextoEjecucion->programCounter);
+    //printf("Recibido PID: %u PC: %d \n", contextoEjecucion->pid, contextoEjecucion->programCounter);
     
 
         //deserealizo los registros
@@ -159,7 +159,7 @@ void recibirContextoBeta(int socket) {
 
         snprintf(nombreRegistro, 3, "%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
-        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        //log_info(logger, "Registro %s: %s", nombreRegistro, registro);
         //free(registro);
     }
 
@@ -172,7 +172,7 @@ void recibirContextoBeta(int socket) {
 
         snprintf(nombreRegistro, 4, "E%cX", nombre);
         dictionary_put(contextoEjecucion->registrosCPU, nombreRegistro, registro);
-        log_info(logger, "Registro %s: %s", nombreRegistro, registro);
+        //log_info(logger, "Registro %s: %s", nombreRegistro, registro);
         //free(registro);
     }
     //SI,DI (4 bytes cada uno)
@@ -181,14 +181,14 @@ void recibirContextoBeta(int socket) {
     registro[10]='\0';
     desplazamiento+=10;
     dictionary_put(contextoEjecucion->registrosCPU, "SI", registro);
-    log_info(logger, "Registro SI: %s", registro);
+    //log_info(logger, "Registro SI: %s", registro);
 
     registro=malloc(11);
     memcpy(registro, buffer + desplazamiento, 10);
     registro[10]='\0';
     desplazamiento+=10;
     dictionary_put(contextoEjecucion->registrosCPU, "DI", registro);
-    log_info(logger, "Registro DI: %s", registro);
+    //log_info(logger, "Registro DI: %s", registro);
     
     // Deserializar SI y DI
     /*memcpy(&(contextoEjecucion->SI), buffer + desplazamiento, sizeof(contextoEjecucion->SI));
@@ -210,7 +210,7 @@ void recibirContextoBeta(int socket) {
         contextoEjecucion->motivoDesalojo->parametros[i] = malloc(parametro_length);
         memcpy(contextoEjecucion->motivoDesalojo->parametros[i], buffer + desplazamiento, parametro_length);
         desplazamiento += parametro_length;
-        log_info(logger, "param %s",contextoEjecucion->motivoDesalojo->parametros[i]);
+        //log_info(logger, "param %s",contextoEjecucion->motivoDesalojo->parametros[i]);
         //free(contextoEjecucion->motivoDesalojo->parametros[i]);
     }
     
@@ -221,7 +221,7 @@ void recibirContextoBeta(int socket) {
     //Deserializar algoritmo
     memcpy(&(contextoEjecucion->algoritmo), buffer + desplazamiento, sizeof(contextoEjecucion->algoritmo));
     desplazamiento += sizeof(contextoEjecucion->algoritmo);
-    log_info(logger,"ALGORITMO: %d", contextoEjecucion->algoritmo);
+    //log_info(logger,"ALGORITMO: %d", contextoEjecucion->algoritmo);
 
     //Deserializar tiempoDeUsoCPU
     memcpy(&(contextoEjecucion->tiempoDeUsoCPU), buffer + desplazamiento, sizeof(contextoEjecucion->tiempoDeUsoCPU));
@@ -231,7 +231,7 @@ void recibirContextoBeta(int socket) {
     memcpy(&(contextoEjecucion->fin_de_quantum), buffer + desplazamiento, sizeof(contextoEjecucion->fin_de_quantum));
     desplazamiento += sizeof(contextoEjecucion->fin_de_quantum);
 
-    log_info(logger, "termino de recibir todo");
+    //log_info(logger, "termino de recibir todo");
     
 }
 

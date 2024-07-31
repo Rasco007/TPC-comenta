@@ -1067,7 +1067,7 @@ void mov_out(char* direccionLogica, char* registro){
     char* valorRegistro=dictionary_get(contextoEjecucion->registrosCPU, registro);
     uint32_t tamRegistro =(uint32_t) obtenerTamanioReg(registro);
     uint32_t valorReg= atoi(valorRegistro);
-    log_warning(logger, "Valor del registro: %u", valorReg);
+   // log_warning(logger, "Valor del registro: %u", valorReg);
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + tamRegistro-1;
@@ -1090,10 +1090,10 @@ void mov_out(char* direccionLogica, char* registro){
         char *palabra=malloc(1);
         int tamanotexto=0;
         for(int i=0; i<num_pages; i++){
-            printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
+            //printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
             memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
             palabra[bytes_por_pagina[i]] = '\0';
-            printf("Palabra: %s\n", palabra); 
+            //printf("Palabra: %s\n", palabra); 
             int numeros=0;
             memcpy(&numeros, palabra,bytes_por_pagina[i]);
             log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
@@ -1112,10 +1112,10 @@ void mov_out(char* direccionLogica, char* registro){
         char *palabra=malloc(4);
         int tamanotexto=0;
         for(int i=0; i<num_pages; i++){
-            printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
+            //printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
             memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
             palabra[bytes_por_pagina[i]] = '\0';
-            printf("Palabra: %s\n", palabra); 
+            //printf("Palabra: %s\n", palabra); 
             int numeros=0;
             memcpy(&numeros, palabra, bytes_por_pagina[i]);
             log_info(logger, "PID: <%d> - Acción: <ESCRIBIR> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
@@ -1152,11 +1152,11 @@ void mov_out(char* direccionLogica, char* registro){
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
     contextoEjecucion->motivoDesalojo->motivo = comando;
-    log_info(logger, "numero de parametros en motivo de %d :%d",comando, numParametros);
+    //log_info(logger, "numero de parametros en motivo de %d :%d",comando, numParametros);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
     for (int i = 0; i < numParametros; i++){
         contextoEjecucion->motivoDesalojo->parametros[i] = parametros[i]; //VER SI ES NECESARIO
-        log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
+        //log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
     }
     //string_array_destroy(contextoEjecucion->motivoDesalojo->parametros);
 }

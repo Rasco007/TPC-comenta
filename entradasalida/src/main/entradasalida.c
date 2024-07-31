@@ -44,13 +44,11 @@ int main(int argc, char** argv) {
 	}
 	pthread_t hilo_kernel;
     pthread_create(&hilo_kernel, NULL, (void*) io_atender_kernel, NULL);
-
+    pthread_join(hilo_kernel, NULL);	
 	//pthread_t hilo_memoria;
 	//pthread_create(&hilo_memoria, NULL, (void*) io_atender_memoria, NULL);
-
-    pthread_join(hilo_kernel, NULL);
 	//pthread_join(hilo_memoria, NULL);
-
+	//io_atender_kernel();
 	return EXIT_SUCCESS;
 	 
 }

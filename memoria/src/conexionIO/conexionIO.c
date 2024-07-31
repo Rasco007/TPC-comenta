@@ -46,6 +46,7 @@ void* ejecutarServidor(void* socketCliente) {
         log_debug(logger, "Se recibió petición %d del IO", peticion);
         switch (peticion) {
             case MENSAJE:
+                usleep(tiempo*1000);
    	 		    char* mensaje = recibirMensaje(sock);
                 log_info(logger, "Mensaje recibido: %s", mensaje);            
                 break;

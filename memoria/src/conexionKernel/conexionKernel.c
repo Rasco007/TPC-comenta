@@ -49,6 +49,7 @@ int ejecutarServidorKernel(int *socketCliente) {
                 break;
             }
             case MENSAJE:{
+                usleep(tiempo*1000);
                 pathInstrucciones=recibirMensaje(*socketCliente); //Recibo el path
                 //log_info(logger,"Path de instrucciones recibido: %s",pathInstrucciones);
                 break;
