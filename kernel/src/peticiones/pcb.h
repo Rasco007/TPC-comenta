@@ -52,6 +52,7 @@ t_pcb* crearPCB();
  * @return
  */
 void destruirPCB(t_pcb* pcb);
+void destruirPCBExit(t_pcb* pcb);
 
 t_dictionary* crearDiccionarioDeRegistros(); 
 
@@ -65,6 +66,7 @@ t_dictionary* crearDiccionarioDeRegistros();
 void inicializarListasPCBs(); 
 
 void destruirListasPCBs();
+void destruirListasPCBsExit();
 
 /**
  * @brief Libera la memoria de una lista de pcbs
