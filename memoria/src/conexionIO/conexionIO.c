@@ -2,10 +2,8 @@
 
 void ejecutarServidorIO(){
     //tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
-    
      //char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     //int socketMemoria = alistarServidorMulti(puertoEscucha);
-
     while (1) {
         log_info(logger,"Esperando conexiones con IO...");
         pthread_t thread;
@@ -33,7 +31,6 @@ void* ejecutarServidor(void* socketCliente) {
     int tiempo = config_get_int_value(config, "RETARDO_RESPUESTA");
     // Hacer handshake
     hacerHandshake(sock);
-
     while (1) {
         int peticion;
         ssize_t bytes = recv(sock, &peticion, sizeof(peticion), 0);
@@ -46,9 +43,7 @@ void* ejecutarServidor(void* socketCliente) {
             close(sock);
             return NULL;
         }
-
         log_debug(logger, "Se recibió petición %d del IO", peticion);
-
         switch (peticion) {
             case MENSAJE:
    	 		    char* mensaje = recibirMensaje(sock);
@@ -104,20 +99,15 @@ void* ejecutarServidor(void* socketCliente) {
 
 void hacerHandshake(int socketClienteIO){
     //size_t bytes;
-
-   int32_t handshake;
+    int32_t handshake;
     int32_t resultOk = 0;
     int32_t resultError = -1;
-
     recv(socketClienteIO, &handshake, sizeof(int32_t), MSG_WAITALL);
-   
     if (handshake == 1) {
-       
         send(socketClienteIO, &resultOk, sizeof(int32_t), 0);
     } else {
         send(socketClienteIO, &resultError, sizeof(int32_t), 0);
     }
-   
 }
 
 void recibirDirYCadena(int socket, int *dir, int *pid, char* cadena) {
@@ -142,9 +132,8 @@ void recibirDirYCadena(int socket, int *dir, int *pid, char* cadena) {
     // Calcular la longitud de la cadena recibida
     int longitud_cadena = bytes_recibidos - 2*sizeof(int) - sizeof(op_code);
     // Asegurarse de no exceder el tamaño del buffer
-    if (longitud_cadena > 2047) {
+    if (longitud_cadena > 2047) 
         longitud_cadena = 2047;
-    }
     // Copiar la cadena recibida
     memcpy(cadena, buffer + 2*sizeof(int) + sizeof(op_code), longitud_cadena);
     // Asegurarse de que la cadena esté terminada en nulo

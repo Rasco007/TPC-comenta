@@ -8,11 +8,9 @@ char* outOfMemory = "OUT_OF_MEMORY";
 char* interrupted_by_user="INTERRUPTED_BY_USER";
 estadoProceso estadoAnterior; 
 void eliminarProcesoAsociado(t_pcb *proceso){
-    for (size_t i = 0; i < list_size(pcbsBloqueados); i++)
-    {
+    for (size_t i = 0; i < list_size(pcbsBloqueados); i++){
         t_pcb *procesoABuscar = list_get(pcbsBloqueados,i);
-        if (proceso->pid == procesoABuscar->pid)
-        {
+        if (proceso->pid == procesoABuscar->pid){
             pthread_mutex_lock(&mutexListaBloqueados);
             list_remove(pcbsBloqueados,i);              
             pthread_mutex_unlock(&mutexListaBloqueados);
@@ -23,7 +21,6 @@ void eliminarProcesoAsociado(t_pcb *proceso){
 void pasarAReady(t_pcb *proceso){
     log_warning(logger, "Proceso <%d> - fin_de_quantum: %d", proceso->pid, proceso->fin_de_quantum);
     eliminarProcesoAsociado(proceso);
-
     estadoAnterior = proceso->estado;
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
@@ -50,9 +47,8 @@ void pasarAReady(t_pcb *proceso){
 void recibirMsjIO(int socketClienteIO){
     char buffer[1024];
     int bytes_recibidos = recv(socketClienteIO, buffer, sizeof(buffer), 0);
-    if (bytes_recibidos < 0) {
+    if (bytes_recibidos < 0)
         perror("Error al recibir el mensaje");
-    }
     buffer[bytes_recibidos] = '\0'; // Asegurar el carácter nulo al final del mensaje
     //log_info(logger, "valor recibido: %s", buffer);
 }
@@ -188,12 +184,9 @@ void signal_s(t_pcb *proceso,char **parametros){
         //instancRecurso++;
         instanciasRecursos[indexRecurso]=instancRecurso;
         
-        
         pthread_mutex_lock(&mutexListaBloqueados);
         t_list *colaBloqueadosRecurso = list_get(recursos, indexRecurso);
         t_pcb* pcbDesbloqueado = desencolar(colaBloqueadosRecurso);
-
-
 
         list_add(pcbDesbloqueado->recursosAsignados, (void*)string_duplicate (recurso));
         pthread_mutex_unlock(&mutexListaBloqueados);
@@ -224,7 +217,6 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "GENERICA");
         if (esValida == 1 ){
-
             log_warning(logger, "Proceso <%d> encolado en cola de bloqueados", proceso->pid);
             // en caso de validar() sea 1, hacemos io_gen_sleep
             estadoAnterior = proceso->estado;
@@ -239,7 +231,7 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_GEN_SLEEP por <%s> unidades de trabajo", proceso->pid, parametros[1]);
 
-             io_global->parametro1 = parametros[0];
+            io_global->parametro1 = parametros[0];
             io_global->parametro2 = parametros[1];
 
             queue_push( io_global->cola_procesos_io,proceso);
@@ -274,25 +266,21 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
 //IO_STDIN_READ (Interfaz, Registro Dirección, Registro Tamaño)
 
 void io_stdin_read(t_pcb *proceso,char **parametros){
-       Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
-
+    Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDIN");
         if (esValida == 1){
-
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
             loggearBloqueoDeProcesos(proceso, "IO_STDIN_READ");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_STDIN_READ",proceso->pid);
 
-
            //agrego proceso a lista de bloqueados
             pthread_mutex_lock(&mutexListaBloqueados);
             list_add(pcbsBloqueados,proceso);
             pthread_mutex_unlock(&mutexListaBloqueados);
-
 
             io_global->parametro1 = contextoEjecucion->motivoDesalojo->parametros[1];
             io_global->parametro2 = contextoEjecucion->motivoDesalojo->parametros[2];
@@ -329,8 +317,7 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
 //IO_STDOUT_WRITE (Interfaz, Registro Dirección, Registro Tamaño)
 
 void io_stdout_write(t_pcb *proceso,char **parametros){
-   Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
-
+    Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "STDOUT");
@@ -379,18 +366,15 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
 //IO_FS_CREATE (Interfaz, Nombre Archivo)
 void io_fs_create(t_pcb *proceso,char **parametros){
     Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
-
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         if (esValida == 1){
-
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
             loggearBloqueoDeProcesos(proceso, "IO_FS");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             log_info(logger, "PID <%d>-Ejecuta IO_FS_CREATE",proceso->pid);
-
             
             //agrego proceso a lista de bloqueados
             pthread_mutex_lock(&mutexListaBloqueados);
@@ -427,7 +411,6 @@ void io_fs_create(t_pcb *proceso,char **parametros){
 //IO_FS_DELETE (Interfaz, Nombre Archivo)
 void io_fs_delete(t_pcb *proceso,char **parametros){
 Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
-
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
@@ -475,12 +458,10 @@ Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesaloj
 //IO_FS_TRUNCATE (Interfaz, Nombre Archivo, Registro Tamaño)
 void io_fs_truncate(t_pcb *proceso,char **parametros){
     Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0]);
-
     int existeInterfaz = existeLaInterfaz(contextoEjecucion->motivoDesalojo->parametros[0], &kernel);
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         if (esValida == 1){
-
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
             loggearBloqueoDeProcesos(proceso, "IO_FS_TRUNCATE");
@@ -530,7 +511,6 @@ void io_fs_write(t_pcb *proceso,char **parametros){
     if (existeInterfaz == 1 && io_global){
         int esValida = validarTipoInterfaz(&kernel, contextoEjecucion->motivoDesalojo->parametros[0], "DialFS");
         if (esValida == 1){
-
             estadoAnterior = proceso->estado;
             proceso->estado = BLOCKED;
             loggearBloqueoDeProcesos(proceso, "IO_FS_WRITE");
@@ -549,7 +529,6 @@ void io_fs_write(t_pcb *proceso,char **parametros){
              io_global->funcion= IO_FS_WRITE;
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-
             // int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
             // if (pidBloqueado == proceso->pid){
             //     args->proceso = proceso;
@@ -636,11 +615,9 @@ void exit_s(t_pcb *proceso,char **parametros){
     //log_info(logger, "llego al exit");
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     loggearSalidaDeProceso(proceso, parametros[0]);
-    
     if(!list_is_empty(proceso->recursosAsignados)){
         liberarRecursosAsignados(proceso);
     }
-
     flag_exit=1;
     liberarMemoriaPCB(proceso);
     destruirPCB(proceso);
@@ -652,7 +629,6 @@ void exit_s(t_pcb *proceso,char **parametros){
     //TODO: ver de encolar en pcbsParaExit
 }
 
-
 //FIN_DE_QUANTUM
 void finDeQuantum(t_pcb *proceso){
     log_info(logger,"PID: <%d> - Desalojado por fin de Quantum",proceso->pid); //Log obligatorio
@@ -660,7 +636,6 @@ void finDeQuantum(t_pcb *proceso){
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     //No importa si es RR o VRR, siempre se encola en READY
-    
     pasarAReady(proceso); 
 }
 

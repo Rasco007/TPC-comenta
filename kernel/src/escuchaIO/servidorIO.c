@@ -1,23 +1,18 @@
 #include <escuchaIO/servidorIO.h>
 #include <global.h>
 #define BUFFER_SIZE 1024
-int instruccionActual;
-
 
 void ejecutarServidorKernel(Interfaz *interfaz_actual);
 void hacerHandshake(int socketClienteIO);
 void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel);
-
 void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char *nombreInterfaz, char *tipoInterfaz, int socketClienteIO);
 void dormir_IO(Interfaz *interfaz, t_pcb *proceso);
 
 void escucharAlIO() {
-
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
     //log_info(logger,"Esperando conexiones con IO...");
     while (1) {
-        
         //pthread_t thread;
         
         int *socketClienteIO = malloc(sizeof(int));
@@ -33,34 +28,27 @@ void escucharAlIO() {
                         socketClienteIO);
         pthread_detach(thread);*/
     }
-    
 }
 
 void recibirNombreInterfaz(int socketClienteIO, Kernel_io *kernel){
-
- char nombreInterfaz[BUFFER_SIZE] = {0};    
- char tipoInterfaz[BUFFER_SIZE] = {0};  
-
+    char nombreInterfaz[BUFFER_SIZE] = {0};    
+    char tipoInterfaz[BUFFER_SIZE] = {0};  
    int valread = recv(socketClienteIO, nombreInterfaz, BUFFER_SIZE, 0);
     if (valread < 0) {
         log_error(loggerError,"se recibio mal el nombre");
     } else {
         int valreadTipo = recv(socketClienteIO, tipoInterfaz, BUFFER_SIZE, 0);
-
         if (valreadTipo < 0) {
             log_error(loggerError,"se recibio mal el tipo");
         }else{
            // log_info(logger, "Nombre recibido: %s\n", nombreInterfaz);
             //log_info(logger, "tipo recibido: %s\n", tipoInterfaz);
-
             guardarNombreTipoYSocketEnStruct(kernel, nombreInterfaz, tipoInterfaz, socketClienteIO);
-
         }
-        
     }
 }
 void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char *nombreInterfaz, char *tipoInterfaz, int socketClienteIO) {
-     Interfaz *nuevaInterfaz = malloc(sizeof(Interfaz));
+    Interfaz *nuevaInterfaz = malloc(sizeof(Interfaz));
     if (kernel->interfaces == NULL) {
         log_error(loggerError, "Error al redimensionar el arreglo de interfaces");
         exit(EXIT_FAILURE);
@@ -87,11 +75,8 @@ void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char *nombreInterfaz, c
         exit(EXIT_FAILURE);
     }
 
-       sem_init(&nuevaInterfaz->semaforo_cola_procesos, 0, 0);
+    sem_init(&nuevaInterfaz->semaforo_cola_procesos, 0, 0);
     list_add(kernel->interfaces,nuevaInterfaz);
-
-
-
 
     pthread_t thread;
     pthread_create(&thread, NULL, (void*)ejecutarServidorKernel, nuevaInterfaz);
@@ -99,25 +84,20 @@ void guardarNombreTipoYSocketEnStruct(Kernel_io *kernel, char *nombreInterfaz, c
     //log_info(logger, "Hilo para ejecutar el servidor kernel creado y desatado");
 
     // Incrementar la cantidad de interfaces
-
 }
 
 
 void hacerHandshake(int socketClienteIO){
     //size_t bytes;
-
-   int32_t handshake;
+    int32_t handshake;
     int32_t resultOk = 0;
     int32_t resultError = -1;
-
     recv(socketClienteIO, &handshake, sizeof(int32_t), MSG_WAITALL);
-   
     if (handshake == 1) {
         send(socketClienteIO, &resultOk, sizeof(int32_t), 0);
     } else {
         send(socketClienteIO, &resultError, sizeof(int32_t), 0);
     }
-   
 }
 
 void inicializarStructsIO(Kernel_io *kernel) {
@@ -129,19 +109,15 @@ void destruirStructsIO(Kernel_io *kernel) {
     free(kernel);
 }
 
-
-
 Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz) {
     // log_info(logger, "nombre requerido %s",nombre_interfaz);
      // log_info(logger, "largo lista %d",list_size(kernel->interfaces));
-
     for (size_t i = 0; i < list_size(kernel->interfaces); i++) {
         Interfaz *interfaz= list_get(kernel->interfaces,i);
        //  log_info(logger, "nombre    que  tengo %ss", interfaz->nombre_interfaz);
          //log_info(logger, "Puntero deeeee la interfaz de kernel: %p", (void*)&interfaz);
         if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) {
          //   log_info(logger, "llamaaa %s", interfaz->nombre_interfaz);
-
             return interfaz;
         }
     }
@@ -152,9 +128,8 @@ Interfaz *obtener_interfaz(const Kernel_io *kernel, const char *nombre_interfaz)
 int obtener_socket(const Kernel_io *kernel, const char *nombre_interfaz) {
     for (size_t i = 0; i < list_size(kernel->interfaces); i++) {
          Interfaz *interfaz= list_get(kernel->interfaces,i);
-        if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) {
+        if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0)
             return interfaz->socket_interfaz;
-        }
     }
     return -1; // Si no se encuentra la interfaz
 }
@@ -166,9 +141,8 @@ int validarTipoInterfaz(const Kernel_io *kernel, char *nombreInterfaz, char *tip
         log_info(logger, "tipo requerido: %s", tipoRequerido);
         log_info(logger, "nombre requerido: %s", tipoRequerido);*/
         if (strcmp(interfaz->nombre_interfaz, nombreInterfaz) == 0) {
-            if (strcmp(interfaz->tipo_interfaz, tipoRequerido) == 0) {
+            if (strcmp(interfaz->tipo_interfaz, tipoRequerido) == 0)
                 return 1;
-            }
         }
     }
     return -1;
@@ -179,7 +153,6 @@ void desconectar_interfaz(Kernel_io *kernel, const char *nombre_interfaz) {
         Interfaz *interfaz= list_get(kernel->interfaces,i);
         if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) {
             list_remove(kernel->interfaces,i);
-
             log_info(logger,"Interfaz %s desconectada\n", nombre_interfaz);
             return;
         }
@@ -192,10 +165,8 @@ int existeLaInterfaz(char *nombreInterfaz, Kernel_io *kernel){
     int socket = obtener_socket(kernel, nombreInterfaz);
     if(socket == -1){
         return -1;
-        
     }else{
         int estaConectado = verificarConexionInterfaz(kernel, nombreInterfaz);
-        
         return estaConectado;
     }
 }
@@ -203,11 +174,9 @@ int existeLaInterfaz(char *nombreInterfaz, Kernel_io *kernel){
 int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     fd_set readfds;
     struct timeval timeout;
-
     FD_ZERO(&readfds);
     int max_sd = 0;
     int interfaz_socket = -1;
-
     for (size_t i = 0; i < list_size(kernel->interfaces); i++) {
          Interfaz *interfaz= list_get(kernel->interfaces,i);
         if (strcmp(interfaz->nombre_interfaz, nombre_interfaz) == 0) {
@@ -215,31 +184,24 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
             break;
         }
     }
-
     if (interfaz_socket == -1) {
         log_info(logger, "Interfaz %s no encontrada", nombre_interfaz);
         return -1;
     }
-
     FD_SET(interfaz_socket, &readfds);
     if (interfaz_socket > max_sd) {
         max_sd = interfaz_socket;
     }
-
     timeout.tv_sec = 0;
     timeout.tv_usec = 500000; // 500ms
-
     int activity = select(max_sd + 1, &readfds, NULL, NULL, &timeout);
-
     if (activity < 0) {
         perror("select error");
         return -1;
     }
-
     if (FD_ISSET(interfaz_socket, &readfds)) {
         char buffer[1];
         int valread = recv(interfaz_socket, buffer, sizeof(buffer), MSG_PEEK);
-
         if (valread == 0) {
             log_info(logger, "Interfaz %s desconectada", nombre_interfaz);
             close(interfaz_socket);
@@ -247,13 +209,11 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
             return -1;
         }
     }
-
     return 1;
 }
 
 
 void ejecutarServidorKernel(Interfaz *interfaz_actual){
-
   pthread_mutex_unlock(&mutex_lista_global);
   list_add(lista_global_io, interfaz_actual);
   pthread_mutex_lock(&mutex_lista_global);
@@ -278,19 +238,15 @@ void ejecutarServidorKernel(Interfaz *interfaz_actual){
             break
         }*/
     } 
-
-     pthread_mutex_unlock(&mutex_lista_global);
+    pthread_mutex_unlock(&mutex_lista_global);
     list_remove(lista_global_io, interfaz_actual);
     pthread_mutex_lock(&mutex_lista_global);
    /* wait(mutex_lista_global)
     remove(lista_global, io)
     signal(mutex_lista_global)*/
-
-
 }
 
 void ejecutar_io(Interfaz *interfaz, t_pcb *proceso){
-
     // log_info(logger,"noombre %s", interfaz->parametro1);
     //  log_info(logger,"tiempooo %s", interfaz->parametro2);
     if (strcmp(interfaz->tipo_interfaz, "GENERICA") == 0)
@@ -298,25 +254,23 @@ void ejecutar_io(Interfaz *interfaz, t_pcb *proceso){
         dormir_IO(interfaz, proceso);
     }
     else
-         if (strcmp(interfaz->tipo_interfaz, "STDIN") == 0)
+        if (strcmp(interfaz->tipo_interfaz, "STDIN") == 0)
         {
             ejecutar_io_stdin_read(interfaz, proceso);
         }
     else
          if (strcmp(interfaz->tipo_interfaz, "STDOUT") == 0)
         {
-
             ejecutar_io_stdout_write(interfaz, proceso);
         }
      else
-         if (strcmp(interfaz->tipo_interfaz, "DialFS") == 0)
+        if (strcmp(interfaz->tipo_interfaz, "DialFS") == 0)
         {
             switch (interfaz->funcion)
             {
             case IO_FS_CREATE:
                 ejecutar_io_fs_create(interfaz,proceso);
             break;
-
             case IO_FS_DELETE:
                  ejecutar_io_fs_delete(interfaz,proceso);
             break;
@@ -330,15 +284,12 @@ void ejecutar_io(Interfaz *interfaz, t_pcb *proceso){
                  ejecutar_io_fs_read(interfaz,proceso);
             break;
             default:
-                break;
+            break;
             }
         }
-
-
 }
 
 void ejecutar_io_fs_create(Interfaz *interfaz, t_pcb *proceso){
-
     char* nombre_interfaz=interfaz->parametro1;
     char* nombreArchivo=interfaz->parametro2;
     int socketClienteIO = interfaz->socket_interfaz;
@@ -370,10 +321,7 @@ void ejecutar_io_fs_create(Interfaz *interfaz, t_pcb *proceso){
     pasarAReady(proceso);
 }
 
-
-
 void ejecutar_io_fs_delete(Interfaz *interfaz, t_pcb *proceso){
-
     char* nombre_interfaz=interfaz->parametro1;
     char* nombreArchivo=interfaz->parametro2;
     int socketClienteIO = interfaz->socket_interfaz;
@@ -402,9 +350,7 @@ void ejecutar_io_fs_delete(Interfaz *interfaz, t_pcb *proceso){
     pasarAReady(proceso);
 }
 
-
 void ejecutar_io_fs_truncate(Interfaz *interfaz, t_pcb *proceso){
-
     char* nombre_interfaz=interfaz->parametro1;
     char* nombreArchivo=interfaz->parametro2;
     int tamanio=atoi(interfaz->parametro3);
@@ -432,14 +378,12 @@ void ejecutar_io_fs_truncate(Interfaz *interfaz, t_pcb *proceso){
     free(paquete->buffer);
     free(paquete);
     free(a_enviar);
-
     pasarAReady(proceso);
 }
 
 
 
 void ejecutar_io_fs_write(Interfaz *interfaz, t_pcb *proceso){
-
     char* nombre_interfaz=interfaz->nombre_interfaz;//verr si llega biiien este
     char* nombreArchivo=interfaz->parametro1;
     char* direccion=interfaz->parametro2;
@@ -503,13 +447,11 @@ void ejecutar_io_fs_write(Interfaz *interfaz, t_pcb *proceso){
 
 
 void ejecutar_io_fs_read(Interfaz *interfaz, t_pcb *proceso){
-
-     char* nombre_interfaz=interfaz->nombre_interfaz; //verr si llega biiien este
+    char* nombre_interfaz=interfaz->nombre_interfaz; //verr si llega biiien este
     char* nombreArchivo=interfaz->parametro1;
     char* direccion=interfaz->parametro2;
     char* tamanio=interfaz->parametro3;
     char* punteroArchivo=interfaz->parametro4;
-
     int punterito = atoi(punteroArchivo);
     int socketClienteIO = obtener_socket(&kernel, interfaz->nombre_interfaz);
     int pid = proceso->pid;
@@ -558,16 +500,12 @@ void ejecutar_io_fs_read(Interfaz *interfaz, t_pcb *proceso){
     free(paquete->buffer);
     free(paquete);
     free(a_enviar);
-
     free(direccionesInt);
     free(tamaniosInt);
     pasarAReady(proceso); 
 }
 
-
 void ejecutar_io_stdout_write(Interfaz *interfaz, t_pcb *proceso){
-
-    //char* interfaz=args->interfaz;
     char* direccionFisica=interfaz->parametro1;
     char* tamanio=interfaz->parametro2;
     int socketClienteIO = interfaz->socket_interfaz;
@@ -591,7 +529,6 @@ void ejecutar_io_stdout_write(Interfaz *interfaz, t_pcb *proceso){
     paquete->codigo_operacion=IO_STDOUT_WRITE;
     paquete->buffer->size = cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int) + sizeof(int)*3;
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    printf("cantidad de direcciones: %d\n", cantidadDirecciones);
     //enviar la cantidad de direcciones, las direcciones, la cantidad de tamanios, los tamanios y el pid
     memcpy(paquete->buffer->stream, &cantidadDirecciones, sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), direccionesInt, cantidadDirecciones*sizeof(int));
@@ -620,16 +557,9 @@ void ejecutar_io_stdout_write(Interfaz *interfaz, t_pcb *proceso){
 }
 
 void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
-
-    //char* interfaz=args->interfaz;
     char* direccionFisica=interfaz->parametro1;
     char* tamanio=interfaz->parametro2;
     int socketClienteIO = interfaz->socket_interfaz;
-    //log_info(logger, "direeeccion %s",interfaz->parametro1);
-    // log_info(logger, "tamanio %s",interfaz->parametro2);
-    //  log_info(logger, "sockett %d",interfaz->socket_interfaz);
-    //int tamanioInt = atoi(tamanio);
-    //int direccionFisicaInt = atoi(direccionFisica);
     int pid = proceso->pid;
     // direccionFisica contiene todas las direcciones separadas por una coma, necesito separarlas
     char** direcciones = string_split(direccionFisica, ",");
@@ -654,7 +584,6 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
     paquete->buffer = malloc(sizeof(t_buffer));
     paquete->buffer->size = cantidadDirecciones*sizeof(int) + cantidadTamanios*sizeof(int) + sizeof(int)*3;
     paquete->buffer->stream = malloc(paquete->buffer->size);
-    printf("cantidad de direcciones: %d\n", cantidadDirecciones);
     //enviar la cantidad de direcciones, las direcciones, la cantidad de tamanios, los tamanios y el pid
     memcpy(paquete->buffer->stream, &cantidadDirecciones, sizeof(int));
     memcpy(paquete->buffer->stream+sizeof(int), direccionesInt, cantidadDirecciones*sizeof(int));
@@ -686,10 +615,8 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
 
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
 void dormir_IO(Interfaz *interfaz, t_pcb *proceso){  
-
     //char* interfaz=interfaz->parametro1;
     char* tiempo=interfaz->parametro2;
-
     int pid = proceso->pid;
     log_info(logger, "tiempo recibido %s", tiempo);
     log_info(logger, "interfaz recibida %s", interfaz->nombre_interfaz);
@@ -703,5 +630,4 @@ void dormir_IO(Interfaz *interfaz, t_pcb *proceso){
     log_warning(logger, "Proceso <%d> desbloqueado por IO_GEN_SLEEP", proceso->pid);
 
     pasarAReady(proceso);
-    //free(args);
 }

@@ -54,13 +54,7 @@ typedef struct
 	t_buffer* buffer;
 
 } t_paquete;
-typedef struct
-{
-	op_code codigo_operacion;
-    t_buffer* buffer;
-    int entero;
 
-} t_paquetebeta;
 /**
  * @fn int crearConexion(char* ip, char* puerto)
  * @brief Dados una direccion IP y un puerto, se conecta a dicha IP en dicho puerto y genera el socket de conexión para interactuar con este servidor.

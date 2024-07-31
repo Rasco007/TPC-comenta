@@ -43,16 +43,12 @@ void solicitarInstruccion(int pid, int indice, int socket){
     t_paquete *paquete = malloc(sizeof(t_paquete));
 	paquete->codigo_operacion = PAQUETE;
 	paquete->buffer = malloc(sizeof(t_buffer));
-
 	paquete->buffer->size = 2*sizeof(int);
 	paquete->buffer->stream = malloc(paquete->buffer->size);
-	
 	memcpy(paquete->buffer->stream, &pid, sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), &indice, sizeof(int));
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-	
     void *a_enviar = serializarPaquete(paquete, bytes);
-
     if (send(socket, a_enviar, bytes, 0) != bytes) {
         perror("Error al enviar datos al servidor");
         exit(EXIT_FAILURE); // Manejo de error, puedes ajustarlo según tu aplicación
@@ -67,16 +63,12 @@ void solicitudResize(int pid, int tamanio, int socket){
     t_paquete *paquete = malloc(sizeof(t_paquete));
 	paquete->codigo_operacion = RESIZE;
 	paquete->buffer = malloc(sizeof(t_buffer));
-
 	paquete->buffer->size = 2*sizeof(int);
 	paquete->buffer->stream = malloc(paquete->buffer->size);
-
 	memcpy(paquete->buffer->stream, &pid, sizeof(int));
     memcpy(paquete->buffer->stream + sizeof(int), &tamanio, sizeof(int));
     int bytes = sizeof(op_code) + sizeof(paquete->buffer->size) + paquete->buffer->size;
-
     void *a_enviar = serializarPaquete(paquete, bytes);
-
     if (send(socket, a_enviar, bytes, 0) != bytes) {
         perror("Error al enviar datos al servidor");
         exit(EXIT_FAILURE);
@@ -93,10 +85,6 @@ void fetch() {
     //Mando la linea que voy a leer de la lista de instrucciones de memoria
     int pid=contextoEjecucion->pid;
     int numInstruccionABuscar = contextoEjecucion->programCounter;
-    /*t_paquete* paquete = crearPaquete();
-    agregarAPaquete(paquete, &numInstruccionABuscar, sizeof(int)); //PC
-    agregarAPaquete(paquete, &pid, sizeof(int));//PID
-    enviarPaquete(paquete, conexionAMemoria);*/
     solicitarInstruccion(pid, numInstruccionABuscar, conexionAMemoria);
     //Recibo la instruccion
     int peticion = recibirOperacion(conexionAMemoria);
@@ -116,7 +104,6 @@ void fetch() {
 void decode(){
     // Eliminar el salto de línea al final de instruccionAEjecutar
     remove_newline(instruccionAEjecutar);
-
     //log_info(logger, "inicio decode con instruccionAEjecutar: %s", instruccionAEjecutar);
     elementosInstruccion = string_n_split(instruccionAEjecutar, 6, " ");
     //log_info(logger, "instruccion a ejecutar: %s", elementosInstruccion[0]); 
@@ -137,7 +124,6 @@ void remove_newline(char* str) {
 
 int buscar(char *elemento, char **lista) {
     int i = 0;
-    
     while (i <= string_array_size (lista)) {
         if (i < string_array_size (lista))
             if (!strcmp (elemento, lista[i]))
@@ -152,11 +138,9 @@ t_comando check_interrupt(){
         log_warning(logger,"INTERRUPCION ASINCRONICA");
         return USER_INTERRUPTION;
     }
-
     if(contextoEjecucion->algoritmo != FIFO){
         log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
-
         log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
         log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
@@ -165,7 +149,6 @@ t_comando check_interrupt(){
             return FIN_DE_QUANTUM;
         } 
     }
-
     return VOID;
 }
 // Función para calcular la cantidad de páginas a leer
@@ -189,30 +172,23 @@ int calcularPaginasALeer(int first_addr, int last_addr, int page_size){
 }*/
 void calcularBytesPorPagina2(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
     int total_bytes = last_addr - first_addr+1; // Calcula el total de bytes a leer
-
     // Calcula el número de página inicial y el desplazamiento dentro de la página
     int start_page = first_addr / page_size;
     int start_offset = first_addr % page_size;
-
     // Calcula el número de página final
     int end_page = last_addr / page_size;
-
     // Calcula el número total de páginas
     *num_pages = end_page - start_page + 1;
-
     // Calcula los bytes a leer en la primera página
     if (start_page == end_page) {
         // Caso especial: first_addr y last_addr están en la misma página
         bytes_por_pagina[0] = total_bytes;
     } else {
         bytes_por_pagina[0] = page_size - start_offset;
-   
-
     // Llena las páginas intermedias con tamaño completo de página
     for (int i = 1; i < *num_pages - 1; i++) {
         bytes_por_pagina[i] = page_size;
     }
-
     // Calcula los bytes a leer en la última página
     bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size); 
     }
@@ -263,9 +239,6 @@ void io_fs_delete(char* interfaz,char* nombreArchivo){
 void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTamanio){
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, RegistroTamanio);
-    /*temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
-    contextoEjecucion->tiempoDeUsoCPU=temporal_gettime(tiempoDeUsoCPU); //Asigno el tiempo al contexto
-    temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro*/
     int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1;
@@ -281,9 +254,8 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
         sprintf(bytes, "%d", bytes_por_pagina[i]);
         strcat(bytes_por_pagina_str, bytes);
         free(bytes);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(bytes_por_pagina_str, ",");
-        }
     }
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
@@ -303,11 +275,9 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
         sprintf(direccion, "%d", direccionesFisicas[i]);
         strcat(direccionesFisicas_str, direccion);
         free(direccion);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(direccionesFisicas_str, ",");
-        }
     }
-
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -340,7 +310,6 @@ void io_stdout_write(char* interfaz, char* registroDireccion, char* RegistroTama
 
 void io_fs_truncate(char* interfaz, char* nombreArchivo, char* RegistroTamanio){
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, RegistroTamanio);
-
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -418,9 +387,8 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
         sprintf(bytes, "%d", bytes_por_pagina[i]);
         strcat(bytes_por_pagina_str, bytes);
         free(bytes);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(bytes_por_pagina_str, ",");
-        }
     }
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
@@ -440,9 +408,8 @@ void io_fs_write(char* interfaz, char* nombreArchivo, char* registroDireccion, c
         sprintf(direccion, "%d", direccionesFisicas[i]);
         strcat(direccionesFisicas_str, direccion);
         free(direccion);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(direccionesFisicas_str, ",");
-        }
     }
 
     //INTERRUPT STAGE
@@ -479,8 +446,7 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
     char* regDireccion=dictionary_get(contextoEjecucion->registrosCPU, registroDireccion);
     char* regTamanio=dictionary_get(contextoEjecucion->registrosCPU, registroTamanio);
     char* regPunteroArchivo=dictionary_get(contextoEjecucion->registrosCPU, registroPunteroArchivo);
-
-   int tamPagina = obtenerTamanoPagina("../memoria"); 
+    int tamPagina = obtenerTamanoPagina("../memoria"); 
     int first_addr = atoi(regDireccion);
     int last_addr = first_addr + atoi(regTamanio)-1;
     int paginasALeer = calcularPaginasALeer(first_addr, last_addr, tamPagina);
@@ -495,9 +461,8 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
         sprintf(bytes, "%d", bytes_por_pagina[i]);
         strcat(bytes_por_pagina_str, bytes);
         free(bytes);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(bytes_por_pagina_str, ",");
-        }
     }
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
@@ -516,9 +481,8 @@ void io_fs_read(char* interfaz, char* nombreArchivo, char* registroDireccion, ch
         sprintf(direccion, "%d", direccionesFisicas[i]);
         strcat(direccionesFisicas_str, direccion);
         free(direccion);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(direccionesFisicas_str, ",");
-        }
     }
     
     //INTERRUPT STAGE
@@ -569,9 +533,8 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
         sprintf(bytes, "%d", bytes_por_pagina[i]);
         strcat(bytes_por_pagina_str, bytes);
         free(bytes);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(bytes_por_pagina_str, ",");
-        }
     }
     //calcular las direcciones logicas para cada página
     int direccionesLogicas[num_pages];
@@ -591,9 +554,8 @@ void io_stdin_read(char* interfaz, char* registroDireccion, char* registroTamani
         sprintf(direccion, "%d", direccionesFisicas[i]);
         strcat(direccionesFisicas_str, direccion);
         free(direccion);
-        if (i < num_pages - 1) {
+        if (i < num_pages - 1)
             strcat(direccionesFisicas_str, ",");
-        }
     }
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
@@ -691,7 +653,6 @@ void copy_string(char* tamanio){
         if (i==0)
             cadenacompleta[0]='\0';
         enviarDireccionTamano2(direccionesFisicas[i],bytes_por_pagina[i],contextoEjecucion->pid,conexionAMemoria);
-        //recibir un mensaje de confirmacion de que se escribio en memoria
         //usleep(1000*1200);
         char recibido[100];
 		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido), 0);
@@ -701,8 +662,7 @@ void copy_string(char* tamanio){
         log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%s>", contextoEjecucion->pid, direccionesFisicas[i], recibido);
     }
     log_info(logger, "Cadena completa: %s", cadenacompleta);
-
-//ACA MANDA PARA ESCRIBIR EN MEMORIA
+    //ACA MANDA PARA ESCRIBIR EN MEMORIA
     int pointer2 = atoi(dictionary_get(contextoEjecucion->registrosCPU, "DI"));
     int first_addr2 = pointer2;
     int last_addr2 = first_addr2 + tamanioInt-1; 
@@ -780,7 +740,6 @@ void resize(char* tamanio){
             log_warning(logger,"Operacion desconocida.");
 			break;
 	}
-
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -810,7 +769,6 @@ void set_c(char* registro, char* valor){
     }else{
         dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(valor)); //TODO: FIX
     }
-
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -848,7 +806,6 @@ void sum_c(char* registro_destino, char* registro_origen){
     sprintf(resultadoStr,"%d", resultado);
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
     dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
-    
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -883,7 +840,6 @@ void sub_c(char* registro_destino, char* registro_origen){
     sprintf(resultadoStr, "%d", resultado);
     dictionary_remove_and_destroy(contextoEjecucion->registrosCPU, registro_destino, free);
     dictionary_put(contextoEjecucion->registrosCPU, registro_destino, resultadoStr);
-
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -911,18 +867,14 @@ void jnz(char* registro, char* instruccion){
         log_error(logger, "Registro no encontrado: %s", registro);
         return;
     }
-
     // Convertir el valor del registro a un entero
     int valor = atoi(valorRegistro);
-    
     // Si el valor no es 0, actualizar el contador de programa (programCounter)
     if (valor != 0) {
         log_info(logger, "contextoEjecucion->programCounter: %d", contextoEjecucion->programCounter);
         log_info(logger, "Valor de registro: %d", atoi(instruccion));
-
         contextoEjecucion->programCounter = atoi(instruccion);
     }
-
     //INTERRUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -968,7 +920,6 @@ void io_gen_sleep(char* interfaz, char* unidades_trabajo){
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
         flag_bloqueante = 1;
     }
-    
 }
 
 /*Desalojo el proceso y le pido a kernel que asigne una instancia del recurso indicado*/
@@ -1065,7 +1016,6 @@ void mov_in(char* registro, char* direccionLogica){
     uint32_t direccionesFisicas[num_pages];
     for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-
     char *cadenacompleta = malloc(tamRegistro);
     for(int i=0; i<num_pages; i++){
         if (i==0)
@@ -1091,7 +1041,6 @@ void mov_in(char* registro, char* direccionLogica){
     free(cadenacompleta);
     dictionary_put(contextoEjecucion->registrosCPU, registro, string_duplicate(numTotalStr));
     free(numTotalStr);
-
     //INTERUPT STAGE
     if(check_interrupt()==FIN_DE_QUANTUM){
         contextoEjecucion->fin_de_quantum=true;
@@ -1135,7 +1084,6 @@ void mov_out(char* direccionLogica, char* registro){
     uint32_t direccionesFisicas[num_pages];
     for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-
     if (tamRegistro == 1){
         uint8_t registro_ext = valorReg;
         void* registro_ext_puntero = &registro_ext;
@@ -1201,18 +1149,14 @@ void mov_out(char* direccionLogica, char* registro){
 }
 
 // Funciones grales
-
 void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1, char * parm2, char * parm3, char * parm4, char * parm5) {
     char * (parametros[5]) = { parm1, parm2, parm3, parm4, parm5};
     contextoEjecucion->motivoDesalojo->motivo = comando;
     log_info(logger, "numero de parametros en motivo de %d :%d",comando, numParametros);
     contextoEjecucion->motivoDesalojo->parametrosLength = numParametros;
     for (int i = 0; i < numParametros; i++){
-     
         contextoEjecucion->motivoDesalojo->parametros[i] = parametros[i]; //VER SI ES NECESARIO
-    
-    log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
-    //
+        log_info(logger, "parametro :%d : %s" ,comando, contextoEjecucion->motivoDesalojo->parametros[i] );
     }
     //string_array_destroy(contextoEjecucion->motivoDesalojo->parametros);
 }
@@ -1229,17 +1173,12 @@ char* recibirValor(int socket) {
     int tamanio; 
 	int size, desplazamiento = 0;
 	void * buffer;
-
 	buffer = recibirBuffer(socket, &size);
-
     memcpy(&(tamanio), buffer, sizeof(int32_t));
     desplazamiento += sizeof(int32_t);
-
     memcpy(&(valor),buffer+desplazamiento,sizeof(char)*tamanio); 
     desplazamiento+=sizeof(char)*tamanio; 
-
 	free(buffer);
-
     return valor;
 }
 
@@ -1250,7 +1189,6 @@ int obtenerTamanioReg(char* registro){
 
 void execute() {
     //log_info(logger, "inicio execute");
-
     switch(cantParametros) {
         case 0:
             log_info(logger, "PID: <%d> - Ejecutando: <%s> ", contextoEjecucion->pid, listaComandos[instruccionActual]);

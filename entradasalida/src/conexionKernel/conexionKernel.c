@@ -17,24 +17,18 @@ void conexionKernel(char **argv) {
         }
     }
 }
- void enviarHandshake(char *nombreInterfaz)
-{
+ void enviarHandshake(char *nombreInterfaz){
     //size_t bytes;
-
     int32_t handshake = 1;
     int32_t result;
-
     send(fd_kernel, &handshake, sizeof(int32_t), 0);
     recv(fd_kernel, &result, sizeof(int32_t), MSG_WAITALL);
-
-    if (result == 0)
-    {
+    if (result == 0){
         log_info(logger, "Handshake OK");
         envioNombreInterfaz(nombreInterfaz, fd_kernel);
         envioTipoInterfaz(TIPO_INTERFAZ,fd_kernel);
     }
-    else
-    {
+    else{
         log_error(logger, "Handshake ERROR");
     }
 }

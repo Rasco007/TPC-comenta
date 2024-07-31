@@ -22,7 +22,7 @@ int main() {
 	atexit (terminarPrograma);
 	log_info (logger, "Memoria lista para recibir conexiones.");
   
-	 server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
+	server_fd = iniciarServidor (confGet("PUERTO_ESCUCHA"));
   
 	sockets[0] = esperarCliente(server_fd);
 	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[0]);
@@ -30,7 +30,6 @@ int main() {
 	sockets[1] = esperarCliente (server_fd);
 	log_info(logger, "Memoria conectada a Módulo, en socket: %d", sockets[1]);
   
-
     // Creación de hilos
     int opCodeCPU = pthread_create(&threadCPU, NULL, (void*)ejecutarServidorCPU, (void*)&sockets[0]);
     int opCodeIO = pthread_create(&threadIO, NULL, (void*)ejecutarServidorIO, NULL);
@@ -46,21 +45,6 @@ int main() {
     if (opCodeKernel) {
         error("Error en iniciar el servidor a Kernel");
     }
-
-
-    //enviarMensaje("Mensaje de memoria a cpu",sockets[0]);
-
-    /*/PRUEBA HARDCODEADA PARA STDOUT (DESPUES BORRAR!!!!!)
-    char *prueba = "hola";
-    size_t offset = 0;
-    memcpy((char*)mf->memoria + offset, prueba, strlen(prueba) + 1);
-    size_t nuevoOffset = 1;
-    size_t longitudSubcadena = strlen(prueba) - nuevoOffset;
-    char *datosLeidos = malloc(longitudSubcadena + 1);
-    memcpy(datosLeidos, (char*)mf->memoria + nuevoOffset, longitudSubcadena);
-    datosLeidos[longitudSubcadena] = '\0';
-    printf("Texto leído: %s\n", datosLeidos);
-    *////
 
     // Espera a que los hilos terminen
     pthread_join(threadCPU, NULL);

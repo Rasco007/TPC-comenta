@@ -8,6 +8,4 @@
 #include <configuraciones/configuraciones.h>
 #include "../include/io_kernel.h"
 //void io_atender_memoria();
-extern char* archivoWrite;
-extern int pointerArchivo;
 #endif

@@ -1,9 +1,6 @@
 #include "../include/io_kernel.h"
 #define BUFFER_SIZE 1024
-char* archivoWrite;
-int pointerArchivo;
-int tamaniosglobales[20];
-int cantidadglobal;
+
 void io_atender_kernel(){
 	bool control=1;
 	while (control) {
@@ -229,10 +226,7 @@ void manejarFS_READ(int socketCliente){
     memcpy(&nombrearchivo, buffer + sizeof(op_code) + 6*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, longitud2);
     nombrearchivo[longitud2] = '\0';
     //printf("Nombre de archivo: %s\n", nombrearchivo);
-    archivoWrite=nombrearchivo;
-    pointerArchivo=punteroArchivo;
     int cantidadtotal=cantidaddirec;
-    cantidadglobal=cantidadtotal;
     int tamanioTotal=0;
     int puntero2=0;
     for (int i = 0; i < cantidadtotal; i++)
@@ -241,7 +235,6 @@ void manejarFS_READ(int socketCliente){
     for(int i=0; i<cantidadtotal; i++){
         log_info(logger, "Tamanio recibido: %d", tamanio[i]);
         log_info(logger, "Direccion recibida: %d", direccion[i]);
-        tamaniosglobales[i]=tamanio[i];
         char *datosLeidos= leerDatosDesdeArchivo(nombrearchivo, punteroArchivo+puntero2, tamanio[i]);
         printf("Datos leidos: %s\n", datosLeidos);
         puntero2+=tamanio[i];
@@ -304,10 +297,7 @@ void manejarFS_WRITE(int socketCliente){
     memcpy(&nombrearchivo, buffer + sizeof(op_code) + 6*sizeof(int)+longitud1+sizeof(int)*cantidaddirec+sizeof(int)*cantidadtamanio, longitud2);
     nombrearchivo[longitud2] = '\0';
     // printf("Nombre de archivo: %s\n", nombrearchivo);
-    archivoWrite=nombrearchivo;
-    pointerArchivo=punteroArchivo;
     int cantidadtotal=cantidaddirec;
-    cantidadglobal=cantidadtotal;
     int tamanioTotal=0;
     char *cadenaCompleta=malloc(126);
     memset(cadenaCompleta, 0, 126);
@@ -317,7 +307,6 @@ void manejarFS_WRITE(int socketCliente){
     for(int i=0; i<cantidadtotal; i++){
         log_info(logger, "Tamanio recibido: %d", tamanio[i]);
         log_info(logger, "Direccion recibida: %d", direccion[i]);
-        tamaniosglobales[i]=tamanio[i];
         enviarDireccionTamano(direccion[i],tamanio[i],pid,fd_memoria);
        // usleep(1000*1000);
         char* recibido=malloc(256);
@@ -331,7 +320,7 @@ void manejarFS_WRITE(int socketCliente){
         free(recibido);
     }
     printf("Mensaje completo:%s\n", cadenaCompleta);
-	escribirCadenaEnArchivo(archivoWrite, cadenaCompleta, pointerArchivo);
+	escribirCadenaEnArchivo(nombrearchivo, cadenaCompleta, punteroArchivo);
     char *mensje="ok";
     send(fd_kernel, &mensje, sizeof(mensje), 0);
     if(cadenaCompleta!=NULL)
@@ -395,9 +384,7 @@ void manejarSTDOUTWRITE(int socketCliente) {
     for(int i=0; i<cantidad; i++){
         log_info(logger, "Tamanio recibido: %d", tamanios[i]);
         log_info(logger, "Direccion recibida: %d", direcciones[i]);
-        tamaniosglobales[i]=tamanios[i];
     }
-    cantidadglobal=cantidad;
     log_info(logger, "PID: <%d> - Operacion: <STDOUT WRITE>", pid);
     char *cadenaCompleta=malloc(126);
     memset(cadenaCompleta, 0, 126);
