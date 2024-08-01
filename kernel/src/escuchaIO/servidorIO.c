@@ -238,9 +238,10 @@ void ejecutarServidorKernel(Interfaz *interfaz_actual){
             break
         }*/
     } 
-    pthread_mutex_unlock(&mutex_lista_global);
-    list_remove(lista_global_io, interfaz_actual);
-    pthread_mutex_lock(&mutex_lista_global);
+    //pthread_mutex_unlock(&mutex_lista_global);
+
+   // list_remove(lista_global_io, interfaz_actual);
+    //pthread_mutex_lock(&mutex_lista_global);
    /* wait(mutex_lista_global)
     remove(lista_global, io)
     signal(mutex_lista_global)*/

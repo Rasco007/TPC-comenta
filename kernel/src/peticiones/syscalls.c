@@ -636,7 +636,7 @@ void finDeQuantum(t_pcb *proceso){
     proceso->estado = READY;
     loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
     //No importa si es RR o VRR, siempre se encola en READY
-    pasarAReady(proceso); 
+    ingresarAReady(proceso); 
 }
 
 void enviarMensajeGen(int socket_cliente, char *mensaje, char *entero_str, int pid){
