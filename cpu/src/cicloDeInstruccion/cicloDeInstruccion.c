@@ -1162,9 +1162,10 @@ void modificarMotivoDesalojo (t_comando comando, int numParametros, char * parm1
 }
 
 void liberarMemoria() {
+    mensajeInterrupcion="";
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-    //free(instruccionAEjecutar); OJO CON ESTE FREE EN LA PRUEBA SALVAJE!!!!!!!
+    //free(instruccionAEjecutar); //OJO CON ESTE FREE EN LA PRUEBA SALVAJE!!!!!!!
     log_warning(logger,"Memoria liberada!");
 }
 
