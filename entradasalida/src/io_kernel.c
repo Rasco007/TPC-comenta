@@ -10,40 +10,40 @@ void io_atender_kernel(){
    	 		recibirMensaje(fd_kernel);
    	 		break;
    		case IO_GEN_SLEEP:
-   			log_info(logger, "GEN SLEEP recibido");
+   			//log_info(logger, "GEN SLEEP recibido");
 			recibir_mensaje_y_dormir(fd_kernel);
    			break;
 		case IO_STDIN_READ:
-   			log_info(logger, "STDIN READ recibido");
+   			//log_info(logger, "STDIN READ recibido");
 			manejarSTDINREAD(fd_kernel);
    			break;
 		case IO_STDOUT_WRITE:
-   			log_info(logger, "STDOUT WRITE recibido");
+   			//log_info(logger, "STDOUT WRITE recibido");
 			manejarSTDOUTWRITE(fd_kernel);
    			break;
 		case IO_FS_CREATE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-            log_info(logger, "FS CREATE recibido");
+            //log_info(logger, "FS CREATE recibido");
 			manejarFS_CREATE(fd_kernel);
 			break;
 		case IO_FS_DELETE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "FS DELETE recibido");
+			//log_info(logger, "FS DELETE recibido");
             manejarFS_DELETE(fd_kernel);   
 			break;
 		case IO_FS_READ:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "FS READ recibido");
+			//log_info(logger, "FS READ recibido");
             manejarFS_READ(fd_kernel);
 			break;
 		case IO_FS_TRUNCATE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "FS TRUNCATE recibido");
+			//log_info(logger, "FS TRUNCATE recibido");
             manejarFS_TRUNCATE(fd_kernel);
 			break;
 		case IO_FS_WRITE:
             usleep(TIEMPO_UNIDAD_TRABAJO*1000);
-			log_info(logger, "FS WRITE recibido");
+			//log_info(logger, "FS WRITE recibido");
             manejarFS_WRITE(fd_kernel);
 			break;
     	case -1:
@@ -370,7 +370,7 @@ void manejarSTDINREAD(int socketCliente) {
     free(datosLeidos);
     free(tamanios);
     free(direcciones);
-    printf("Todo liberado!\n");
+    //printf("Todo liberado!\n");
     char *mensje="ok";
     send(fd_kernel, &mensje, sizeof(mensje), 0);
 }
@@ -492,7 +492,7 @@ void recibirEnteros3(int socket, int *tamanio, int *direccion, int *pid, int *ca
     }
     int cantidaddireciones,cantidadtamanios;
     memcpy(&cantidaddireciones, buffer+sizeof(op_code), sizeof(int));
-    printf("Cantidad de direcciones: %d\n", cantidaddireciones);
+    //printf("Cantidad de direcciones: %d\n", cantidaddireciones);
     memcpy(direccion, buffer+sizeof(op_code)+sizeof(int), sizeof(int)*cantidaddireciones);
     memcpy(&cantidadtamanios, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones, sizeof(int));
     memcpy(tamanio, buffer+sizeof(op_code)+sizeof(int)+sizeof(int)*cantidaddireciones+sizeof(int), sizeof(int)*cantidadtamanios);

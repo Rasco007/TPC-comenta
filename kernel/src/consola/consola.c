@@ -132,6 +132,7 @@ void ejecutarScript(const char* path) {
                 strcpy(tokenModificado, "src"); // Copy "src" to the modified token
                 strcat(tokenModificado, token); // Concatenate the original token to the modified token
                 iniciarProceso(tokenModificado);
+                free(tokenModificado);
             } else {
                 log_info(logger, "No se proporcionó un argumento para INICIAR_PROCESO");
                 ejecutarConsola ();
@@ -230,7 +231,7 @@ void procesoEstado(){
     log_info(logger, "Procesos en EXEC");
     imprimirListaPCBs(pcbsExec);
     log_info(logger, "Procesos en BLOCKED:");
-    listarPIDS(pcbsBloqueados);
+    imprimirListaPCBs(pcbsBloqueados);
     log_info(logger, "Procesos en EXIT");
     imprimirListaExit(pcbsParaExit);
 }

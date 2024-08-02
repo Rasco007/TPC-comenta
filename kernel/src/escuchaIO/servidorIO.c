@@ -212,7 +212,6 @@ int verificarConexionInterfaz(Kernel_io *kernel, const char *nombre_interfaz) {
     return 1;
 }
 
-
 void ejecutarServidorKernel(Interfaz *interfaz_actual){
   pthread_mutex_unlock(&mutex_lista_global);
   list_add(lista_global_io, interfaz_actual);
@@ -381,8 +380,6 @@ void ejecutar_io_fs_truncate(Interfaz *interfaz, t_pcb *proceso){
     free(a_enviar);
     pasarAReady(proceso);
 }
-
-
 
 void ejecutar_io_fs_write(Interfaz *interfaz, t_pcb *proceso){
     char* nombre_interfaz=interfaz->nombre_interfaz;//verr si llega biiien este
@@ -565,9 +562,8 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
     // direccionFisica contiene todas las direcciones separadas por una coma, necesito separarlas
     char** direcciones = string_split(direccionFisica, ",");
     int cantidadDirecciones = 0;
-    while(direcciones[cantidadDirecciones] != NULL){
+    while(direcciones[cantidadDirecciones] != NULL)
         cantidadDirecciones++;
-    }
     int* direccionesInt = malloc(cantidadDirecciones*sizeof(int));
     for(int i = 0; i < cantidadDirecciones; i++)
         direccionesInt[i] = atoi(direcciones[i]);
@@ -575,9 +571,8 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
     // tamanio contiene todos los tamannios separados por una coma, necesito separarlos
     char** tamanios = string_split(tamanio, ",");
     int cantidadTamanios = 0;
-    while(tamanios[cantidadTamanios] != NULL){
+    while(tamanios[cantidadTamanios] != NULL)
         cantidadTamanios++;
-    }
     int* tamaniosInt = malloc(cantidadTamanios*sizeof(int));
     for(int i = 0; i < cantidadTamanios; i++)
         tamaniosInt[i] = atoi(tamanios[i]);
@@ -613,7 +608,6 @@ void ejecutar_io_stdin_read(Interfaz *interfaz, t_pcb *proceso){
      //sem_post(&io_global_actual->liberacion_semaforo);
 }
 
-
 //IO_GEN_SLEEP [Interfaz, UnidadesDeTrabajo]
 void dormir_IO(Interfaz *interfaz, t_pcb *proceso){  
     //char* interfaz=interfaz->parametro1;
@@ -629,6 +623,5 @@ void dormir_IO(Interfaz *interfaz, t_pcb *proceso){
     recibirMsjIO( socketClienteIO);
     //log_info(logger, "luego e recobor msj");
     log_warning(logger, "Proceso <%d> desbloqueado por IO_GEN_SLEEP", proceso->pid);
-
     pasarAReady(proceso);
 }

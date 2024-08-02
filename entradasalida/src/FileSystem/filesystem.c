@@ -118,7 +118,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
     }
     //si el nuevo tamanio es menor al anterior, se liberan bloques
     if (tamanio<tamanoArchivo) {
-        printf("tamanio<tamanoArchivo\n");
+        //printf("tamanio<tamanoArchivo\n");
         // Calcular la cantidad de bloques ocupados por el archivo
         int bloquefinalprev = bloqueInicial+bloquesarchivo-1;
         int bloquefinalpost = bloqueInicial+cantidadBloques;
@@ -130,7 +130,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
     }
     else if (tamanio>tamanoArchivo) {//si el nuevo tamanio es mayor al anterior, se buscan bloques libres y se los asigna
         //contar la cantidad de bloques libres depues de que termina el archivo
-        printf("tamanio>tamanoArchivo\n");
+        //printf("tamanio>tamanoArchivo\n");
         int bloqueslibres=0;
         for (int i = bloquefinal+1; !bitarray_test_bit(my_bitmap2, i); i++) 
             bloqueslibres++;

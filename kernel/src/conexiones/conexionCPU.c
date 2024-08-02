@@ -10,7 +10,7 @@ pthread_mutex_t mutexProcesoEnEjecucion;
 void conexionCPU() {
     //CONEXION CPU DISPATCH
     //logger = cambiarNombre(logger, "Kernel-CPU");
-    loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU");
+    //loggerError = cambiarNombre(loggerError,"Errores Kernel-CPU");
 
     while(1){
        
@@ -102,39 +102,34 @@ void asignarPCBAContexto(t_pcb* proceso){
     contextoEjecucion->algoritmo = proceso->algoritmo;
     if(contextoEjecucion->algoritmo != FIFO){
         contextoEjecucion->quantum=proceso->quantum;
-        log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
+        //log_info(logger, "Quantum: %ld", contextoEjecucion->quantum);
         contextoEjecucion->fin_de_quantum=proceso->fin_de_quantum;
     }
 }
 
 t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     t_dictionary *copia = dictionary_create();
-
     // Allocate memory for 1-byte registers
-    char* AX = malloc(3);
-    char* BX = malloc(3);
-    char* CX = malloc(3);
-    char* DX = malloc(3);
-
+    char* AX = malloc(4);
+    char* BX = malloc(4);
+    char* CX = malloc(4);
+    char* DX = malloc(4);
     // Allocate memory for 4-byte registers
-    char* EAX = malloc(10);
-    char* EBX = malloc(10);
-    char* ECX = malloc(10);
-    char* EDX = malloc(10);
-    char* SI=malloc(10);
-    char* DI=malloc(10);
-
+    char* EAX = malloc(11);
+    char* EBX = malloc(11);
+    char* ECX = malloc(11);
+    char* EDX = malloc(11);
+    char* SI=malloc(11);
+    char* DI=malloc(11);
     // Copy values from the original dictionary
     strncpy(AX, (char *)dictionary_get(aCopiar, "AX"), 3);
     strncpy(BX, (char *)dictionary_get(aCopiar, "BX"), 3);
     strncpy(CX, (char *)dictionary_get(aCopiar, "CX"), 3);
     strncpy(DX, (char *)dictionary_get(aCopiar, "DX"), 3);
-
     strncpy(EAX, (char *)dictionary_get(aCopiar, "EAX"), 10);
     strncpy(EBX, (char *)dictionary_get(aCopiar, "EBX"), 10);
     strncpy(ECX, (char *)dictionary_get(aCopiar, "ECX"), 10);
     strncpy(EDX, (char *)dictionary_get(aCopiar, "EDX"), 10);
-
     strncpy(SI, (char *)dictionary_get(aCopiar, "SI"), 10);
     strncpy(DI, (char *)dictionary_get(aCopiar, "DI"), 10);
 
@@ -143,12 +138,10 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     BX[3] = '\0';
     CX[3] = '\0';
     DX[3] = '\0';
-
     EAX[10] = '\0';
     EBX[10] = '\0';
     ECX[10] = '\0';
     EDX[10] = '\0';
-
     SI[10]='\0';
     DI[10]='\0';
 
@@ -163,6 +156,5 @@ t_dictionary *registrosDelCPU(t_dictionary *aCopiar) {
     dictionary_put(copia, "EDX", EDX);
     dictionary_put(copia, "SI", SI);
     dictionary_put(copia, "DI", DI);
-
     return copia;
 }

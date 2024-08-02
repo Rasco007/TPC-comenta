@@ -37,7 +37,6 @@ void cicloDeInstruccion(){
     decode();//interpreta que instruccion va a ejecutar y si requiere traduccion logica o fisica
     execute();//ejecuta la instruccion
     liberarMemoria();
-   // usleep(200);  //VER ESTO!!!!
 }
 void solicitarInstruccion(int pid, int indice, int socket){
     t_paquete *paquete = malloc(sizeof(t_paquete));
@@ -97,7 +96,6 @@ void fetch() {
             log_warning(logger,"Operacion desconocida.");
 			break;
 	}
-	//}
     contextoEjecucion->programCounter += 1;
 }
 
@@ -134,7 +132,7 @@ int buscar(char *elemento, char **lista) {
 }
  
 t_comando check_interrupt(){
-        if(strcmp(mensajeInterrupcion,"USER_INTERRUPT")==0){
+    if(strcmp(mensajeInterrupcion,"USER_INTERRUPT")==0){
         log_warning(logger,"INTERRUPCION ASINCRONICA");
         return USER_INTERRUPTION;
     }
@@ -158,18 +156,6 @@ int calcularPaginasALeer(int first_addr, int last_addr, int page_size){
     return end_page - start_page + 1;
 }
 // Función para calcular la cantidad de bytes a escribir/leer en cada página
-/*void calcularBytesPorPagina(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
-    int total_bytes = last_addr - first_addr + 1;
-    int start_page = first_addr / page_size;
-    int start_offset = first_addr % page_size;
-    int end_page = last_addr / page_size;
-    *num_pages = end_page - start_page + 1;
-    bytes_por_pagina[0] = page_size - start_offset;
-    for (int i = 1; i <*num_pages - 1; i++) {
-        bytes_por_pagina[i] = page_size;
-    }
-    bytes_por_pagina[*num_pages - 1] = total_bytes - (bytes_por_pagina[0] + (*num_pages - 2) * page_size) -1;
-}*/
 void calcularBytesPorPagina2(int first_addr, int last_addr, int page_size, int *bytes_por_pagina, int *num_pages) {
     int total_bytes = last_addr - first_addr+1; // Calcula el total de bytes a leer
     // Calcula el número de página inicial y el desplazamiento dentro de la página
@@ -814,6 +800,7 @@ void sum_c(char* registro_destino, char* registro_origen){
         temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
         modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     } else if(check_interrupt()==USER_INTERRUPTION){
         contextoEjecucion->fin_de_quantum=false;
         temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
@@ -821,6 +808,7 @@ void sum_c(char* registro_destino, char* registro_origen){
         temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
         modificarMotivoDesalojo (USER_INTERRUPTION, 0, "", "", "", "", "");
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 }
 
@@ -848,6 +836,7 @@ void sub_c(char* registro_destino, char* registro_origen){
         temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
         modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     } else if(check_interrupt()==USER_INTERRUPTION){
         contextoEjecucion->fin_de_quantum=false;
         temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
@@ -855,6 +844,7 @@ void sub_c(char* registro_destino, char* registro_origen){
         temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
         modificarMotivoDesalojo (USER_INTERRUPTION, 0, "", "", "", "", "");
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 }
 
@@ -883,6 +873,7 @@ void jnz(char* registro, char* instruccion){
         temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
         modificarMotivoDesalojo (FIN_DE_QUANTUM, 0, "", "", "", "", "");
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     } else if(check_interrupt()==USER_INTERRUPTION){
         contextoEjecucion->fin_de_quantum=false;
         temporal_stop(tiempoDeUsoCPU); //Detengo el cronometro
@@ -890,6 +881,7 @@ void jnz(char* registro, char* instruccion){
         temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
         modificarMotivoDesalojo (USER_INTERRUPTION, 0, "", "", "", "", "");
         enviarContextoBeta(socketClienteInterrupt, contextoEjecucion);
+        flag_bloqueante = 1;
     }
 }
 /*Desalojo el proceso y kernel le indica a IO que haga un sleep en una interfaz indicada y un tiempo indicado*/
@@ -1016,13 +1008,13 @@ void mov_in(char* registro, char* direccionLogica){
     uint32_t direccionesFisicas[num_pages];
     for (int i = 0; i < num_pages; i++) 
         direccionesFisicas[i] =  mmu(contextoEjecucion->pid, direccionesLogicas[i],0);
-    char *cadenacompleta = malloc(tamRegistro);
+    char *cadenacompleta = malloc(tamRegistro+1);
     for(int i=0; i<num_pages; i++){
         if (i==0)
             cadenacompleta[0]='\0';
         enviarDireccionTamano2(direccionesFisicas[i],bytes_por_pagina[i],contextoEjecucion->pid,conexionAMemoria);
         char recibido[100];
-		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido), 0);
+		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido)-1, 0);
         recibido[bytes] = '\0';
         log_info(logger, "Recibido: %s", recibido);
         strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
@@ -1087,9 +1079,10 @@ void mov_out(char* direccionLogica, char* registro){
     if (tamRegistro == 1){
         uint8_t registro_ext = valorReg;
         void* registro_ext_puntero = &registro_ext;
-        char *palabra=malloc(1);
+        char *palabra=malloc(1+1);
         int tamanotexto=0;
         for(int i=0; i<num_pages; i++){
+            palabra=realloc(palabra, bytes_por_pagina[i]+1);
             //printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
             memcpy(palabra, registro_ext_puntero + tamanotexto, bytes_por_pagina[i]);
             palabra[bytes_por_pagina[i]] = '\0';
@@ -1109,7 +1102,7 @@ void mov_out(char* direccionLogica, char* registro){
     else{
         uint32_t registro_ext = valorReg;
         void* registro_ext_puntero = &registro_ext;
-        char *palabra=malloc(4);
+        char *palabra=malloc(4+1);
         int tamanotexto=0;
         for(int i=0; i<num_pages; i++){
             //printf("Tamaño de la palabra: %d\n", bytes_por_pagina[i]);
@@ -1165,8 +1158,8 @@ void liberarMemoria() {
     mensajeInterrupcion="";
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
-    //free(instruccionAEjecutar); //OJO CON ESTE FREE EN LA PRUEBA SALVAJE!!!!!!!
-    log_warning(logger,"Memoria liberada!");
+    free(instruccionAEjecutar); //VER!
+    log_warning(logger,"Ciclo terminado!");
 }
 
 char* recibirValor(int socket) {

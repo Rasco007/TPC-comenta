@@ -122,7 +122,7 @@ void listarPIDS(t_list *pcbs) {
 }
 
 void imprimirListaPCBs(t_list *pcbs){
-    logger=cambiarNombre(logger,"Kernel-Lista PCBs");
+    //logger=cambiarNombre(logger,"Kernel-Lista PCBs");
     for(int i = 0; i < list_size(pcbs); i++){
         t_pcb *pcb = list_get(pcbs, i);
         log_info(logger, "PID: %d", pcb->pid);
@@ -130,7 +130,7 @@ void imprimirListaPCBs(t_list *pcbs){
 }
 
 void imprimirListaExit(t_list *idsExit){
-    logger=cambiarNombre(logger,"Kernel-Lista Exit");
+    //logger=cambiarNombre(logger,"Kernel-Lista Exit");
     for(int i = 0; i < list_size(idsExit); i++){
         log_info(logger, "PID: %d", (int)(uintptr_t)list_get(idsExit, i));
     }
