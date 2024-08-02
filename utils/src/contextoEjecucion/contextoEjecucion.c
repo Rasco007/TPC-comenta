@@ -1,6 +1,5 @@
 #include <contextoEjecucion/contextoEjecucion.h>
 t_contexto * contextoEjecucion = NULL;
-t_dictionary *crearDiccionarioDeRegistros2();
 
 // MANEJO DE CONTEXTO
 void enviarContextoBeta(int socket, t_contexto* contexto) {

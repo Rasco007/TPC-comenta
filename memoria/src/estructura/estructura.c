@@ -48,7 +48,7 @@ Proceso *inicializar_proceso(int pid, const char *archivo_pseudocodigo) {
     proceso->pid = pid;
 
     proceso->tabla_paginas = inicializar_tabla_paginas();
-    log_info(logger, "Creacion de tabla de paginas para proceso PID: <%d> - Tamaño: <%d> Páginas", pid, proceso->tabla_paginas->paginas_asignadas);
+    log_info(logger, "Creación de Tabla de Páginas PID: <%d> - Tamaño: <%d> Páginas", pid, proceso->tabla_paginas->paginas_asignadas);
     // Leer archivo de pseudocódigo
     FILE *archivo = fopen(archivo_pseudocodigo, "r");
     if (!archivo) {

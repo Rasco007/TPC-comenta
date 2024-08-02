@@ -25,7 +25,7 @@ uint32_t mmu(uint32_t pid, uint32_t direccionLogica, int tamValor) {
     int tamPagina = obtenerTamanoPagina2("../memoria");
     uint32_t page_number = direccionLogica / tamPagina;
     uint32_t offset = direccionLogica % tamPagina;
-    log_info(logger,"PID: <%d> - DIRECCION LOGICA: <%d> - PAGINA: <%d> - OFFSET: <%d>", pid, direccionLogica, page_number, offset);
+    //log_info(logger,"PID: <%d> - DIRECCION LOGICA: <%d> - PAGINA: <%d> - OFFSET: <%d>", pid, direccionLogica, page_number, offset);
     int recibo;
     char* valorAInsertar;
     int consulta;
@@ -121,7 +121,7 @@ void inicializar_tlb(char* algoritmoTLB) {
         entry->time_added = -1;
         list_add(tlb->entries, entry);
     }
-    log_info(logger, "TLB inicializada con algoritmo %s.", algoritmoTLB);
+   // log_info(logger, "TLB inicializada con algoritmo %s.", algoritmoTLB);
 }
 
 int consultar_tlb(uint32_t pid, uint32_t page_number, uint32_t *frame_number) {
@@ -203,7 +203,7 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
             entry->last_used = tiempo_actual;
             entry->time_added = tiempo_actual;
             tiempo_actual++;
-            log_info(logger, "Se agregó la entrada %ld", i);
+            //log_info(logger, "Se agregó la entrada %ld", i);
             return;
         }
     }
@@ -239,5 +239,5 @@ void agregar_a_tlb(uint32_t pid, uint32_t page_number, uint32_t frame_number) {
     entry->last_used = tiempo_actual;
     entry->time_added = tiempo_actual;
     tiempo_actual++;
-    log_info(logger, "Se reemplazó la entrada %ld", reemplazo);
+    //log_info(logger, "Se reemplazó la entrada %ld", reemplazo);
 }

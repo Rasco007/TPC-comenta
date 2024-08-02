@@ -42,8 +42,8 @@ int ejecutarServidorKernel(int *socketCliente) {
             case ENDPCB: {
                 usleep(tiempo*1000);
                 PID = recibirPID(*socketCliente);
-                log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
-                log_info(logger, "Destruccion de tabla de paginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
+                //log_info(logger, "Eliminación de Proceso PID: <%d>", PID);
+                log_info(logger, "Destrucción de Tabla de Páginas PID: <%d> - Tamaño: <%d> Páginas", PID, buscar_proceso_por_pid(PID)->tabla_paginas->paginas_asignadas);
                 eliminarProcesoDeMemoria(PID);
                 //free(pathInstrucciones); //ver si va o no
                 break;
@@ -82,16 +82,16 @@ void eliminarProcesoDeMemoria(int pid) {
             //reemmplazaaaa vaalor marcando false como  disponible
             free(entrada);
         }
-    int marcosLibres=0;
+    /*int marcosLibres=0;
     for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
         if (list_get(mf->listaMarcosLibres,i) == false)
             marcosLibres++;
     }
-    log_info(logger,"Marcos libres: %d",marcosLibres);
+    log_info(logger,"Marcos libres: %d",marcosLibres);*/
             // Elimina todas las páginas del proceso
         list_destroy(proceso->tabla_paginas->entradas);
         liberar_tabla_paginas(proceso->tabla_paginas);
-
+        
         // Elimina todas las instrucciones del proceso
         for (int i = 0; i < proceso->numero_instrucciones; i++) {
             free(proceso->instrucciones[i]);

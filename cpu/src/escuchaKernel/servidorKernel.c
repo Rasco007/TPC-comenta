@@ -42,12 +42,12 @@ int ejecutarServidorCPU(int socketCliente){
 					//log_info(logger,"APAREZCO DESDE CPU");
 					recibirContextoBeta(socketCliente);
 					//Inicio el cronometro del tiempo de uso de CPU
-					log_info(logger,"luego de recibir contexto de kernel");
+					//log_info(logger,"luego de recibir contexto de kernel");
 					tiempoDeUsoCPU=temporal_create(); //Inicio y creo el CRONOMETRO
 					/*log_info(logger,"-*-*- Antes del while, programCounter: %d",contextoEjecucion->programCounter);
 					log_info(logger,"-*-*- Antes del while, contextoEjecucion->instruccionesLength: %d",contextoEjecucion->instruccionesLength);*/
-					log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
-					log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
+					//log_info(logger,"-*-*- InstruccionesLength: %d",contextoEjecucion->instruccionesLength);
+					//log_info(logger,"-*-*- Ejecutando instruccion %d",contextoEjecucion->programCounter);
 					 
 					 flag_bloqueante = 0;
 					 while(contextoEjecucion->programCounter < contextoEjecucion->instruccionesLength && flag_bloqueante == 0) {

@@ -260,9 +260,9 @@ void modificarGradoMultiprogramacion(int valor){
     } else{
         gradoMultiprogramacion = valor;
         ajustarTamanioSemaforo(&semGradoMultiprogramacion,valor);
-        log_info(logger, "Grado de multiprogramacion modificado a %d", valor);
+        //log_info(logger, "Grado de multiprogramacion modificado a %d", valor);
         int valorSemaforo;
         sem_getvalue(&semGradoMultiprogramacion, &valorSemaforo);
-        log_info(logger, "Valor del semaforo: %d", valorSemaforo);
+        //log_info(logger, "Valor del semaforo: %d", valorSemaforo);
     }
 }

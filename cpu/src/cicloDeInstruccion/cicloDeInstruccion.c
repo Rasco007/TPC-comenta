@@ -137,7 +137,7 @@ t_comando check_interrupt(){
         return USER_INTERRUPTION;
     }
     if(contextoEjecucion->algoritmo != FIFO){
-        log_info(logger, "inicio check_interrupt");
+        //log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
         log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
         log_info(logger,"Quantum %" PRId64 ,quantum);
@@ -981,7 +981,7 @@ void exit_c () {
     temporal_destroy(tiempoDeUsoCPU); //Destruyo el cronometro
     char * terminado = string_duplicate ("SUCCESS");
     modificarMotivoDesalojo (EXIT, 1, terminado, "", "", "", "");
-    log_info(logger, "Pasa modificarMotivoDesalojo");
+    //log_info(logger, "Pasa modificarMotivoDesalojo");
     enviarContextoBeta(socketClienteInterrupt, contextoEjecucion); //TODO: HACER CON INTERRUPT
     free (terminado);
     //log_info(logger, "fin exit_c");
@@ -1016,17 +1016,17 @@ void mov_in(char* registro, char* direccionLogica){
         char recibido[100];
 		int bytes=recv(conexionAMemoria, recibido, sizeof(recibido)-1, 0);
         recibido[bytes] = '\0';
-        log_info(logger, "Recibido: %s", recibido);
+        //log_info(logger, "Recibido: %s", recibido);
         strncat(cadenacompleta, recibido, bytes_por_pagina[i]);
         int numeros=0;
         memcpy(&numeros, recibido,bytes_por_pagina[i]);
         log_info(logger, "PID: <%d> - Acción: <LEER> - Dirección Física: <%d> - Valor: <%d>", contextoEjecucion->pid, direccionesFisicas[i], numeros);
         // mem_hexdump(&numeros, bytes_por_pagina[i]);
     }
-    log_info(logger, "Cadena completa: %s", cadenacompleta);
+    //log_info(logger, "Cadena completa: %s", cadenacompleta);
     int numTotal=0;
     memcpy(&numTotal, cadenacompleta, strlen(cadenacompleta));
-    log_info(logger, "Valor total: %d", numTotal);
+    //log_info(logger, "Valor total: %d", numTotal);
     //paso numTotal a string
     char* numTotalStr = malloc(sizeof(char) * 10);
     sprintf(numTotalStr, "%d", numTotal);
@@ -1159,7 +1159,7 @@ void liberarMemoria() {
     for (int i = 0; i <= cantParametros; i++) free(elementosInstruccion[i]);
     free(elementosInstruccion);
     free(instruccionAEjecutar); //VER!
-    log_warning(logger,"Ciclo terminado!");
+    //log_warning(logger,"Ciclo terminado!");
 }
 
 char* recibirValor(int socket) {

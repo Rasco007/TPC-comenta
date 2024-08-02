@@ -59,11 +59,11 @@ void* ejecutarServidor(void* socketCliente) {
                 cadena[strlen(cadena)] = '\0';
                 log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid, dir, cadena); 
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
-                char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
+                /*char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
                 memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
                 datoEscrito[strlen(cadena)] = '\0';
                 printf("Dato escrito: %s\n", datoEscrito);
-                free(datoEscrito);
+                free(datoEscrito);*/
                 char *mensaje2;
                // memset(mensaje2, 0, 3);
                 mensaje2 = "OK";
@@ -75,7 +75,7 @@ void* ejecutarServidor(void* socketCliente) {
                 log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
                 int dir2, tamano, pid2;
                 recibirDireccionyTamano(sock, &dir2, &pid2, &tamano);
-                printf("Tamaño: %d\n", tamano);
+                //printf("Tamaño: %d\n", tamano);
                 char* datosLeidos = malloc(256);
                 memset(datosLeidos, 0, 256);
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);

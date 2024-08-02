@@ -42,7 +42,7 @@ void planificarALargoPlazo(){
         
         int semValue;
         sem_getvalue(&semGradoMultiprogramacion, &semValue);
-        log_info(logger,"Valor del semáforo de multiprogramación: %d", semValue);
+        //log_info(logger,"Valor del semáforo de multiprogramación: %d", semValue);
         sem_wait(&semGradoMultiprogramacion);
 
         pthread_mutex_lock(&pausaMutex);

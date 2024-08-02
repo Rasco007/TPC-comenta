@@ -19,7 +19,7 @@ t_pcb *crearPCB(){
     nuevoPCB->fin_de_quantum=false;
     nuevoPCB->numeroInstrucciones=0;
     recibirEstructurasInicialesMemoria(nuevoPCB); //Mando señal a memoria para que reserve espacio para el PCB
-    log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
+    //log_info(logger, "PCB con PID %d creado correctamente", nuevoPCB->pid);
     
     return nuevoPCB;
 }
@@ -31,7 +31,7 @@ void destruirPCB(t_pcb *pcb){
     list_add(pcbsParaExit, (void*)(uintptr_t)pid_copia);
     pthread_mutex_unlock(&mutexListaExit);
     dictionary_destroy_and_destroy_elements(pcb->registrosCPU, free);
-    log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
+    //log_info(logger, "PCB con PID %d destruido correctamente", pcb->pid);
     free(pcb->recursosAsignados);
     free(pcb);
 }

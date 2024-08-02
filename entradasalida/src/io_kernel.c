@@ -342,7 +342,7 @@ void manejarSTDINREAD(int socketCliente) {
         log_info(logger, "Tamanio recibido: %d", tamanios[i]);
         log_info(logger, "Direccion recibida: %d", direcciones[i]);
     }
-    log_info(logger, "PID: <%d> - Operacion: <STDIN READ>", pid);
+    log_info(logger, "PID: <%d> - Operacion: <IO_STDIN_READ>", pid);
     // Leer una línea de texto usando readline
     char* texto = readline("Ingrese el texto: ");
     //tengo que dividir el texto ingresado en partes de tamanio maximo tamanios[0]
@@ -381,11 +381,11 @@ void manejarSTDOUTWRITE(int socketCliente) {
     int pid, cantidad;
     recibirEnteros3(socketCliente, tamanios, direcciones, &pid, &cantidad);
     // Loguear los parámetros recibidos
-    for(int i=0; i<cantidad; i++){
+    /*for(int i=0; i<cantidad; i++){
         log_info(logger, "Tamanio recibido: %d", tamanios[i]);
         log_info(logger, "Direccion recibida: %d", direcciones[i]);
-    }
-    log_info(logger, "PID: <%d> - Operacion: <STDOUT WRITE>", pid);
+    }*/
+    log_info(logger, "PID: <%d> - Operacion: <IO_STDOUT_WRITE>", pid);
     char *cadenaCompleta=malloc(126);
     memset(cadenaCompleta, 0, 126);
     //divido el texto en partes
@@ -393,16 +393,16 @@ void manejarSTDOUTWRITE(int socketCliente) {
         enviarDireccionTamano(direcciones[i],tamanios[i],pid,fd_memoria);
         char* recibido=malloc(256);
         memset(recibido, 0, 256);
-	    if(i==0)
-	    	cadenaCompleta[0]='\0';
+	    //if(i==0)
+	    //	cadenaCompleta[0]='\0';
 	    recv(fd_memoria, recibido, tamanios[i], 0);
-	    printf("Mensaje recibido de memoria:%s\n", recibido);
+	    //printf("Mensaje recibido de memoria:%s\n", recibido);
 	    //ir concatenando los mensajes
 	    strncat(cadenaCompleta, recibido, tamanios[i]);
         //log_error(logger, "mensaje concatenado: %s", cadenaCompleta);
         free(recibido);
     }
-    printf("Mensaje completo:%s\n", cadenaCompleta);
+    printf("%s\n", cadenaCompleta);
 	char *mensje="ok";
     send(fd_kernel, &mensje, sizeof(mensje), 0);
     if(cadenaCompleta!=NULL)
@@ -427,11 +427,11 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
     int longitud=bytes_recibidos-sizeof(op_code)-2*sizeof(int);
     memcpy(nombre, buffer+sizeof(op_code)+2*sizeof(int), longitud);
     nombre[longitud] = '\0';
-    log_info(logger, "PID: <%d> - Operacion: <GEN SLEEP>", pid);
-    log_info(logger, "Nombre recibido: %s", nombre);
-	log_info(logger, "Tiempo a dormir recibido: %d", unidades); 
+    log_info(logger, "PID: <%d> - Operacion: <IO_GEN_SLEEP>", pid);
+    //log_info(logger, "Nombre recibido: %s", nombre);
+	//log_info(logger, "Tiempo a dormir recibido: %d", unidades); 
 	log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
-	log_info(logger, "antes de dormir");
+	log_info(logger, "Antes de dormir");
 	sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
 	log_info(logger, "Despues de dormir");
 	//mandar mensaje luego de dormir a kernel

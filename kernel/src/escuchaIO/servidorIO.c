@@ -613,15 +613,15 @@ void dormir_IO(Interfaz *interfaz, t_pcb *proceso){
     //char* interfaz=interfaz->parametro1;
     char* tiempo=interfaz->parametro2;
     int pid = proceso->pid;
-    log_info(logger, "tiempo recibido %s", tiempo);
-    log_info(logger, "interfaz recibida %s", interfaz->nombre_interfaz);
+    //log_info(logger, "tiempo recibido %s", tiempo);
+    //log_info(logger, "interfaz recibida %s", interfaz->nombre_interfaz);
     int socketClienteIO = interfaz->socket_interfaz;
-    log_info(logger, "se recibio el socket %d", socketClienteIO);
+    //log_info(logger, "se recibio el socket %d", socketClienteIO);
     enviarMensajeGen(socketClienteIO, interfaz->nombre_interfaz, tiempo, pid);
     //log_info(logger, "antes de recibir msj");
     //Recibir mensaje de confirmacion de IO
     recibirMsjIO( socketClienteIO);
     //log_info(logger, "luego e recobor msj");
-    log_warning(logger, "Proceso <%d> desbloqueado por IO_GEN_SLEEP", proceso->pid);
+    //log_warning(logger, "Proceso <%d> desbloqueado por IO_GEN_SLEEP", proceso->pid);
     pasarAReady(proceso);
 }

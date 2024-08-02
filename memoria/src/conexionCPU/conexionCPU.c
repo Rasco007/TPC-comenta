@@ -59,7 +59,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 usleep(tiempo*1000);
                 int nuevo_tamano;
                 recibirEnteros2(*socketCliente, &pid, &nuevo_tamano);
-                log_info(logger, "PID: %d - Nuevo tamaño: %d", pid, nuevo_tamano);
+                //log_info(logger, "PID: %d - Nuevo tamaño: %d", pid, nuevo_tamano);
                 proceso = buscar_proceso_por_pid(pid);
                 if (proceso == NULL) {
                     log_error(loggerError, "No se encontró el proceso con PID: %d", pid);
@@ -73,7 +73,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 log_info(logger, "MEMORIA envía mensaje a CPU segun direccion y tamaño");
                 int dir2, tamano, pid2;
                 recibirDireccionyTamano(*socketCliente, &dir2, &pid2, &tamano);
-                printf("Tamaño: %d\n", tamano);
+                //printf("Tamaño: %d\n", tamano);
                 char* datosLeidos = malloc(tamano);
                 memcpy(datosLeidos, (char*)mf->memoria + dir2, tamano);
                 datosLeidos[tamano] = '\0';
@@ -90,11 +90,11 @@ int ejecutarServidorCPU(int *socketCliente) {
                 cadena[strlen(cadena)] = '\0';
                 log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid3, dir, cadena); 
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
-                char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
+                /*char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
                 memcpy(datoEscrito, (char*)mf->memoria + dir, strlen(cadena));
                 datoEscrito[strlen(cadena)] = '\0';
                 printf("Dato escrito: %s\n", datoEscrito);
-                free(datoEscrito);
+                free(datoEscrito);*/
                 char *mensje="ok";
                 send(*socketCliente, &mensje, sizeof(mensje), 0);
                 break;
@@ -165,7 +165,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         // Registro de ampliación del proceso
         int tamano_a_ampliar = (paginas_necesarias - proceso->tabla_paginas->paginas_asignadas) * tam_pagina;
         //int nuevoTamanio = paginas_necesarias * tam_pagina;
-        log_info(logger, "Ampliación de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Ampliar: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, tamano_a_ampliar);
+        log_info(logger, "PID: <%d> - Tamaño Actual: <%d> bytes - Tamaño a Ampliar: <%d> bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, tamano_a_ampliar);
         for (int i = proceso->tabla_paginas->paginas_asignadas; i < paginas_necesarias; i++) {
             if (!asignar_pagina(mf, proceso, i)) {
                 log_error(loggerError, "Error al asignar página %d al proceso", i);
@@ -176,7 +176,7 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
         // Registro de reducción del proceso
         int tamano_a_reducir = (proceso->tabla_paginas->paginas_asignadas - paginas_necesarias) * tam_pagina;
         //int nuevoTamanio = paginas_necesarias * tam_pagina;
-        log_info(logger,"Reducción de Proceso: PID: %d - Tamaño Actual: %d bytes - Tamaño a Reducir: %d bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, tamano_a_reducir);
+        log_info(logger,"PID: <%d> - Tamaño Actual: <%d> bytes - Tamaño a Reducir: <%d> bytes",proceso->pid, proceso->tabla_paginas->paginas_asignadas * tam_pagina, tamano_a_reducir);
        
             
         for (int i = proceso->tabla_paginas->paginas_asignadas - 1; i >= paginas_necesarias; i--) {
@@ -194,14 +194,14 @@ Proceso *ajustar_tamano_proceso(MemoriaFisica *mf, Proceso *proceso, int nuevo_t
     }
     // Actualiza el número de páginas asignadas en la tabla de páginas del proceso
     proceso->tabla_paginas->paginas_asignadas = paginas_necesarias;
-    log_info(logger,"cant. de paginas asignadas: %d",proceso->tabla_paginas->paginas_asignadas);
+    //log_info(logger,"cant. de paginas asignadas: %d",proceso->tabla_paginas->paginas_asignadas);
     //contar cantidad de marcos libres
-    int marcosLibres=0;
+    /*int marcosLibres=0;
     for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
         if (list_get(mf->listaMarcosLibres,i) == false)
             marcosLibres++;
     }
-    log_info(logger,"Marcos libres: %d",marcosLibres);
+    log_info(logger,"Marcos libres: %d",marcosLibres);*/
     //indicar en que posicion de la lista de marcos libres se encuentran los marcos ocupados
     /*for (int i = 0; i < list_size(mf->listaMarcosLibres); i++) {
         if (list_get(mf->listaMarcosLibres,i) == true)
