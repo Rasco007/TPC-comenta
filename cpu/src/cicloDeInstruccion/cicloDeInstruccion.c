@@ -139,11 +139,11 @@ t_comando check_interrupt(){
     if(contextoEjecucion->algoritmo != FIFO){
         //log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
-        log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
+        //log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
         //log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
-            log_warning(logger,"FIN DE QUANTUM");
+            //log_warning(logger,"FIN DE QUANTUM");
             return FIN_DE_QUANTUM;
         } 
     }

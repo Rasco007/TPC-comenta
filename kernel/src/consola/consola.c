@@ -198,7 +198,7 @@ void finalizarProceso(int pid){
     } else if(buscarProceso(pcbsREADYaux,pid)){
         eliminarProceso(pcbsREADYaux,pid);
     } else if (buscarProceso(pcbsExec,pid)){
-        log_error(logger, "se envia MENSAJE a CPU para que finalice el proceso");
+        //log_error(logger, "se envia MENSAJE a CPU para que finalice el proceso");
         enviarMensaje2("USER_INTERRUPT",conexionACPUInterrupt);
     } else if (buscarProceso(pcbsBloqueados,pid)){
         eliminarProceso(pcbsBloqueados,pid);
@@ -210,7 +210,7 @@ void detenerPlanificacion(){
     pthread_mutex_lock(&pausaMutex);
     pausaPlanificacion = true;
     pthread_mutex_unlock(&pausaMutex);
-    log_info(logger, "Planificacion detenida");
+    //log_info(logger, "Planificacion detenida");
 }
 
 //INICIAR_PLANIFICACION
@@ -219,7 +219,7 @@ void iniciarPlanificacion(){
     pausaPlanificacion = false;
     pthread_cond_signal(&pausaCond);
     pthread_mutex_unlock(&pausaMutex);
-    log_info(logger, "Planificaciones iniciadas");
+    //log_info(logger, "Planificaciones iniciadas");
 }
 
 //PROCESO_ESTADO
