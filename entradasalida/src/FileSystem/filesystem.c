@@ -208,12 +208,13 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
                     }
                 }
                 closedir(dir); // Cierra el directorio después de leer
+                usleep(RETRASO_COMPACTACION*1000);
                 log_info(logger, "PID: <%d> - Fin Compactación.", pid);
             } else {
                 perror("Error al abrir el directorio");
                 return ;
             }
-            usleep(RETRASO_COMPACTACION*1000);
+            
             for (int i = nuevaposicioninicial; i < nuevaposicioninicial+cantidadBloques-1; i++) 
                 bitarray_set_bit(my_bitmap2, i+1);//posicionBit = i+1;printf("posicionBit: %d\n", posicionBit);
             char *sinextension=obtenerNombreSinExtension(pathMetadatabeta);//printf("nombreSinExtension: %s\n", sinextension);
@@ -224,7 +225,7 @@ void truncarArchivo2(char* nombre, int tamanio, int pid){
     }
     if (msync(bitmap, BLOCK_COUNT/8, MS_SYNC) == -1) 
         perror("Error al sincronizar el archivo bitmap.dat");
-    printf("FIN TRUNCAR ARCHIVO.....\n");
+    //printf("FIN TRUNCAR ARCHIVO.....\n");
     // Liberar recursos
     munmap(bitmap, BLOCK_COUNT/8);
     //fclose(file);

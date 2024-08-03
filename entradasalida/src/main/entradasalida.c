@@ -60,11 +60,11 @@ void crearCarpetaSiNoExiste(const char *path) {
     if (stat(path, &st) == -1) {
         // Crear la carpeta con permisos 0755
         if (mkdir(path, 0755) == 0) {
-            log_info(logger,"Carpeta creada exitosamente: %s\n", path);
+            log_info(logger,"Carpeta creada; %s", path);
         } else {
             perror("Error al crear la carpeta");
         }
     } else {
-        printf("La carpeta ya existe: %s\n", path);
+        log_info(logger,"La carpeta existe: %s", path);
     }
 }

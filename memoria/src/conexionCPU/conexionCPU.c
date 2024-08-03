@@ -70,7 +70,7 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case 104: // PARA LEER POR COPY STRING O MOV IN
                 usleep(tiempo*1000);
-                log_info(logger, "MEMORIA envía mensaje a CPU segun direccion y tamaño");
+                //log_info(logger, "MEMORIA envía mensaje a CPU segun direccion y tamaño");
                 int dir2, tamano, pid2;
                 recibirDireccionyTamano(*socketCliente, &dir2, &pid2, &tamano);
                 //printf("Tamaño: %d\n", tamano);
@@ -83,11 +83,11 @@ int ejecutarServidorCPU(int *socketCliente) {
                 break;
             case 105: //PARA ESCRIBIR POR COPY STRING o MOV OUT
                 usleep(tiempo*1000);
-                log_info(logger, "CPU envía mensaje a escribir en memoria");
+                //log_info(logger, "CPU envía mensaje a escribir en memoria");
                 int dir, pid3;
                 char cadena[2048]="";
                 recibirDirYCadena(*socketCliente, &dir, &pid3, cadena);
-                cadena[strlen(cadena)] = '\0';
+                //cadena[strlen(cadena)] = '\0';
                 log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid3, dir, cadena); 
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
                 /*char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!

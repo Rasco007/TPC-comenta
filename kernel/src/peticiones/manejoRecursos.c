@@ -71,7 +71,7 @@ int tamanioArrayCharDoble (char **arreglo){
 
 void liberarRecursosAsignados(t_pcb* proceso){
     int cantRecursos = list_size(proceso->recursosAsignados);
-    log_error(logger,"La cant de recursos es %d",(cantRecursos));
+    //log_error(logger,"La cant de recursos es %d",(cantRecursos));
     int i;
     if(cantRecursos!=0){
         for(i=0; i<cantRecursos;cantRecursos--){
@@ -88,7 +88,7 @@ void liberarRecursosAsignados(t_pcb* proceso){
             if(pcbBloqueado->pid==proceso->pid){
                 instanciasRecursos[i]++;
                 list_remove(colaBloquadosRecurso,j);
-                log_warning(logger,"Se elimina el pid <%d> de las colas de bloqueados",proceso->pid);
+                //log_warning(logger,"Se elimina el pid <%d> de las colas de bloqueados",proceso->pid);
             }
         }
     }
@@ -96,17 +96,17 @@ void liberarRecursosAsignados(t_pcb* proceso){
 
 void eliminarRecursoLista(t_list* recursos, char* recurso){
     int cantRecursos = list_size(recursos);
-    log_warning(logger,"La cant de recursos es %d",(cantRecursos));
-    log_warning(logger,"el recurso es %s",(recurso));
+    //log_warning(logger,"La cant de recursos es %d",(cantRecursos));
+    //log_warning(logger,"el recurso es %s",(recurso));
     int i;
     
     for(i=0;i<cantRecursos;i++){ 
-        log_warning(logger,"Mi lista tiene %s",(char*)list_get(recursos, i));
+        //log_warning(logger,"Mi lista tiene %s",(char*)list_get(recursos, i));
         
         if(!strcmp((char*)list_get(recursos,i), recurso)){
             list_remove(recursos,i); //SI HAY LEAK DEMAS ,CAMBIARLO POR REEEEMOVE AND DESTROY
-            int cantidadRecursos = list_size(recursos);
-            log_warning(logger,"La cant de recursos es %d",(cantidadRecursos));
+            //int cantidadRecursos = list_size(recursos);
+            //log_warning(logger,"La cant de recursos es %d",(cantidadRecursos));
             return;  
         }
     }

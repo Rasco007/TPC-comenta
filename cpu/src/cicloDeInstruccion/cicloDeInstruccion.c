@@ -133,14 +133,14 @@ int buscar(char *elemento, char **lista) {
  
 t_comando check_interrupt(){
     if(strcmp(mensajeInterrupcion,"USER_INTERRUPT")==0){
-        log_warning(logger,"INTERRUPCION ASINCRONICA");
+        //log_warning(logger,"INTERRUPCION ASINCRONICA");
         return USER_INTERRUPTION;
     }
     if(contextoEjecucion->algoritmo != FIFO){
         //log_info(logger, "inicio check_interrupt");
         int64_t quantum=contextoEjecucion->quantum;
         log_info(logger,"Tiempo %" PRId64 ,temporal_gettime(tiempoDeUsoCPU));
-        log_info(logger,"Quantum %" PRId64 ,quantum);
+        //log_info(logger,"Quantum %" PRId64 ,quantum);
         //Si el cronometro marca un tiempo superior al quantum, desalojo el proceso
         if(temporal_gettime(tiempoDeUsoCPU)>=quantum){
             log_warning(logger,"FIN DE QUANTUM");
@@ -678,7 +678,7 @@ void copy_string(char* tamanio){
         //recibir un mensaje de confirmacion de que se escribio en memoria
         char recibido[100];
         recv(conexionAMemoria, recibido, sizeof(recibido), 0);
-        log_info(logger, "OK DE MEMORIA");
+        //log_info(logger, "OK DE MEMORIA");
     }
     free(datosLeidos2);
     free(cadenacompleta);
@@ -1095,7 +1095,7 @@ void mov_out(char* direccionLogica, char* registro){
             //recibir un mensaje de confirmacion de que se escribio en memoria
             char recibido[100];
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
-            log_info(logger, "OK DE MEMORIA");
+            //log_info(logger, "OK DE MEMORIA");
         }
         free(palabra);
     }
@@ -1117,7 +1117,7 @@ void mov_out(char* direccionLogica, char* registro){
             //recibir un mensaje de confirmacion de que se escribio en memoria
             char recibido[100];
             recv(conexionAMemoria, recibido, sizeof(recibido), 0);
-            log_info(logger, "OK DE MEMORIA");
+            //log_info(logger, "OK DE MEMORIA");
         }
         free(palabra);
     }

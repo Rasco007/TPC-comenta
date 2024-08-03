@@ -104,7 +104,7 @@ void retornoContexto(t_pcb *proceso, t_contexto *contextoEjecucion){
 }
 
 void loggearBloqueoDeProcesos(t_pcb* proceso, char* motivo) {
-    log_info(logger,"PID: <%d> - Bloqueado por: %s", proceso->pid, motivo); //Log obligatorio
+    log_info(logger,"PID: <%d> - Bloqueado por: <%s>", proceso->pid, motivo); //Log obligatorio
 }
 
 void loggearSalidaDeProceso(t_pcb* proceso, char* motivo) {
@@ -127,7 +127,7 @@ void wait_s(t_pcb *proceso,char **parametros){
     instanciaRecurso--; 
     instanciasRecursos[indexRecurso]=instanciaRecurso;
 
-    log_info(logger,"PID:<%d>-WAIT:<%s>-Instancias:<%d>",proceso->pid,recurso,instanciaRecurso);
+    //log_info(logger,"PID:<%d>-WAIT:<%s>-Instancias:<%d>",proceso->pid,recurso,instanciaRecurso);
 
     //Si el numero de instancias es menor a 0 el proceso se bloquea
     if(instanciaRecurso<0){
@@ -172,11 +172,11 @@ void signal_s(t_pcb *proceso,char **parametros){
     int instancRecurso = instanciasRecursos[indexRecurso];
     instancRecurso++;
 
-    log_info(logger,"PID: <%d> - Signal: <%s> - Instancias: <%d>",proceso->pid, recurso, instancRecurso); 
+    //log_info(logger,"PID: <%d> - Signal: <%s> - Instancias: <%d>",proceso->pid, recurso, instancRecurso); 
     eliminarRecursoLista(proceso->recursosAsignados,recurso); 
 
     instanciasRecursos[indexRecurso]=instancRecurso;
-    log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
+    //log_warning(logger,"Instancias del recurso %s: %d",recurso,instancRecurso);
     if(instancRecurso <= 0){
         //instancRecurso++;
         instanciasRecursos[indexRecurso]=instancRecurso;
@@ -233,21 +233,6 @@ void io_gen_sleep(t_pcb *proceso, char **parametros){
 
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-            /* si la cola de bloqueados esta vacia, ejecutar
-            int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            if (pidBloqueado == proceso->pid){
-                args->proceso = proceso;
-                args->interfaz = parametros[0];
-                args->tiempo = parametros[1];
-                pthread_t pcb_bloqueado;
-                //log_warning(logger, "Proceso: <%d> - Interfaz: <%s> - Tiempo: <%s>",args->proceso->pid, args->interfaz, args->tiempo);
-                // if (!pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void *) args))
-                //     pthread_join(pcb_bloqueado,NULL);
-                // else
-                //     log_error(loggerError, "Error al crear hilo para dormir IO");
-                pthread_create(&pcb_bloqueado, NULL, (void*)dormir_IO, (void *) args);
-                pthread_detach(pcb_bloqueado);
-            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -291,14 +276,6 @@ void io_stdin_read(t_pcb *proceso,char **parametros){
             sem_post(&io_global->semaforo_cola_procesos);
            // sem_wait(&io_global->liberacion_semaforo);
             //log_info(logger, "luego de liberar el seeeeemaforo");
-           /* int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            if (pidBloqueado == proceso->pid){
-                args->proceso = proceso;
-                args->interfaz = parametros[0];
-                    pthread_detach(pcb_bloqueado);
-                else
-                    log_error(loggerError, "Error al crear hilo");
-            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -335,18 +312,6 @@ void io_stdout_write(t_pcb *proceso,char **parametros){
 
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-           /* int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            if (pidBloqueado == proceso->pid){
-                args->proceso = proceso;
-                args->interfaz = parametros[0];
-                args->direccionFisica = parametros[1];
-                args->tamanio = parametros[2];
-                pthread_t pcb_bloqueado;
-                if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_stdout_write, (void*)args))
-                    pthread_detach(pcb_bloqueado);
-                else
-                    log_error(loggerError, "Error al crear hilo");
-            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -371,7 +336,6 @@ void io_fs_create(t_pcb *proceso,char **parametros){
             loggearBloqueoDeProcesos(proceso, "IO_FS");
             loggearCambioDeEstado(proceso->pid, estadoAnterior, proceso->estado);
             //log_info(logger, "PID <%d>-Ejecuta IO_FS_CREATE",proceso->pid);
-            
             //agrego proceso a lista de bloqueados
             pthread_mutex_lock(&mutexListaBloqueados);
             list_add(pcbsBloqueados,proceso);
@@ -382,17 +346,6 @@ void io_fs_create(t_pcb *proceso,char **parametros){
             io_global->funcion= IO_FS_CREATE;
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-            /*int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            if (pidBloqueado == proceso->pid){
-                args->proceso = proceso;
-                args->interfaz = parametros[0];
-                args->nombreArchivo = parametros[1];
-                pthread_t pcb_bloqueado;
-                if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_create, (void*)args))
-                    pthread_detach(pcb_bloqueado);
-                else
-                    log_error(loggerError, "Error al crear hilo");
-            }*/
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -427,17 +380,6 @@ Interfaz *io_global = obtener_interfaz(&kernel, contextoEjecucion->motivoDesaloj
             io_global->funcion= IO_FS_DELETE;
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-            // int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            // if (pidBloqueado == proceso->pid){
-            //     args->proceso = proceso;
-            //     args->interfaz = parametros[0];
-            //     args->nombreArchivo = parametros[1];
-            //     pthread_t pcb_bloqueado;
-            //     if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_delete, (void*)args))
-            //         pthread_detach(pcb_bloqueado);
-            //     else
-            //         log_error(loggerError, "Error al crear hilo");
-            // }
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -474,19 +416,6 @@ void io_fs_truncate(t_pcb *proceso,char **parametros){
             io_global->funcion= IO_FS_TRUNCATE;
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-
-            // int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            // if (pidBloqueado == proceso->pid){
-            //     args->proceso = proceso;
-            //     args->interfaz = parametros[0];
-            //     args->nombreArchivo = parametros[1];
-            //     args->tamanio = parametros[2];
-            //     pthread_t pcb_bloqueado;
-            //     if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_truncate, (void*)args))
-            //         pthread_detach(pcb_bloqueado);
-            //     else
-            //         log_error(loggerError, "Error al crear hilo");
-            // }
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -524,20 +453,6 @@ void io_fs_write(t_pcb *proceso,char **parametros){
             io_global->funcion= IO_FS_WRITE;
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-            // int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            // if (pidBloqueado == proceso->pid){
-            //     args->proceso = proceso;
-            //     args->interfaz = parametros[0];
-            //     args->nombreArchivo = parametros[1];
-            //     args->direccion = parametros[2];
-            //     args->tamanio = parametros[3];
-            //     args->punteroArchivo = parametros[4];
-            //     pthread_t pcb_bloqueado2;
-            //     pthread_create(&pcb_bloqueado2, NULL, (void*)ejecutar_io_fs_write, (void*)args);
-            //     pthread_detach(pcb_bloqueado2);
-            //    // else
-            //     //log_error(loggerError, "Error al crear hilo");
-            // }
         }
         else{
             // mandar proceso a exit porque devuelve -1
@@ -575,20 +490,6 @@ void io_fs_read(t_pcb *proceso,char **parametros){
             io_global->funcion= IO_FS_READ;
             queue_push( io_global->cola_procesos_io,proceso);
             sem_post(&io_global->semaforo_cola_procesos);
-            // int pidBloqueado = *(int*)queue_peek(args->colaBloqueados);
-            // if (pidBloqueado == proceso->pid){
-            //     args->proceso = proceso;
-            //     args->interfaz = parametros[0];
-            //     args->nombreArchivo = parametros[1];
-            //     args->direccion = parametros[2];
-            //     args->tamanio = parametros[3];
-            //     args->punteroArchivo = parametros[4];
-            //     pthread_t pcb_bloqueado;
-            //     if (!pthread_create(&pcb_bloqueado, NULL, (void*)ejecutar_io_fs_read, (void*)args))
-            //         pthread_detach(pcb_bloqueado);
-            //     else
-            //         log_error(loggerError, "Error al crear hilo");
-            // }
         }
         else{
             // mandar proceso a exit porque devuelve -1

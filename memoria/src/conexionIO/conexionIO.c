@@ -52,11 +52,11 @@ void* ejecutarServidor(void* socketCliente) {
                 break;
             case 100: //INVENTE UN NUMERO DE OPCODE PARA CUANDO IO (STDIN O FS_READ) ENVIA EL MENSAJE A ESCRIBIR EN MEMORIA 
                 usleep(tiempo*1000);
-                log_info(logger, "IO envía mensaje a escribir en memoria");
+                //log_info(logger, "IO envía mensaje a escribir en memoria");
                 int dir, pid;
                 char cadena[2048]="";
                 recibirDirYCadena(sock, &dir, &pid, cadena);
-                cadena[strlen(cadena)] = '\0';
+                //cadena[strlen(cadena)] = '\0';
                 log_info(logger, "PID: <%d> - Accion: <ESCRIBIR> - Direccion Física: <%d> - Valor: <%s>", pid, dir, cadena); 
                 memcpy((char*)mf->memoria + dir, cadena, strlen(cadena));
                 /*char* datoEscrito= malloc(strlen(cadena));//ACA VERIFICO QUE SE ESCRIBIO BIEN EN MEMORIA!!!!!!!!
@@ -72,7 +72,7 @@ void* ejecutarServidor(void* socketCliente) {
                 break;
             case 101: //IDEM PARA STDOUT, ACA LEO DE MEMORIA Y ENVIO A IO (STDOUT o FS_WRITE)
                 usleep(tiempo*1000);
-                log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
+                //log_info(logger, "MEMORIA envía mensaje a IO segun direccion y tamaño");
                 int dir2, tamano, pid2;
                 recibirDireccionyTamano(sock, &dir2, &pid2, &tamano);
                 //printf("Tamaño: %d\n", tamano);

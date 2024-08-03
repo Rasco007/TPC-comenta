@@ -21,6 +21,7 @@ void conexionKernel(char **argv) {
     //size_t bytes;
     int32_t handshake = 1;
     int32_t result;
+    log_info(logger, "Enviando handshake al servidor");
     send(fd_kernel, &handshake, sizeof(int32_t), 0);
     recv(fd_kernel, &result, sizeof(int32_t), MSG_WAITALL);
     if (result == 0){
@@ -35,7 +36,7 @@ void conexionKernel(char **argv) {
 
 void envioTipoInterfaz(char *tipoInterfaz, int fd_kernel)
 {
-    log_info(logger, "tipo de interfaz es: %s", tipoInterfaz);
+    log_info(logger, "Tipo de interfaz es: %s", tipoInterfaz);
 
     // Enviar mensaje al servidor
     send(fd_kernel, tipoInterfaz, strlen(tipoInterfaz), 0);
@@ -44,7 +45,7 @@ void envioTipoInterfaz(char *tipoInterfaz, int fd_kernel)
 
 void envioNombreInterfaz(char *nombreInterfaz, int fd_kernel)
 {
-    log_info(logger, "nombre de interfaz es: %s", nombreInterfaz);
+    log_info(logger, "Nombre de interfaz es: %s", nombreInterfaz);
 
     // Enviar mensaje al servidor
     send(fd_kernel, nombreInterfaz, strlen(nombreInterfaz), 0);

@@ -233,16 +233,16 @@ void manejarFS_READ(int socketCliente){
         tamanioTotal += tamanio[i];
     log_info(logger, "PID: <%d> - Leer Archivo: <%s> - Tamaño a Leer: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanioTotal, punteroArchivo);
     for(int i=0; i<cantidadtotal; i++){
-        log_info(logger, "Tamanio recibido: %d", tamanio[i]);
-        log_info(logger, "Direccion recibida: %d", direccion[i]);
+        //log_info(logger, "Tamanio recibido: %d", tamanio[i]);
+        //log_info(logger, "Direccion recibida: %d", direccion[i]);
         char *datosLeidos= leerDatosDesdeArchivo(nombrearchivo, punteroArchivo+puntero2, tamanio[i]);
-        printf("Datos leidos: %s\n", datosLeidos);
+        //printf("Datos leidos: %s\n", datosLeidos);
         puntero2+=tamanio[i];
         enviarAImprimirAMemoria(datosLeidos,direccion[i], fd_memoria, pid);
         //usleep(1000*1000);
         char *recibido="";
         recv(fd_memoria, &recibido, sizeof(recibido), 0);
-        log_info(logger, "OK DE MEMORIA");
+        //log_info(logger, "OK DE MEMORIA");
         free(datosLeidos);
     }
     free(direccion);
@@ -305,8 +305,8 @@ void manejarFS_WRITE(int socketCliente){
         tamanioTotal+=tamanio[i];
     log_info(logger, "PID: <%d> - Escribir Archivo: <%s> - Tamaño a Escribir: <%d> - Puntero Archivo: <%d>", pid, nombrearchivo, tamanioTotal, punteroArchivo);
     for(int i=0; i<cantidadtotal; i++){
-        log_info(logger, "Tamanio recibido: %d", tamanio[i]);
-        log_info(logger, "Direccion recibida: %d", direccion[i]);
+        //log_info(logger, "Tamanio recibido: %d", tamanio[i]);
+        //log_info(logger, "Direccion recibida: %d", direccion[i]);
         enviarDireccionTamano(direccion[i],tamanio[i],pid,fd_memoria);
        // usleep(1000*1000);
         char* recibido=malloc(256);
@@ -314,12 +314,12 @@ void manejarFS_WRITE(int socketCliente){
 	    //if(i==0)
 	    //	cadenaCompleta[0]='\0';
 	    recv(fd_memoria, recibido, tamanio[i], 0);
-	    printf("Mensaje recibido de memoria:%s\n", recibido);
+	    //printf("Mensaje recibido de memoria:%s\n", recibido);
 	    //ir concatenando los mensajes
 	    strncat(cadenaCompleta, recibido, tamanio[i]);
         free(recibido);
     }
-    printf("Mensaje completo:%s\n", cadenaCompleta);
+    //printf("Mensaje completo:%s\n", cadenaCompleta);
 	escribirCadenaEnArchivo(nombrearchivo, cadenaCompleta, punteroArchivo);
     char *mensje="ok";
     send(fd_kernel, &mensje, sizeof(mensje), 0);
@@ -338,13 +338,13 @@ void manejarSTDINREAD(int socketCliente) {
     int cantidad;
     recibirEnteros3(socketCliente, tamanios, direcciones, &pid, &cantidad);
     // Loguear los parámetros recibidos
-    for(int i=0; i<cantidad; i++){
+    /*for(int i=0; i<cantidad; i++){
         log_info(logger, "Tamanio recibido: %d", tamanios[i]);
         log_info(logger, "Direccion recibida: %d", direcciones[i]);
-    }
+    }*/
     log_info(logger, "PID: <%d> - Operacion: <IO_STDIN_READ>", pid);
     // Leer una línea de texto usando readline
-    char* texto = readline("Ingrese el texto: ");
+    char* texto = readline(">");
     //tengo que dividir el texto ingresado en partes de tamanio maximo tamanios[0]
     //y enviar cada parte a memoria en la direccion direcciones[i]
     // Copiar los datos desde el archivo mapeado al buffer de datos leídos
@@ -355,13 +355,13 @@ void manejarSTDINREAD(int socketCliente) {
     for(int i=0; i<cantidad; i++){
         memcpy(datosLeidos, texto + tamanotexto, tamanios[i]);
         datosLeidos[tamanios[i]] = '\0';
-        printf("Texto a enviar a memoria: %s\n", datosLeidos);
+        //printf("Texto a enviar a memoria: %s\n", datosLeidos);
         tamanotexto += strlen(datosLeidos);
         enviarAImprimirAMemoria(datosLeidos,direcciones[i], fd_memoria, pid);//estos datos se deben escribir en la direccion de memoria
         //recibir un mensaje de confirmacion de que se escribio en memoria
         char *recibido="";
         recv(fd_memoria, &recibido, sizeof(recibido), 0);
-        log_info(logger, "OK DE MEMORIA");
+        //log_info(logger, "OK DE MEMORIA");
         //usleep(1000*1000);
     }
     //recv(fd_memoria, &recibido, sizeof(recibido), 0);
@@ -430,10 +430,10 @@ void recibir_mensaje_y_dormir(int socket_cliente) {
     log_info(logger, "PID: <%d> - Operacion: <IO_GEN_SLEEP>", pid);
     //log_info(logger, "Nombre recibido: %s", nombre);
 	//log_info(logger, "Tiempo a dormir recibido: %d", unidades); 
-	log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
-	log_info(logger, "Antes de dormir");
+	//log_info(logger, "Tiempo a dormir calculado: %f", unidades*TIEMPO_UNIDAD_TRABAJO/1000.0); // ejemplo: 10*250/1000 = 2.5seg
+	//log_info(logger, "Antes de dormir");
 	sleep(unidades* TIEMPO_UNIDAD_TRABAJO/1000.0);
-	log_info(logger, "Despues de dormir");
+	//log_info(logger, "Despues de dormir");
 	//mandar mensaje luego de dormir a kernel
     send(socket_cliente, "OK", 2, 0);
 	//enviarMensaje("OK", socket_cliente);

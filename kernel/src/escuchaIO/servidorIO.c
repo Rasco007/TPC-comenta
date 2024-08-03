@@ -11,13 +11,13 @@ void dormir_IO(Interfaz *interfaz, t_pcb *proceso);
 void escucharAlIO() {
     char *puertoEscucha = confGet("PUERTO_ESCUCHA");
     int socketKernel = alistarServidorMulti(puertoEscucha);
-    //log_info(logger,"Esperando conexiones con IO...");
+    log_info(logger,"Esperando conexiones con IO...");
     while (1) {
         //pthread_t thread;
         
         int *socketClienteIO = malloc(sizeof(int));
         *socketClienteIO = esperarCliente(socketKernel);
-       // log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
+        log_info(logger, "IO conectado, en socket: %d",*socketClienteIO);
 
         hacerHandshake(*socketClienteIO);
         recibirNombreInterfaz(*socketClienteIO, &kernel);
